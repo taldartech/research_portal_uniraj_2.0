@@ -33,7 +33,7 @@
                                         <tr class="hover:bg-gray-50">
                                             <td class="px-6 py-4 whitespace-nowrap">
                                                 <div class="text-sm font-medium text-gray-900">{{ $report->scholar->user->name }}</div>
-                                                <div class="text-sm text-gray-500">{{ $report->scholar->enrollment_number ?? 'N/A' }}</div>
+                                                <div class="text-sm text-gray-500">SCH-{{ str_pad($report->scholar->id, 6, '0', STR_PAD_LEFT) }}</div>
                                             </td>
                                             <td class="px-6 py-4 whitespace-nowrap">
                                                 <div class="text-sm text-gray-900">{{ $report->scholar->admission->department->name ?? 'N/A' }}</div>
@@ -67,7 +67,7 @@
                                                 <div class="text-sm text-gray-900">{{ $report->submission_date->format('M d, Y') }}</div>
                                             </td>
                                             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                                <a href="{{ Storage::url($report->report_file) }}" 
+                                                <a href="{{ Storage::url($report->report_file) }}"
                                                    target="_blank"
                                                    class="text-indigo-600 hover:text-indigo-900">
                                                     Download

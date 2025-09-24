@@ -377,26 +377,118 @@ class SupervisorController extends Controller
         return view('supervisor.progress_reports.pending', compact('pendingReports'));
     }
 
-    public function approveProgressReportForm(\App\Models\ProgressReport $progressReport)
+    public function showProgressReport($reportId)
     {
+        \Illuminate\Support\Facades\Log::info('=== SHOW PROGRESS REPORT DEBUG ===');
+        \Illuminate\Support\Facades\Log::info('Report ID Parameter: ' . $reportId);
+
+        // Manually fetch the progress report
+        $progressReport = \App\Models\ProgressReport::find($reportId);
+
+        if (!$progressReport) {
+            \Illuminate\Support\Facades\Log::error('Progress report not found with ID: ' . $reportId);
+            abort(404, 'Progress report not found.');
+        }
+
+        \Illuminate\Support\Facades\Log::info('Report ID: ' . $progressReport->id);
+        \Illuminate\Support\Facades\Log::info('Report Supervisor ID: ' . $progressReport->supervisor_id);
+        \Illuminate\Support\Facades\Log::info('Report Status: ' . $progressReport->status);
+
+        $authUser = Auth::user();
+        \Illuminate\Support\Facades\Log::info('Auth User: ' . ($authUser ? $authUser->name : 'NULL'));
+
+        if ($authUser && $authUser->supervisor) {
+            \Illuminate\Support\Facades\Log::info('Auth User Supervisor ID: ' . $authUser->supervisor->id);
+        } else {
+            \Illuminate\Support\Facades\Log::error('Auth user has no supervisor relationship!');
+        }
+
         if ($progressReport->supervisor_id !== Auth::user()->supervisor->id) {
+            \Illuminate\Support\Facades\Log::error('SUPERVISOR ID MISMATCH: Report=' . $progressReport->supervisor_id . ', User=' . Auth::user()->supervisor->id);
+            abort(403, 'Unauthorized action.');
+        }
+
+        \Illuminate\Support\Facades\Log::info('All checks passed - loading show view');
+        $progressReport->load(['scholar.user', 'supervisor.user', 'supervisorApprover', 'hodApprover']);
+
+        return view('supervisor.progress_reports.show', compact('progressReport'));
+    }
+
+    public function approveProgressReportForm($reportId)
+    {
+        \Illuminate\Support\Facades\Log::info('=== APPROVE PROGRESS REPORT FORM DEBUG ===');
+        \Illuminate\Support\Facades\Log::info('Report ID Parameter: ' . $reportId);
+
+        // Manually fetch the progress report
+        $progressReport = \App\Models\ProgressReport::find($reportId);
+
+        if (!$progressReport) {
+            \Illuminate\Support\Facades\Log::error('Progress report not found with ID: ' . $reportId);
+            abort(404, 'Progress report not found.');
+        }
+
+        \Illuminate\Support\Facades\Log::info('Report ID: ' . $progressReport->id);
+        \Illuminate\Support\Facades\Log::info('Report Supervisor ID: ' . $progressReport->supervisor_id);
+        \Illuminate\Support\Facades\Log::info('Report Status: ' . $progressReport->status);
+
+        $authUser = Auth::user();
+        \Illuminate\Support\Facades\Log::info('Auth User: ' . ($authUser ? $authUser->name : 'NULL'));
+
+        if ($authUser && $authUser->supervisor) {
+            \Illuminate\Support\Facades\Log::info('Auth User Supervisor ID: ' . $authUser->supervisor->id);
+        } else {
+            \Illuminate\Support\Facades\Log::error('Auth user has no supervisor relationship!');
+        }
+
+        if ($progressReport->supervisor_id !== Auth::user()->supervisor->id) {
+            \Illuminate\Support\Facades\Log::error('SUPERVISOR ID MISMATCH: Report=' . $progressReport->supervisor_id . ', User=' . Auth::user()->supervisor->id);
             abort(403, 'Unauthorized action.');
         }
 
         if ($progressReport->status !== 'pending_supervisor_approval') {
+            \Illuminate\Support\Facades\Log::error('STATUS MISMATCH: Report status is ' . $progressReport->status . ', expected pending_supervisor_approval');
             abort(403, 'This progress report is not pending supervisor approval.');
         }
+
+        \Illuminate\Support\Facades\Log::info('All checks passed - loading view');
+        $progressReport->load(['scholar.user', 'supervisor.user', 'supervisorApprover', 'hodApprover']);
 
         return view('supervisor.progress_reports.approve', compact('progressReport'));
     }
 
-    public function approveProgressReport(Request $request, \App\Models\ProgressReport $progressReport)
+    public function approveProgressReport(Request $request, $reportId)
     {
+        \Illuminate\Support\Facades\Log::info('=== APPROVE PROGRESS REPORT POST DEBUG ===');
+        \Illuminate\Support\Facades\Log::info('Report ID Parameter: ' . $reportId);
+
+        // Manually fetch the progress report
+        $progressReport = \App\Models\ProgressReport::find($reportId);
+
+        if (!$progressReport) {
+            \Illuminate\Support\Facades\Log::error('Progress report not found with ID: ' . $reportId);
+            abort(404, 'Progress report not found.');
+        }
+
+        \Illuminate\Support\Facades\Log::info('Report ID: ' . $progressReport->id);
+        \Illuminate\Support\Facades\Log::info('Report Supervisor ID: ' . $progressReport->supervisor_id);
+        \Illuminate\Support\Facades\Log::info('Report Status: ' . $progressReport->status);
+
+        $authUser = Auth::user();
+        \Illuminate\Support\Facades\Log::info('Auth User: ' . ($authUser ? $authUser->name : 'NULL'));
+
+        if ($authUser && $authUser->supervisor) {
+            \Illuminate\Support\Facades\Log::info('Auth User Supervisor ID: ' . $authUser->supervisor->id);
+        } else {
+            \Illuminate\Support\Facades\Log::error('Auth user has no supervisor relationship!');
+        }
+
         if ($progressReport->supervisor_id !== Auth::user()->supervisor->id) {
+            \Illuminate\Support\Facades\Log::error('SUPERVISOR ID MISMATCH: Report=' . $progressReport->supervisor_id . ', User=' . Auth::user()->supervisor->id);
             abort(403, 'Unauthorized action.');
         }
 
         if ($progressReport->status !== 'pending_supervisor_approval') {
+            \Illuminate\Support\Facades\Log::error('STATUS MISMATCH: Report status is ' . $progressReport->status . ', expected pending_supervisor_approval');
             abort(403, 'This progress report is not pending supervisor approval.');
         }
 
@@ -405,24 +497,29 @@ class SupervisorController extends Controller
             'remarks' => 'required|string|max:500',
         ]);
 
+        \Illuminate\Support\Facades\Log::info('Action: ' . $request->action);
+        \Illuminate\Support\Facades\Log::info('Remarks: ' . $request->remarks);
+
         if ($request->action === 'approve') {
             $progressReport->update([
                 'status' => 'pending_hod_approval',
-                'supervisor_approver_id' => Auth::id(),
-                'supervisor_approved_at' => now(),
-                'supervisor_remarks' => $request->remarks,
+                'da_approver_id' => Auth::id(),
+                'da_approved_at' => now(),
+                'da_remarks' => $request->remarks,
             ]);
 
             $message = 'Progress report approved and forwarded to HOD.';
+            \Illuminate\Support\Facades\Log::info('Progress report approved successfully');
         } else {
             $progressReport->update([
                 'status' => 'rejected',
-                'supervisor_approver_id' => Auth::id(),
-                'supervisor_approved_at' => now(),
-                'supervisor_remarks' => $request->remarks,
+                'da_approver_id' => Auth::id(),
+                'da_approved_at' => now(),
+                'da_remarks' => $request->remarks,
             ]);
 
             $message = 'Progress report rejected.';
+            \Illuminate\Support\Facades\Log::info('Progress report rejected');
         }
 
         return redirect()->route('staff.progress_reports.pending')->with('success', $message);

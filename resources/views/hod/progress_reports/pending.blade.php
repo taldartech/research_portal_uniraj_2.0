@@ -44,12 +44,12 @@
                                                     </div>
                                                     <div class="ml-4">
                                                         <div class="text-sm font-medium text-gray-900">{{ $report->scholar->user->name }}</div>
-                                                        <div class="text-sm text-gray-500">{{ $report->scholar->enrollment_number ?? 'N/A' }}</div>
+                                                        <div class="text-sm text-gray-500">SCH-{{ str_pad($report->scholar->id, 6, '0', STR_PAD_LEFT) }}</div>
                                                     </div>
                                                 </div>
                                             </td>
                                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                                {{ $report->report_period }}
+                                                {{ $report->report_period ?? 'N/A' }}
                                             </td>
                                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                                 {{ $report->supervisor->user->name ?? 'N/A' }}

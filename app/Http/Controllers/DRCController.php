@@ -138,6 +138,20 @@ class DRCController extends Controller
         return view('drc.progress_reports.pending', compact('pendingReports'));
     }
 
+    public function approveProgressReportForm(\App\Models\ProgressReport $progressReport)
+    {
+        $drc = Auth::user()->departmentManaging->drc;
+        if (! $drc || $progressReport->scholar->admission->department_id !== $drc->department_id) {
+            abort(403, 'Unauthorized action.');
+        }
+
+        if ($progressReport->status !== 'pending_hod_approval') {
+            abort(403, 'This progress report is not pending HOD approval.');
+        }
+
+        return view('drc.progress_reports.approve', compact('progressReport'));
+    }
+
     public function approveProgressReport(Request $request, \App\Models\ProgressReport $progressReport)
     {
         $drc = Auth::user()->departmentManaging->drc;
@@ -157,18 +171,18 @@ class DRCController extends Controller
         if ($request->action === 'approve') {
             $progressReport->update([
                 'status' => 'pending_da_approval',
-                'hod_approver_id' => Auth::id(),
-                'hod_approved_at' => now(),
-                'hod_remarks' => $request->remarks,
+                'da_approver_id' => Auth::id(),
+                'da_approved_at' => now(),
+                'da_remarks' => $request->remarks,
             ]);
 
             $message = 'Progress report approved and forwarded to Dean\'s Assistant.';
         } else {
             $progressReport->update([
                 'status' => 'rejected',
-                'hod_approver_id' => Auth::id(),
-                'hod_approved_at' => now(),
-                'hod_remarks' => $request->remarks,
+                'da_approver_id' => Auth::id(),
+                'da_approved_at' => now(),
+                'da_remarks' => $request->remarks,
             ]);
 
             $message = 'Progress report rejected.';

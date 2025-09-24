@@ -170,25 +170,6 @@ class Scholar extends Model
         return !$this->hasAssignedSupervisor();
     }
 
-    public function isProfileComplete()
-    {
-        // Check if all required profile fields are filled
-        return !empty($this->first_name) &&
-               !empty($this->last_name) &&
-               !empty($this->date_of_birth) &&
-               !empty($this->contact_number) &&
-               !empty($this->address) &&
-            //    !empty($this->research_area) &&
-               !empty($this->father_name) &&
-               !empty($this->mother_name) &&
-               !empty($this->nationality) &&
-               !empty($this->post_graduate_degree) &&
-               !empty($this->post_graduate_university) &&
-               !empty($this->post_graduate_year) &&
-               !empty($this->post_graduate_percentage) &&
-               !empty($this->phd_faculty) &&
-               !empty($this->phd_subject);
-    }
 
     public function vivaExaminations()
     {
@@ -330,6 +311,11 @@ class Scholar extends Model
         return $this->courseworkExemptions()->where('status', 'approved')->exists();
     }
 
+    public function hasDateOfConfirmation()
+    {
+        return !is_null($this->date_of_confirmation);
+    }
+
     public function hasExistingThesis()
     {
         return $this->thesisSubmissions()->exists();
@@ -337,10 +323,10 @@ class Scholar extends Model
 
     public function getThesisEligibilityStatus()
     {
-        if (!$this->date_of_confirmation) {
+        if (!$this->hasDateOfConfirmation()) {
             return [
                 'eligible' => false,
-                'reason' => 'Date of Confirmation (DOC) not set',
+                'reason' => 'Date of Confirmation (DOC) not set - Registration form not yet signed by DR',
                 'can_submit' => false,
                 'requires_special_approval' => false,
                 'days_remaining' => null,
@@ -527,26 +513,32 @@ class Scholar extends Model
             ];
         }
 
-        // Step 3: Profile Setup - MOVED TO THIRD
-        if (!$this->isProfileComplete()) {
-            return [
-                'step' => 3,
-                'title' => 'Profile Setup',
-                'description' => 'Complete your personal information and upload required documents',
-                'route' => 'scholar.profile.edit',
-                'status' => 'pending',
-                'icon' => 'profile'
-            ];
-        }
 
-        // Step 4: Progress Reports
+        // Step 3: Progress Reports
         $approvedReports = $this->progressReports()->where('status', 'approved')->count();
         if ($approvedReports < 2) {
             $isSubmissionAllowed = \App\Helpers\ProgressReportHelper::isSubmissionAllowed();
             $statusMessage = \App\Helpers\ProgressReportHelper::getSubmissionStatusMessage();
+            $currentMonth = date('F');
+
+            // Check if a report already exists for the current month
+            $existingReport = $this->progressReports()
+                ->where('report_period', $currentMonth)
+                ->first();
+
+            if ($existingReport) {
+                return [
+                    'step' => 3,
+                    'title' => 'Progress Reports',
+                    'description' => "Report for {$currentMonth} already submitted (Status: " . ucfirst(str_replace('_', ' ', $existingReport->status)) . ")",
+                    'route' => 'scholar.dashboard',
+                    'status' => 'completed',
+                    'icon' => 'progress'
+                ];
+            }
 
             return [
-                'step' => 4,
+                'step' => 3,
                 'title' => 'Progress Reports',
                 'description' => $isSubmissionAllowed
                     ? "Submit periodic progress reports ({$approvedReports}/2 completed)"
@@ -557,10 +549,10 @@ class Scholar extends Model
             ];
         }
 
-        // Step 5: Coursework Completion
+        // Step 4: Coursework Completion
         if (!$this->coursework_completed) {
             return [
-                'step' => 5,
+                'step' => 4,
                 'title' => 'Coursework Completion',
                 'description' => 'Complete required coursework and upload certificates',
                 'route' => 'scholar.dashboard',
@@ -569,11 +561,11 @@ class Scholar extends Model
             ];
         }
 
-        // Step 6: Thesis Submission
+        // Step 5: Thesis Submission
         if (!$this->thesisSubmissions()->where('status', 'approved')->exists()) {
             if (!$this->thesisSubmissions()->exists()) {
                 return [
-                    'step' => 6,
+                    'step' => 5,
                     'title' => 'Thesis Submission',
                     'description' => 'Submit your final thesis for evaluation',
                     'route' => 'scholar.thesis.submit',
@@ -592,11 +584,11 @@ class Scholar extends Model
             }
         }
 
-        // Step 7: Viva Examination
+        // Step 6: Viva Examination
         if (!$this->vivaExaminations()->where('status', 'completed')->exists()) {
             if (!$this->vivaExaminations()->exists()) {
                 return [
-                    'step' => 7,
+                    'step' => 6,
                     'title' => 'Viva Examination',
                     'description' => 'Wait for viva scheduling',
                     'route' => 'scholar.thesis.status',
@@ -605,7 +597,7 @@ class Scholar extends Model
                 ];
             } else {
                 return [
-                    'step' => 7,
+                    'step' => 6,
                     'title' => 'Viva Examination',
                     'description' => 'Attend scheduled viva examination',
                     'route' => 'scholar.thesis.status',
@@ -615,10 +607,10 @@ class Scholar extends Model
             }
         }
 
-        // Step 8: Final Documents
+        // Step 7: Final Documents
         if (!$this->registration_letter_generated) {
             return [
-                'step' => 8,
+                    'step' => 7,
                 'title' => 'Final Documents',
                 'description' => 'Download registration letter and certificates',
                 'route' => 'scholar.thesis.submissions.status',

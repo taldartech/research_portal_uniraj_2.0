@@ -34,7 +34,8 @@
                                     @foreach ($reports as $report)
                                         <tr>
                                             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                                                {{ $report->scholar->user->name }}
+                                                <div>{{ $report->scholar->user->name }}</div>
+                                                <div class="text-xs text-gray-500">SCH-{{ str_pad($report->scholar->id, 6, '0', STR_PAD_LEFT) }}</div>
                                             </td>
                                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                                 {{ $report->report_period ?? 'N/A' }}

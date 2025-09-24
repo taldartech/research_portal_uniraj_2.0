@@ -9,7 +9,7 @@ class ProgressReportHelper
      */
     public static function getAllowedMonths(): array
     {
-        $months = config('app.progress_report_months', '4,10');
+        $months = config('app.progress_report_months', '4,9');
         return array_map('intval', explode(',', $months));
     }
 

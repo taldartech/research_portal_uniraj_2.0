@@ -179,6 +179,7 @@ Route::prefix('staff')->name('staff.')->middleware(['auth'])->group(function () 
         Route::post('/coursework-exemptions/{exemption}/approve', [App\Http\Controllers\SupervisorController::class, 'approveCourseworkExemption'])->name('coursework_exemption.approve.store');
         Route::get('/synopses/pending', [App\Http\Controllers\SupervisorController::class, 'listPendingSynopses'])->name('synopsis.pending');
         Route::get('/progress-reports/pending', [App\Http\Controllers\SupervisorController::class, 'listPendingProgressReports'])->name('progress_reports.pending');
+        Route::get('/progress-reports/{report}', [App\Http\Controllers\SupervisorController::class, 'showProgressReport'])->name('progress_reports.show');
         Route::get('/progress-reports/{report}/approve', [App\Http\Controllers\SupervisorController::class, 'approveProgressReportForm'])->name('progress_reports.approve');
         Route::post('/progress-reports/{report}/approve', [App\Http\Controllers\SupervisorController::class, 'approveProgressReport'])->name('progress_reports.approve.store');
         Route::get('/thesis/pending', [App\Http\Controllers\SupervisorController::class, 'listPendingThesisSubmissions'])->name('thesis.pending');
@@ -295,6 +296,7 @@ Route::prefix('da')->name('da.')->middleware(['auth', UserTypeMiddleware::class]
     Route::get('/registration-forms/eligible-scholars', [App\Http\Controllers\RegistrationFormController::class, 'listEligibleScholars'])->name('registration_forms.eligible_scholars');
     Route::post('/registration-forms/generate/{scholar}', [App\Http\Controllers\RegistrationFormController::class, 'generateRegistrationForm'])->name('registration_forms.generate');
     Route::get('/registration-forms', [App\Http\Controllers\RegistrationFormController::class, 'listRegistrationForms'])->name('registration_forms.list');
+    Route::get('/registration-forms/{registrationForm}/official-letter', [App\Http\Controllers\RegistrationFormController::class, 'showOfficialLetter'])->name('registration_forms.official_letter');
 
     // Expert Evaluation Routes
     Route::get('/thesis/evaluations-for-assignment', [App\Http\Controllers\ExpertEvaluationController::class, 'listThesisEvaluationsForAssignment'])->name('thesis.evaluations_for_assignment');
@@ -486,7 +488,7 @@ Route::prefix('expert')->name('expert.')->middleware(['auth', UserTypeMiddleware
     Route::post('/evaluations/{evaluation}/submit', [App\Http\Controllers\ExpertEvaluationController::class, 'submitEvaluation'])->name('evaluations.submit');
 });
 
-// require __DIR__.'/auth.php';
+require __DIR__.'/auth.php';
 
 // Custom login routes
 Route::middleware('guest')->group(function () {
@@ -517,6 +519,22 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
 Route::get('/debug-login', function () {
     return view('debug-login');
 })->name('debug.login');
+
+// Debug route to check current user
+Route::get('/debug-user', function () {
+    $user = Auth::user();
+    if ($user) {
+        return response()->json([
+            'id' => $user->id,
+            'name' => $user->name,
+            'email' => $user->email,
+            'user_type' => $user->user_type,
+            'role_id' => $user->role_id,
+            'supervisor_id' => $user->supervisor ? $user->supervisor->id : null,
+        ]);
+    }
+    return response()->json(['error' => 'No user authenticated']);
+})->middleware('auth');
 
 // Workflow Dashboard routes
 Route::middleware(['auth'])->group(function () {

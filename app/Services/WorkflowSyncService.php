@@ -9,6 +9,7 @@ use App\Models\User;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Notification;
 use App\Notifications\WorkflowStatusUpdate;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class WorkflowSyncService
 {
@@ -505,13 +506,29 @@ class WorkflowSyncService
                 'generated_at' => now(),
             ]);
 
-            // Generate form content
-            $formContent = $this->generateFormContent($scholar, $registrationForm, $approvedSynopsis);
-            $formPath = 'registration_forms/' . $dispatchNumber . '.pdf';
+            // Generate PDF form using official letter blade template
+            $pdf = Pdf::loadView('registration.official_letter', [
+                'scholar' => $scholar,
+                'registrationForm' => $registrationForm,
+                'synopsis' => $approvedSynopsis
+            ]);
+            $pdf->setPaper('A4', 'portrait');
+            $pdf->setOptions([
+                'isHtml5ParserEnabled' => true,
+                'isRemoteEnabled' => true,
+                'isPhpEnabled' => true,
+                'defaultFont' => 'Times New Roman',
+                'debugKeepTemp' => false,
+                'debugCss' => false,
+                'debugLayout' => false,
+                'debugLayoutLines' => false,
+                'debugLayoutBlocks' => false,
+                'debugLayoutInline' => false,
+                'debugLayoutPaddingBox' => false
+            ]);
 
-            // Store the form content as a simple PDF
-            $pdfContent = $this->generateSimplePDF($formContent);
-            \Illuminate\Support\Facades\Storage::disk('public')->put($formPath, $pdfContent);
+            $formPath = 'registration_forms/' . $dispatchNumber . '.pdf';
+            \Illuminate\Support\Facades\Storage::disk('public')->put($formPath, $pdf->output());
 
             // Update form file path
             $registrationForm->update(['form_file_path' => $formPath]);

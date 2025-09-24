@@ -433,7 +433,14 @@ class ScholarController extends Controller
         }
 
         $allowedMonths = \App\Helpers\ProgressReportHelper::getAllowedMonthNames();
-        return view('scholar.progress_report.submit', compact('allowedMonths'));
+        $currentMonth = date('F'); // Get current month name (e.g., 'April', 'October')
+
+        // Check if a report already exists for the current month
+        $existingReport = \App\Models\ProgressReport::where('scholar_id', $scholar->id)
+            ->where('report_period', $currentMonth)
+            ->first();
+
+        return view('scholar.progress_report.submit', compact('allowedMonths', 'currentMonth', 'existingReport'));
     }
 
     public function storeProgressReport(Request $request)
@@ -459,6 +466,17 @@ class ScholarController extends Controller
             'cancellation_request' => 'boolean',
             'supervisor_change_request' => 'boolean',
         ]);
+
+        // Check if a progress report already exists for this month
+        $existingReport = \App\Models\ProgressReport::where('scholar_id', $scholar->id)
+            ->where('report_period', $request->report_period)
+            ->exists();
+
+        if ($existingReport) {
+            return redirect()->back()->withErrors([
+                'report_period' => 'A progress report for ' . $request->report_period . ' has already been submitted. Only one report per month is allowed.'
+            ])->withInput();
+        }
 
         $path = $request->file('report_file')->store('progress_reports', 'public');
 

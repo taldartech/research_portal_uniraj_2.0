@@ -203,6 +203,7 @@
                                         :value="old('research_area', $scholar->research_area)" required />
                                     <x-input-error :messages="$errors->get('research_area')" class="mt-2" />
                                 </div>
+
                             </div>
                         </div>
 

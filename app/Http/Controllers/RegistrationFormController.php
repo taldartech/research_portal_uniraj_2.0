@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class RegistrationFormController extends Controller
 {
@@ -64,14 +65,28 @@ class RegistrationFormController extends Controller
         $workflowSyncService = app(\App\Services\WorkflowSyncService::class);
         $workflowSyncService->syncRegistrationWorkflow($registrationForm, 'da_generate', Auth::user());
 
-        // Generate PDF form (placeholder - in real implementation, use a PDF library)
-        $formContent = $this->generateFormContent($scholar, $registrationForm);
+        // Generate PDF form using official letter blade template
+        $synopsis = $scholar->synopses()->where('status', 'approved')->first();
+
+        // Generate PDF
+        $pdf = Pdf::loadView('registration.official_letter', compact('scholar', 'registrationForm', 'synopsis'));
+        $pdf->setPaper('A4', 'portrait');
+        $pdf->setOptions([
+            'isHtml5ParserEnabled' => true,
+            'isRemoteEnabled' => true,
+            'isPhpEnabled' => true,
+            'defaultFont' => 'Times New Roman',
+            'debugKeepTemp' => false,
+            'debugCss' => false,
+            'debugLayout' => false,
+            'debugLayoutLines' => false,
+            'debugLayoutBlocks' => false,
+            'debugLayoutInline' => false,
+            'debugLayoutPaddingBox' => false
+        ]);
+
         $formPath = 'registration_forms/' . $dispatchNumber . '.pdf';
-
-        // Store the form content (in real implementation, generate actual PDF)
-        Storage::disk('public')->put($formPath, $formContent);
-
-        // Update form file path
+        Storage::disk('public')->put($formPath, $pdf->output());
         $registrationForm->update(['form_file_path' => $formPath]);
 
         // Update scholar's registration form relationship
@@ -105,6 +120,12 @@ class RegistrationFormController extends Controller
         // Update registration form
         $registrationForm->update([
             'dr_signature_file' => $signaturePath,
+        ]);
+
+        // Set Date of Confirmation (DOC) for the scholar
+        $scholar = $registrationForm->scholar;
+        $scholar->update([
+            'date_of_confirmation' => now()->toDateString(),
         ]);
 
         // Sync workflow
@@ -178,6 +199,17 @@ class RegistrationFormController extends Controller
         // Return file download
         return response()->download(storage_path('app/public/' . $registrationForm->form_file_path),
             $downloadFileName);
+    }
+
+    /**
+     * Show official registration letter format
+     */
+    public function showOfficialLetter(RegistrationForm $registrationForm)
+    {
+        $scholar = $registrationForm->scholar;
+        $synopsis = $scholar->synopses()->where('status', 'approved')->first();
+
+        return view('registration.official_letter', compact('scholar', 'registrationForm', 'synopsis'));
     }
 
     /**

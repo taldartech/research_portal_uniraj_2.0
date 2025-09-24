@@ -15,19 +15,19 @@
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                             <div>
                                 <span class="font-medium text-gray-700">Name:</span>
-                                <span class="text-gray-900">{{ $progressReport->scholar->user->name }}</span>
+                                <span class="text-gray-900">{{ $report->scholar->user->name }}</span>
                             </div>
                             <div>
                                 <span class="font-medium text-gray-700">Scholar ID:</span>
-                                <span class="text-gray-900">SCH-{{ str_pad($progressReport->scholar->id, 6, '0', STR_PAD_LEFT) }}</span>
+                                <span class="text-gray-900">SCH-{{ str_pad($report->scholar->id, 6, '0', STR_PAD_LEFT) }}</span>
                             </div>
                             <div>
                                 <span class="font-medium text-gray-700">Department:</span>
-                                <span class="text-gray-900">{{ $progressReport->scholar->admission->department->name ?? 'N/A' }}</span>
+                                <span class="text-gray-900">{{ $report->scholar->admission->department->name ?? 'N/A' }}</span>
                             </div>
                             <div>
                                 <span class="font-medium text-gray-700">Supervisor:</span>
-                                <span class="text-gray-900">{{ $progressReport->supervisor->user->name ?? 'N/A' }}</span>
+                                <span class="text-gray-900">{{ $report->supervisor->user->name ?? 'N/A' }}</span>
                             </div>
                         </div>
                     </div>
@@ -38,11 +38,11 @@
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                             <div>
                                 <span class="font-medium text-gray-700">Report Period:</span>
-                                <span class="text-gray-900">{{ $progressReport->report_period ?? 'N/A' }}</span>
+                                <span class="text-gray-900">{{ $report->report_period ?? 'N/A' }}</span>
                             </div>
                             <div>
                                 <span class="font-medium text-gray-700">Submission Date:</span>
-                                <span class="text-gray-900">{{ $progressReport->submission_date ? $progressReport->submission_date->format('M d, Y') : 'N/A' }}</span>
+                                <span class="text-gray-900">{{ $report->submission_date ? $report->submission_date->format('M d, Y') : 'N/A' }}</span>
                             </div>
                         </div>
                     </div>
@@ -50,16 +50,16 @@
                     <!-- Report Content -->
                     <div class="mb-6 p-4 bg-gray-50 rounded-lg">
                         <h3 class="text-lg font-medium text-gray-900 mb-2">Progress Report File</h3>
-                        @if($progressReport->report_file)
+                        @if($report->report_file)
                             <div class="flex items-center space-x-4">
                                 <svg class="w-8 h-8 text-red-500" fill="currentColor" viewBox="0 0 20 20">
                                     <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clip-rule="evenodd"></path>
                                 </svg>
                                 <div>
                                     <p class="text-sm font-medium text-gray-900">Progress Report PDF</p>
-                                    <p class="text-xs text-gray-500">Uploaded on {{ $progressReport->submission_date ? $progressReport->submission_date->format('M d, Y') : 'Unknown date' }}</p>
+                                    <p class="text-xs text-gray-500">Uploaded on {{ $report->submission_date ? $report->submission_date->format('M d, Y') : 'Unknown date' }}</p>
                                 </div>
-                                <a href="{{ Storage::url($progressReport->report_file) }}" target="_blank" class="ml-auto bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-3 rounded text-sm">
+                                <a href="{{ Storage::url($report->report_file) }}" target="_blank" class="ml-auto bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-3 rounded text-sm">
                                     View PDF
                                 </a>
                             </div>
@@ -68,24 +68,24 @@
                         @endif
                     </div>
 
-                    @if($progressReport->feedback_da)
+                    @if($report->feedback_da)
                     <div class="mb-6 p-4 bg-blue-50 rounded-lg">
                         <h3 class="text-lg font-medium text-blue-900 mb-2">DA Feedback</h3>
-                        <div class="text-sm text-gray-700 whitespace-pre-wrap">{{ $progressReport->feedback_da }}</div>
+                        <div class="text-sm text-gray-700 whitespace-pre-wrap">{{ $report->feedback_da }}</div>
                     </div>
                     @endif
 
-                    @if($progressReport->special_remark)
+                    @if($report->special_remark)
                     <div class="mb-6 p-4 bg-yellow-50 rounded-lg">
                         <h3 class="text-lg font-medium text-yellow-900 mb-2">Special Remarks</h3>
-                        <div class="text-sm text-gray-700 whitespace-pre-wrap">{{ $progressReport->special_remark }}</div>
+                        <div class="text-sm text-gray-700 whitespace-pre-wrap">{{ $report->special_remark }}</div>
                     </div>
                     @endif
 
                     <!-- Approval Form -->
                     <div class="mt-8 p-6 bg-white border border-gray-200 rounded-lg">
-                        <h3 class="text-lg font-medium text-gray-900 mb-4">HOD Decision</h3>
-                        <form method="POST" action="{{ route('hod.progress_reports.approve.store', $progressReport) }}">
+                        <h3 class="text-lg font-medium text-gray-900 mb-4">DA Decision</h3>
+                        <form method="POST" action="{{ route('da.progress_reports.process', $report) }}">
                             @csrf
                             @method('POST')
 
@@ -103,7 +103,7 @@
                             </div>
 
                             <!-- Remarks -->
-                            <div class="mb-6">
+                            <div class="mb-4">
                                 <label for="remarks" class="block text-sm font-medium text-gray-700 mb-2">Remarks</label>
                                 <textarea id="remarks" name="remarks" rows="4" class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500" placeholder="Enter your remarks..." required>{{ old('remarks') }}</textarea>
                                 @error('remarks')
@@ -111,9 +111,19 @@
                                 @enderror
                             </div>
 
+                            <!-- DA Negative Remarks (Optional) -->
+                            <div class="mb-6">
+                                <label for="da_negative_remarks" class="block text-sm font-medium text-gray-700 mb-2">DA Negative Remarks (Optional)</label>
+                                <textarea id="da_negative_remarks" name="da_negative_remarks" rows="3" class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500" placeholder="Enter negative remarks if any...">{{ old('da_negative_remarks') }}</textarea>
+                                <p class="mt-1 text-sm text-gray-500">If negative remarks are provided, the report will go through the full approval chain.</p>
+                                @error('da_negative_remarks')
+                                    <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                                @enderror
+                            </div>
+
                             <!-- Action Buttons -->
                             <div class="flex items-center justify-end space-x-4">
-                                <a href="{{ route('hod.progress_reports.pending') }}"
+                                <a href="{{ route('da.progress_reports.pending') }}"
                                    class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
                                     Cancel
                                 </a>

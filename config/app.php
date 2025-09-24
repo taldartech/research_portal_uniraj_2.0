@@ -134,6 +134,6 @@ return [
     |
     */
 
-    'progress_report_months' => env('PROGRESS_REPORT_MONTHS', '4,10'),
+    'progress_report_months' => env('PROGRESS_REPORT_MONTHS', '4,9'),
 
 ];

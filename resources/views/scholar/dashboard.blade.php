@@ -25,38 +25,63 @@
                             $isSubmissionAllowed = \App\Helpers\ProgressReportHelper::isSubmissionAllowed();
                             $statusMessage = \App\Helpers\ProgressReportHelper::getSubmissionStatusMessage();
                             $allowedMonths = \App\Helpers\ProgressReportHelper::getAllowedMonthNames();
+                            $currentMonth = date('F');
+                            $existingReport = auth()->user()->scholar->progressReports()
+                                ->where('report_period', $currentMonth)
+                                ->first();
                         @endphp
 
-                        <div class="flex items-start">
-                            <div class="flex-shrink-0">
-                                @if($isSubmissionAllowed)
-                                    <div class="w-8 h-8 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center">
-                                        <svg class="w-5 h-5 text-green-600 dark:text-green-400" fill="currentColor" viewBox="0 0 20 20">
-                                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                        @if($existingReport)
+                            <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-md p-4">
+                                <div class="flex">
+                                    <div class="flex-shrink-0">
+                                        <svg class="h-5 w-5 text-blue-400" viewBox="0 0 20 20" fill="currentColor">
+                                            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
                                         </svg>
                                     </div>
-                                @else
-                                    <div class="w-8 h-8 bg-yellow-100 dark:bg-yellow-900 rounded-full flex items-center justify-center">
-                                        <svg class="w-5 h-5 text-yellow-600 dark:text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
-                                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"></path>
-                                        </svg>
+                                    <div class="ml-3">
+                                        <h3 class="text-sm font-medium text-blue-800 dark:text-blue-200">
+                                            Report Already Submitted for {{ $currentMonth }}
+                                        </h3>
+                                        <div class="mt-2 text-sm text-blue-700 dark:text-blue-300">
+                                            <p>Submitted on: <strong>{{ $existingReport->submission_date->format('M d, Y') }}</strong></p>
+                                            <p>Status: <span class="font-semibold">{{ ucfirst(str_replace('_', ' ', $existingReport->status)) }}</span></p>
+                                        </div>
                                     </div>
-                                @endif
+                                </div>
                             </div>
-                            <div class="ml-4 flex-1">
-                                <p class="text-sm text-gray-600 dark:text-gray-400 mb-2">{{ $statusMessage }}</p>
-                                <p class="text-xs text-gray-500 dark:text-gray-500">
-                                    Allowed months: {{ implode(', ', $allowedMonths) }}
-                                </p>
-                                @if($isSubmissionAllowed)
-                                    <div class="mt-3">
-                                        <a href="{{ route('scholar.progress_report.submit') }}" class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
-                                            Submit Progress Report
-                                        </a>
-                                    </div>
-                                @endif
+                        @else
+                            <div class="flex items-start">
+                                <div class="flex-shrink-0">
+                                    @if($isSubmissionAllowed)
+                                        <div class="w-8 h-8 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center">
+                                            <svg class="w-5 h-5 text-green-600 dark:text-green-400" fill="currentColor" viewBox="0 0 20 20">
+                                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                                            </svg>
+                                        </div>
+                                    @else
+                                        <div class="w-8 h-8 bg-yellow-100 dark:bg-yellow-900 rounded-full flex items-center justify-center">
+                                            <svg class="w-5 h-5 text-yellow-600 dark:text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+                                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"></path>
+                                            </svg>
+                                        </div>
+                                    @endif
+                                </div>
+                                <div class="ml-4 flex-1">
+                                    <p class="text-sm text-gray-600 dark:text-gray-400 mb-2">{{ $statusMessage }}</p>
+                                    <p class="text-xs text-gray-500 dark:text-gray-500">
+                                        Allowed months: {{ implode(', ', $allowedMonths) }}
+                                    </p>
+                                    @if($isSubmissionAllowed)
+                                        <div class="mt-3">
+                                            <a href="{{ route('scholar.progress_report.submit') }}" class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
+                                                Submit Progress Report
+                                            </a>
+                                        </div>
+                                    @endif
+                                </div>
                             </div>
-                        </div>
+                        @endif
                     </div>
                 </div>
             @endif

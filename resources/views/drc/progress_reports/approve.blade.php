@@ -84,8 +84,8 @@
 
                     <!-- Approval Form -->
                     <div class="mt-8 p-6 bg-white border border-gray-200 rounded-lg">
-                        <h3 class="text-lg font-medium text-gray-900 mb-4">HOD Decision</h3>
-                        <form method="POST" action="{{ route('hod.progress_reports.approve.store', $progressReport) }}">
+                        <h3 class="text-lg font-medium text-gray-900 mb-4">DRC Decision</h3>
+                        <form method="POST" action="{{ route('drc.progress_reports.approve.store', $progressReport) }}">
                             @csrf
                             @method('POST')
 
@@ -113,7 +113,7 @@
 
                             <!-- Action Buttons -->
                             <div class="flex items-center justify-end space-x-4">
-                                <a href="{{ route('hod.progress_reports.pending') }}"
+                                <a href="{{ route('drc.progress_reports.pending') }}"
                                    class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
                                     Cancel
                                 </a>

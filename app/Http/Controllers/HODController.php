@@ -659,18 +659,18 @@ class HODController extends Controller
         if ($request->action === 'approve') {
             $progressReport->update([
                 'status' => 'pending_da_approval',
-                'hod_approver_id' => Auth::id(),
-                'hod_approved_at' => now(),
-                'hod_remarks' => $request->remarks,
+                'da_approver_id' => Auth::id(),
+                'da_approved_at' => now(),
+                'da_remarks' => $request->remarks,
             ]);
 
             $message = 'Progress report approved and forwarded to DA.';
         } else {
             $progressReport->update([
                 'status' => 'rejected_by_hod',
-                'hod_approver_id' => Auth::id(),
-                'hod_approved_at' => now(),
-                'hod_remarks' => $request->remarks,
+                'da_approver_id' => Auth::id(),
+                'da_approved_at' => now(),
+                'da_remarks' => $request->remarks,
                 'rejected_by' => Auth::id(),
                 'rejected_at' => now(),
                 'rejection_reason' => $request->remarks,
