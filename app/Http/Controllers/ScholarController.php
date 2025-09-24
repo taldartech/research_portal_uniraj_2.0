@@ -878,7 +878,7 @@ class ScholarController extends Controller
         $scholar = Auth::user()->scholar;
 
         // Check if scholar owns this assignment
-        if ($assignment->scholar_id !== $scholar->id) {
+        if ($scholar && $assignment->scholar_id !== $scholar->id) {
             abort(403, 'Unauthorized access.');
         }
 
