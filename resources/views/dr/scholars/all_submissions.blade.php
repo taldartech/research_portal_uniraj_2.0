@@ -8,7 +8,7 @@
     <div class="py-12">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
             <!-- Summary Cards -->
-            <div class="grid grid-cols-1 md:grid-cols-5 gap-6 mb-8">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
                 <div class="bg-blue-50 p-6 rounded-lg shadow-md">
                     <div class="text-2xl font-bold text-blue-600">{{ $scholars->count() }}</div>
                     <div class="text-sm text-blue-800">Total Scholars</div>
@@ -79,7 +79,13 @@
                                                     {{ Str::limit($synopsis->proposed_topic, 50) }}
                                                 </td>
                                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                                    {{ $synopsis->rac->supervisor->user->name ?? 'N/A' }}
+                                                    @if($synopsis->rac && $synopsis->rac->supervisor)
+                                                        {{ $synopsis->rac->supervisor->user->name }}
+                                                    @elseif($synopsis->scholar->currentSupervisor && $synopsis->scholar->currentSupervisor->supervisor)
+                                                        {{ $synopsis->scholar->currentSupervisor->supervisor->user->name }}
+                                                    @else
+                                                        N/A
+                                                    @endif
                                                 </td>
                                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                                     {{ $synopsis->submission_date->format('M d, Y') }}

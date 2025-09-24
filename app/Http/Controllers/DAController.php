@@ -49,7 +49,7 @@ class DAController extends Controller
     public function listPendingSynopses()
     {
         $synopses = \App\Models\Synopsis::where('status', 'pending_da_approval')
-            ->with(['scholar.user', 'rac.supervisor.user', 'supervisorApprover', 'hodApprover'])
+            ->with(['scholar.user', 'rac.supervisor.user', 'scholar.currentSupervisor.supervisor.user', 'supervisorApprover', 'hodApprover'])
             ->latest()
             ->get();
 
@@ -116,7 +116,14 @@ class DAController extends Controller
             abort(403, 'This synopsis is not pending DA approval.');
         }
 
-        $synopsis->load(['scholar.user', 'rac.supervisor.user', 'supervisorApprover', 'hodApprover']);
+        $synopsis->load([
+            'scholar.user',
+            'scholar.admission.department',
+            'scholar.currentSupervisor.supervisor.user',
+            'rac.supervisor.user',
+            'supervisorApprover',
+            'hodApprover'
+        ]);
 
         return view('da.synopses.approve', compact('synopsis'));
     }
@@ -135,23 +142,24 @@ class DAController extends Controller
             'remarks' => 'required|string|max:500',
         ]);
 
+        // Use WorkflowSyncService for syncing
+        $workflowSyncService = app(\App\Services\WorkflowSyncService::class);
+
         if ($request->action === 'approve') {
             $synopsis->update([
-                'status' => 'pending_so_approval',
-                'da_approver_id' => Auth::id(),
-                'da_approved_at' => now(),
                 'da_remarks' => $request->remarks,
             ]);
 
+            // Sync workflow
+            $workflowSyncService->syncSynopsisWorkflow($synopsis, 'da_approve', Auth::user());
             $message = 'Synopsis approved and forwarded to Section Officer.';
         } else {
             $synopsis->update([
-                'status' => 'rejected',
-                'da_approver_id' => Auth::id(),
-                'da_approved_at' => now(),
                 'da_remarks' => $request->remarks,
             ]);
 
+            // Sync workflow
+            $workflowSyncService->syncSynopsisWorkflow($synopsis, 'da_reject', Auth::user());
             $message = 'Synopsis rejected.';
         }
 
@@ -599,7 +607,7 @@ class DAController extends Controller
         $scholars = \App\Models\Scholar::with(['user', 'admission.department'])->get();
 
         // Get all synopses
-        $synopses = \App\Models\Synopsis::with(['scholar.user', 'rac.supervisor.user', 'scholar.admission.department'])
+        $synopses = \App\Models\Synopsis::with(['scholar.user', 'rac.supervisor.user', 'scholar.currentSupervisor.supervisor.user', 'scholar.admission.department'])
             ->latest()
             ->get();
 
@@ -613,11 +621,6 @@ class DAController extends Controller
             ->latest()
             ->get();
 
-        // Get all coursework exemptions
-        $courseworkExemptions = \App\Models\CourseworkExemption::with(['scholar.user', 'supervisor.user', 'scholar.admission.department'])
-            ->latest()
-            ->get();
-
-        return view('da.scholars.all_submissions', compact('scholars', 'synopses', 'progressReports', 'thesisSubmissions', 'courseworkExemptions'));
+        return view('da.scholars.all_submissions', compact('scholars', 'synopses', 'progressReports', 'thesisSubmissions'));
     }
 }

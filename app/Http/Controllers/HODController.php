@@ -280,7 +280,7 @@ class HODController extends Controller
         $query = Scholar::whereHas('admission.department', function ($query) use ($hodDepartment) {
                                 $query->where('id', $hodDepartment->id);
                             })
-                            ->with(['user', 'admission', 'currentSupervisor.supervisor.user', 'thesisSubmissions' => function($query) {
+                            ->with(['user', 'admission', 'currentSupervisor.supervisor.user', 'synopses', 'registrationForm', 'thesisSubmissions' => function($query) {
                                 $query->where('status', 'approved_by_da')->latest();
                             }]);
 
@@ -288,7 +288,8 @@ class HODController extends Controller
         if ($request->has('search') && !empty($request->search)) {
             $searchTerm = $request->search;
             $query->whereHas('user', function ($q) use ($searchTerm) {
-                $q->where('name', 'like', "%{$searchTerm}%")
+                $q->where('first_name', 'like', "%{$searchTerm}%")
+                  ->orWhere('last_name', 'like', "%{$searchTerm}%")
                   ->orWhere('email', 'like', "%{$searchTerm}%");
             });
         }
@@ -299,11 +300,86 @@ class HODController extends Controller
             $query->where('status', 'supervisor_assigned');
         } elseif ($filter === 'unassigned') {
             $query->where('status', '!=', 'supervisor_assigned');
+        } elseif ($filter === 'submitted_forms') {
+            $query->where('registration_form_status', '!=', 'not_started');
+        } elseif ($filter === 'submitted_synopses') {
+            $query->whereHas('synopses');
+        } elseif ($filter === 'pending_approval') {
+            $query->whereHas('synopses', function($q) {
+                $q->where('status', 'pending_hod_approval');
+            });
         }
 
         $scholars = $query->get();
 
         return view('hod.scholars.list', compact('scholars'));
+    }
+
+    /**
+     * List scholars with their submission status for HOD review
+     */
+    public function listScholarsWithSubmissions(Request $request)
+    {
+        $hodDepartment = auth()->user()->departmentManaging;
+
+        if (! $hodDepartment) {
+            abort(403, 'You are not assigned as HOD to any department.');
+        }
+
+        $query = Scholar::whereHas('admission.department', function ($query) use ($hodDepartment) {
+                                $query->where('id', $hodDepartment->id);
+                            })
+                            ->with([
+                                'user',
+                                'admission',
+                                'currentSupervisor.supervisor.user',
+                                'synopses' => function($query) {
+                                    $query->latest();
+                                },
+                                'registrationForm',
+                                'supervisorAssignments.supervisor.user'
+                            ]);
+
+        // Apply search filter
+        if ($request->has('search') && !empty($request->search)) {
+            $searchTerm = $request->search;
+            $query->whereHas('user', function ($q) use ($searchTerm) {
+                $q->where('first_name', 'like', "%{$searchTerm}%")
+                  ->orWhere('last_name', 'like', "%{$searchTerm}%")
+                  ->orWhere('email', 'like', "%{$searchTerm}%");
+            });
+        }
+
+        // Apply filter based on request parameter
+        $filter = $request->get('filter', 'all');
+        if ($filter === 'submitted_forms') {
+            $query->where('registration_form_status', '!=', 'not_started');
+        } elseif ($filter === 'submitted_synopses') {
+            $query->whereHas('synopses');
+        } elseif ($filter === 'pending_synopsis_approval') {
+            $query->whereHas('synopses', function($q) {
+                $q->where('status', 'pending_hod_approval');
+            });
+        } elseif ($filter === 'supervisor_verified') {
+            $query->where('registration_form_status', 'approved');
+        } elseif ($filter === 'needs_attention') {
+            $query->where(function($q) {
+                $q->whereHas('synopses', function($sq) {
+                    $sq->where('status', 'pending_hod_approval');
+                })->orWhere('registration_form_status', 'submitted');
+            });
+        }
+
+        $scholars = $query->get();
+
+        // Add workflow status for each scholar
+        $workflowSyncService = app(\App\Services\WorkflowSyncService::class);
+        $scholarsWithStatus = $scholars->map(function($scholar) use ($workflowSyncService) {
+            $scholar->workflow_status = $workflowSyncService->getScholarWorkflowStatus($scholar);
+            return $scholar;
+        });
+
+        return view('hod.scholars.submissions', compact('scholarsWithStatus'));
     }
 
     public function viewScholarDetails(Scholar $scholar)
@@ -442,8 +518,9 @@ class HODController extends Controller
         $synopses = Synopsis::whereHas('scholar.admission', function ($query) use ($hodDepartment) {
             $query->where('department_id', $hodDepartment->id);
         })
-        ->where('status', 'pending_hod_approval')
-        ->with(['scholar.user', 'scholar.admission.department'])
+        ->whereIn('status', ['pending_supervisor_approval', 'pending_hod_approval'])
+        ->with(['scholar.user', 'scholar.admission.department', 'rac.supervisor.user', 'scholar.currentSupervisor.supervisor.user'])
+        ->orderBy('status', 'asc') // Show pending_hod_approval first, then pending_supervisor_approval
         ->get();
 
         return view('hod.synopsis.pending', compact('synopses'));
@@ -457,9 +534,17 @@ class HODController extends Controller
             abort(403, 'Unauthorized action.');
         }
 
-        if ($synopsis->status !== 'pending_hod_approval') {
-            abort(403, 'This synopsis is not pending HOD approval.');
+        if (!in_array($synopsis->status, ['pending_supervisor_approval', 'pending_hod_approval'])) {
+            abort(403, 'This synopsis is not pending approval.');
         }
+
+        // Load additional relationships for registration details
+        $synopsis->load([
+            'scholar.user',
+            'scholar.admission.department',
+            'scholar.currentSupervisor.supervisor.user',
+            'rac.supervisor.user'
+        ]);
 
         return view('hod.synopsis.approve', compact('synopsis'));
     }
@@ -482,30 +567,28 @@ class HODController extends Controller
             'drc_minutes_file' => 'required_if:action,approve|file|mimes:pdf|max:2048',
         ]);
 
+        // Use WorkflowSyncService for syncing
+        $workflowSyncService = app(\App\Services\WorkflowSyncService::class);
+
         if ($request->action === 'approve') {
             // Upload DRC minutes file
             $drcMinutesPath = $request->file('drc_minutes_file')->store('drc_minutes', 'public');
 
             $synopsis->update([
-                'status' => 'pending_da_approval',
-                'hod_approver_id' => Auth::id(),
-                'hod_approved_at' => now(),
                 'hod_remarks' => $request->remarks,
                 'drc_minutes_file' => $drcMinutesPath,
             ]);
 
+            // Sync workflow
+            $workflowSyncService->syncSynopsisWorkflow($synopsis, 'hod_approve', Auth::user());
             $message = 'Synopsis approved and forwarded to DA with DRC minutes.';
         } else {
             $synopsis->update([
-                'status' => 'rejected_by_hod',
-                'hod_approver_id' => Auth::id(),
-                'hod_approved_at' => now(),
                 'hod_remarks' => $request->remarks,
-                'rejected_by' => Auth::id(),
-                'rejected_at' => now(),
-                'rejection_reason' => $request->remarks,
-                'rejection_count' => $synopsis->rejection_count + 1,
             ]);
+
+            // Sync workflow
+            $workflowSyncService->syncSynopsisWorkflow($synopsis, 'hod_reject', Auth::user());
 
             $message = 'Synopsis rejected by HOD.';
         }
@@ -967,7 +1050,7 @@ class HODController extends Controller
 
         // Update assignment status
         $assignment->update([
-            'status' => 'approved',
+            'status' => 'assigned',
             'approved_at' => now(),
             'approved_by' => auth()->id(),
         ]);

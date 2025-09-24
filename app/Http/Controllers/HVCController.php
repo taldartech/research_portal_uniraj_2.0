@@ -262,13 +262,13 @@ class HVCController extends Controller
      */
     public function listVivaCandidates()
     {
-        $theses = \App\Models\ThesisSubmission::where('status', 'approved_for_viva')
+        $candidates = \App\Models\ThesisSubmission::where('status', 'approved_for_viva')
             ->whereDoesntHave('vivaProcess')
             ->with(['scholar.user', 'supervisor.user', 'thesisEvaluation.expert'])
             ->latest()
             ->get();
 
-        return view('hvc.viva.candidates', compact('theses'));
+        return view('hvc.viva.candidates', compact('candidates'));
     }
 
     /**
@@ -325,12 +325,12 @@ class HVCController extends Controller
      */
     public function listScheduledVivas()
     {
-        $vivas = \App\Models\VivaProcess::with(['thesisSubmission.scholar.user', 'hvcAssignedExpert', 'supervisor.user'])
+        $scheduledVivas = \App\Models\VivaProcess::with(['thesisSubmission.scholar.user', 'hvcAssignedExpert', 'supervisor.user'])
             ->whereIn('status', ['scheduled', 'completed'])
             ->latest()
             ->get();
 
-        return view('hvc.viva.scheduled', compact('vivas'));
+        return view('hvc.viva.scheduled', compact('scheduledVivas'));
     }
 
     /**
@@ -383,7 +383,7 @@ class HVCController extends Controller
     public function listPendingSynopses()
     {
         $synopses = \App\Models\Synopsis::where('status', 'pending_hvc_approval')
-            ->with(['scholar.user', 'rac.supervisor.user', 'supervisorApprover', 'hodApprover', 'daApprover', 'soApprover', 'arApprover', 'drApprover'])
+            ->with(['scholar.user', 'rac.supervisor.user', 'scholar.currentSupervisor.supervisor.user', 'supervisorApprover', 'hodApprover', 'daApprover', 'soApprover', 'arApprover', 'drApprover'])
             ->latest()
             ->get();
 
@@ -399,7 +399,18 @@ class HVCController extends Controller
             abort(403, 'This synopsis is not pending HVC approval.');
         }
 
-        $synopsis->load(['scholar.user', 'rac.supervisor.user', 'supervisorApprover', 'hodApprover', 'daApprover', 'soApprover', 'arApprover', 'drApprover']);
+        $synopsis->load([
+            'scholar.user',
+            'scholar.admission.department',
+            'scholar.currentSupervisor.supervisor.user',
+            'rac.supervisor.user',
+            'supervisorApprover',
+            'hodApprover',
+            'daApprover',
+            'soApprover',
+            'arApprover',
+            'drApprover'
+        ]);
 
         return view('hvc.synopses.approve', compact('synopsis'));
     }
@@ -418,23 +429,24 @@ class HVCController extends Controller
             'remarks' => 'required|string|max:500',
         ]);
 
+        // Use WorkflowSyncService for syncing
+        $workflowSyncService = app(\App\Services\WorkflowSyncService::class);
+
         if ($request->action === 'approve') {
             $synopsis->update([
-                'status' => 'approved',
-                'hvc_approver_id' => Auth::id(),
-                'hvc_approved_at' => now(),
                 'hvc_remarks' => $request->remarks,
             ]);
 
+            // Sync workflow
+            $workflowSyncService->syncSynopsisWorkflow($synopsis, 'hvc_approve', Auth::user());
             $message = 'Synopsis approved by HVC!';
         } else {
             $synopsis->update([
-                'status' => 'rejected',
-                'hvc_approver_id' => Auth::id(),
-                'hvc_approved_at' => now(),
                 'hvc_remarks' => $request->remarks,
             ]);
 
+            // Sync workflow
+            $workflowSyncService->syncSynopsisWorkflow($synopsis, 'hvc_reject', Auth::user());
             $message = 'Synopsis rejected by HVC.';
         }
 
@@ -525,7 +537,7 @@ class HVCController extends Controller
         $scholars = \App\Models\Scholar::with(['user', 'admission.department'])->get();
 
         // Get all synopses
-        $synopses = \App\Models\Synopsis::with(['scholar.user', 'rac.supervisor.user', 'scholar.admission.department'])
+        $synopses = \App\Models\Synopsis::with(['scholar.user', 'rac.supervisor.user', 'scholar.currentSupervisor.supervisor.user', 'scholar.admission.department'])
             ->latest()
             ->get();
 

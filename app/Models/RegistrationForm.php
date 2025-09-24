@@ -71,7 +71,7 @@ class RegistrationForm extends Model
 
     public function isCompleted()
     {
-        return in_array($this->status, ['completed', 'downloaded']);
+        return in_array($this->status, ['completed', 'downloaded', 'signed_by_dr']);
     }
 
     public function isDownloaded()

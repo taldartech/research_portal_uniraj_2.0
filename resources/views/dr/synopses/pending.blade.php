@@ -50,7 +50,15 @@
                                                 <div class="text-sm text-gray-900">{{ $synopsis->scholar->admission->department->name ?? 'N/A' }}</div>
                                             </td>
                                             <td class="px-6 py-4 whitespace-nowrap">
-                                                <div class="text-sm text-gray-900">{{ $synopsis->rac->supervisor->user->name ?? 'N/A' }}</div>
+                                                <div class="text-sm text-gray-900">
+                                                    @if($synopsis->rac && $synopsis->rac->supervisor)
+                                                        {{ $synopsis->rac->supervisor->user->name }}
+                                                    @elseif($synopsis->scholar->currentSupervisor && $synopsis->scholar->currentSupervisor->supervisor)
+                                                        {{ $synopsis->scholar->currentSupervisor->supervisor->user->name }}
+                                                    @else
+                                                        N/A
+                                                    @endif
+                                                </div>
                                             </td>
                                             <td class="px-6 py-4">
                                                 <div class="text-sm text-gray-900 max-w-xs truncate">{{ $synopsis->proposed_topic }}</div>

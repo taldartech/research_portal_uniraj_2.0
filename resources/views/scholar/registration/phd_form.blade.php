@@ -176,7 +176,7 @@
                                 <div>
                                     <x-input-label for="date_of_birth" :value="__('Date of Birth')" />
                                     <x-text-input id="date_of_birth" name="date_of_birth" type="date" class="mt-1 block w-full"
-                                        :value="old('date_of_birth', $scholar->date_of_birth)" required />
+                                        :value="old('date_of_birth', $scholar->date_of_birth ? $scholar->date_of_birth->format('Y-m-d') : '')" required />
                                     <x-input-error :messages="$errors->get('date_of_birth')" class="mt-2" />
                                 </div>
 
@@ -203,12 +203,13 @@
                                         :value="old('research_area', $scholar->research_area)" required />
                                     <x-input-error :messages="$errors->get('research_area')" class="mt-2" />
                                 </div>
+                            </div>
+                        </div>
 
-                                <!-- Family Information -->
-                                <div class="md:col-span-2 w-full">
-                                    <h4 class="text-md font-medium text-gray-900 dark:text-gray-100 mb-4 mt-6 w-full">Family Information</h4>
-                                </div>
+                        <div class="border-b border-gray-200 dark:border-gray-700 pb-8">
+                            <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-6">Family Information</h3>
 
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div>
                                     <x-input-label for="father_name" :value="__('Father\'s Name')" />
                                     <x-text-input id="father_name" name="father_name" type="text" class="mt-1 block w-full"
@@ -311,51 +312,56 @@
                             </div>
                         </div>
 
-
-
                         <!-- Academic Qualifications Section -->
                         <div class="border-b border-gray-200 dark:border-gray-700 pb-8">
                             <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-6">Academic Qualifications</h3>
 
                             <div class="space-y-6" id="academic-qualifications-container">
-                                <div class="academic-qualification-item border border-gray-200 dark:border-gray-700 rounded-lg p-4">
-                                    <div class="flex items-center justify-between mb-4">
-                                        <h4 class="text-md font-medium text-gray-900 dark:text-gray-100">Qualification 1</h4>
-                                        <button type="button" class="remove-qualification-btn text-red-600 hover:text-red-800 text-sm font-medium" style="display: none;">
-                                            Remove
-                                        </button>
+                                @php
+                                    $savedQualifications = $scholar->academic_qualifications ?? [];
+                                    $qualificationCount = max(1, count($savedQualifications));
+                                @endphp
+
+                                @for($i = 0; $i < $qualificationCount; $i++)
+                                    <div class="academic-qualification-item border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+                                        <div class="flex items-center justify-between mb-4">
+                                            <h4 class="text-md font-medium text-gray-900 dark:text-gray-100">Qualification {{ $i + 1 }}</h4>
+                                            <button type="button" class="remove-qualification-btn text-red-600 hover:text-red-800 text-sm font-medium" style="display: {{ $qualificationCount > 1 ? 'block' : 'none' }};">
+                                                Remove
+                                            </button>
+                                        </div>
+
+                                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                            <div>
+                                                <x-input-label for="post_graduate_degree_{{ $i + 1 }}" :value="__('Degree/Qualification')" />
+                                                <x-text-input id="post_graduate_degree_{{ $i + 1 }}" name="post_graduate_degrees[]" type="text" class="mt-1 block w-full"
+                                                    :value="old('post_graduate_degrees.' . $i, $savedQualifications[$i]['degree'] ?? $scholar->post_graduate_degree)" placeholder="e.g., M.Sc., M.A., M.Tech, etc." required />
+                                                <x-input-error :messages="$errors->get('post_graduate_degrees')" class="mt-2" />
+                                            </div>
+
+                                            <div>
+                                                <x-input-label for="post_graduate_university_{{ $i + 1 }}" :value="__('University/Institution')" />
+                                                <x-text-input id="post_graduate_university_{{ $i + 1 }}" name="post_graduate_universities[]" type="text" class="mt-1 block w-full"
+                                                    :value="old('post_graduate_universities.' . $i, $savedQualifications[$i]['university'] ?? $scholar->post_graduate_university)" placeholder="Name of university or institution" required />
+                                                <x-input-error :messages="$errors->get('post_graduate_universities')" class="mt-2" />
+                                            </div>
+
+                                            <div>
+                                                <x-input-label for="post_graduate_year_{{ $i + 1 }}" :value="__('Year of Completion')" />
+                                                <x-text-input id="post_graduate_year_{{ $i + 1 }}" name="post_graduate_years[]" type="text" class="mt-1 block w-full"
+                                                    :value="old('post_graduate_years.' . $i, $savedQualifications[$i]['year'] ?? $scholar->post_graduate_year)" placeholder="e.g., 2020" required />
+                                                <x-input-error :messages="$errors->get('post_graduate_years')" class="mt-2" />
+                                            </div>
+
+                                            <div>
+                                                <x-input-label for="post_graduate_percentage_{{ $i + 1 }}" :value="__('Percentage/CGPA')" />
+                                                <x-text-input id="post_graduate_percentage_{{ $i + 1 }}" name="post_graduate_percentages[]" type="number" step="0.01" class="mt-1 block w-full"
+                                                    :value="old('post_graduate_percentages.' . $i, $savedQualifications[$i]['percentage'] ?? $scholar->post_graduate_percentage)" placeholder="e.g., 85.5 or 8.5" required />
+                                                <x-input-error :messages="$errors->get('post_graduate_percentages')" class="mt-2" />
+                                            </div>
+                                        </div>
                                     </div>
-
-                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                        <div>
-                                            <x-input-label for="post_graduate_degree_1" :value="__('Degree/Qualification')" />
-                                            <x-text-input id="post_graduate_degree_1" name="post_graduate_degrees[]" type="text" class="mt-1 block w-full"
-                                                :value="old('post_graduate_degree', $scholar->post_graduate_degree)" placeholder="e.g., M.Sc., M.A., M.Tech, etc." required />
-                                            <x-input-error :messages="$errors->get('post_graduate_degrees')" class="mt-2" />
-                                        </div>
-
-                                        <div>
-                                            <x-input-label for="post_graduate_university_1" :value="__('University/Institution')" />
-                                            <x-text-input id="post_graduate_university_1" name="post_graduate_universities[]" type="text" class="mt-1 block w-full"
-                                                :value="old('post_graduate_university', $scholar->post_graduate_university)" placeholder="Name of university or institution" required />
-                                            <x-input-error :messages="$errors->get('post_graduate_universities')" class="mt-2" />
-                                        </div>
-
-                                        <div>
-                                            <x-input-label for="post_graduate_year_1" :value="__('Year of Completion')" />
-                                            <x-text-input id="post_graduate_year_1" name="post_graduate_years[]" type="text" class="mt-1 block w-full"
-                                                :value="old('post_graduate_year', $scholar->post_graduate_year)" placeholder="e.g., 2020" required />
-                                            <x-input-error :messages="$errors->get('post_graduate_years')" class="mt-2" />
-                                        </div>
-
-                                        <div>
-                                            <x-input-label for="post_graduate_percentage_1" :value="__('Percentage/CGPA')" />
-                                            <x-text-input id="post_graduate_percentage_1" name="post_graduate_percentages[]" type="number" step="0.01" class="mt-1 block w-full"
-                                                :value="old('post_graduate_percentage', $scholar->post_graduate_percentage)" placeholder="e.g., 85.5 or 8.5" required />
-                                            <x-input-error :messages="$errors->get('post_graduate_percentages')" class="mt-2" />
-                                        </div>
-                                    </div>
-                                </div>
+                                @endfor
                             </div>
 
                             <div class="mt-4">
@@ -468,6 +474,28 @@
                         <div class="border-b border-gray-200 dark:border-gray-700 pb-8">
                             <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-6">Document Upload</h3>
 
+                            <!-- Display existing documents -->
+                            @if($scholar->registration_documents && count($scholar->registration_documents) > 0)
+                                <div class="mb-6 p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
+                                    <h4 class="text-sm font-medium text-green-800 dark:text-green-200 mb-3">Previously Uploaded Documents</h4>
+                                    <div class="space-y-2">
+                                        @foreach($scholar->registration_documents as $index => $document)
+                                            <div class="flex items-center justify-between p-2 bg-white dark:bg-gray-800 rounded border">
+                                                <div class="flex items-center">
+                                                    <svg class="w-4 h-4 mr-2 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                                                        <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clip-rule="evenodd"></path>
+                                                    </svg>
+                                                    <span class="text-sm text-gray-900 dark:text-gray-100">{{ $document['filename'] ?? 'Document ' . ($index + 1) }}</span>
+                                                </div>
+                                                <span class="text-xs text-gray-500 dark:text-gray-400">
+                                                    {{ isset($document['uploaded_at']) ? \Carbon\Carbon::parse($document['uploaded_at'])->format('M d, Y') : 'Uploaded' }}
+                                                </span>
+                                            </div>
+                                        @endforeach
+                                    </div>
+                                </div>
+                            @endif
+
                             <div class="space-y-6" id="document-upload-container">
                                 <div class="document-upload-item border border-gray-200 dark:border-gray-700 rounded-lg p-4">
                                     <div class="flex items-center justify-between mb-4">
@@ -480,7 +508,7 @@
                                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <div>
                                             <x-input-label for="document_type_1" :value="__('Document Type')" />
-                                            <select id="document_type_1" name="document_types[]" class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 dark:focus:border-indigo-600 focus:ring-indigo-500 dark:focus:ring-indigo-600 rounded-md shadow-sm" required>
+                                            <select id="document_type_1" name="document_types[]" class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 dark:focus:border-indigo-600 focus:ring-indigo-500 dark:focus:ring-indigo-600 rounded-md shadow-sm" {{ !$scholar->registration_documents || count($scholar->registration_documents) == 0 ? 'required' : '' }}>
                                                 <option value="">Select Document Type</option>
                                                 <option value="degree_certificate">Degree Certificate</option>
                                                 <option value="marksheet">Marksheet</option>
@@ -499,8 +527,11 @@
                                             <x-input-label for="registration_documents_1" :value="__('Upload Document')" />
                                             <input id="registration_documents_1" name="registration_documents[]" type="file"
                                                 class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
-                                                accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" required>
+                                                accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" {{ !$scholar->registration_documents || count($scholar->registration_documents) == 0 ? 'required' : '' }}>
                                             <x-input-error :messages="$errors->get('registration_documents')" class="mt-2" />
+                                            @if($scholar->registration_documents && count($scholar->registration_documents) > 0)
+                                                <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Optional: Upload additional documents</p>
+                                            @endif
                                         </div>
                                     </div>
 
@@ -620,7 +651,7 @@
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             // Academic Qualifications dynamic functionality
-            let qualificationCount = 1;
+            let qualificationCount = {{ $qualificationCount }};
             const addQualificationBtn = document.getElementById('add-qualification-btn');
             const qualificationsContainer = document.getElementById('academic-qualifications-container');
 

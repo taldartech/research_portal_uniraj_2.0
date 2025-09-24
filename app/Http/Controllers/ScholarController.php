@@ -123,11 +123,11 @@ class ScholarController extends Controller
             'coursework_marks_obtained' => 'nullable|string|max:255',
             'coursework_max_marks' => 'nullable|string|max:255',
 
-            // Document Upload (arrays)
-            'document_types' => 'required|array|min:1',
-            'document_types.*' => 'required|string|in:degree_certificate,marksheet,net_certificate,slet_certificate,csir_certificate,gate_certificate,mpat_certificate,noc_letter,other',
-            'registration_documents' => 'required|array|min:1',
-            'registration_documents.*' => 'required|file|mimes:pdf,doc,docx,jpg,jpeg,png|max:5120',
+            // Document Upload (arrays) - optional if documents already exist
+            'document_types' => 'nullable|array',
+            'document_types.*' => 'required_with:registration_documents.*|string|in:degree_certificate,marksheet,net_certificate,slet_certificate,csir_certificate,gate_certificate,mpat_certificate,noc_letter,other',
+            'registration_documents' => 'nullable|array',
+            'registration_documents.*' => 'required_with:document_types.*|file|mimes:pdf,doc,docx,jpg,jpeg,png|max:5120',
 
             // Synopsis
             'synopsis_topic' => 'nullable|string|max:255',
@@ -157,20 +157,60 @@ class ScholarController extends Controller
         }
 
         // Update scholar with form data
-        $formData = $request->except(['registration_documents', 'synopsis_file', 'action']);
+        $formData = $request->except(['registration_documents', 'synopsis_file', 'action', 'post_graduate_degrees', 'post_graduate_universities', 'post_graduate_years', 'post_graduate_percentages', 'document_types']);
+
+        // Handle academic qualifications arrays - store all qualifications
+        if ($request->has('post_graduate_degrees') && !empty($request->post_graduate_degrees)) {
+            $qualifications = [];
+            $degrees = $request->post_graduate_degrees;
+            $universities = $request->post_graduate_universities ?? [];
+            $years = $request->post_graduate_years ?? [];
+            $percentages = $request->post_graduate_percentages ?? [];
+
+            // Combine all qualification data
+            for ($i = 0; $i < count($degrees); $i++) {
+                $qualifications[] = [
+                    'degree' => $degrees[$i] ?? '',
+                    'university' => $universities[$i] ?? '',
+                    'year' => $years[$i] ?? '',
+                    'percentage' => $percentages[$i] ?? '',
+                ];
+            }
+
+            $formData['academic_qualifications'] = $qualifications;
+
+            // Keep the first qualification in the old single fields for backward compatibility
+            $formData['post_graduate_degree'] = $degrees[0] ?? '';
+            $formData['post_graduate_university'] = $universities[0] ?? '';
+            $formData['post_graduate_year'] = $years[0] ?? '';
+            $formData['post_graduate_percentage'] = $percentages[0] ?? '';
+        }
 
         // Handle checkbox fields properly
         $formData['is_teacher'] = $request->has('is_teacher') ? (bool) $request->input('is_teacher') : false;
         $formData['appearing_other_exam'] = $request->has('appearing_other_exam') ? (bool) $request->input('appearing_other_exam') : false;
         $formData['has_co_supervisor'] = $request->has('has_co_supervisor') ? (bool) $request->input('has_co_supervisor') : false;
 
-        $formData['registration_documents'] = array_merge($scholar->registration_documents ?? [], $uploadedDocuments);
+        // Only merge new documents if any were uploaded
+        if (!empty($uploadedDocuments)) {
+            $formData['registration_documents'] = array_merge($scholar->registration_documents ?? [], $uploadedDocuments);
+        }
 
         // Handle synopsis data
         if ($synopsisFilePath) {
             $formData['synopsis_file'] = $synopsisFilePath;
             $formData['synopsis_submitted_at'] = now();
             $formData['synopsis_status'] = 'pending_supervisor_approval';
+
+            // Create Synopsis model record for workflow tracking
+            $synopsis = \App\Models\Synopsis::create([
+                'scholar_id' => $scholar->id,
+                'rac_id' => null, // RAC will be created after supervisor approval
+                'proposed_topic' => $request->synopsis_topic,
+                'synopsis_file' => $synopsisFilePath,
+                'submission_date' => now(),
+                'status' => 'pending_supervisor_approval',
+            ]);
         }
 
         // Update registration form status
@@ -245,6 +285,15 @@ class ScholarController extends Controller
         }
 
         $scholar->update($formData);
+
+        // Sync workflow if supervisor is approving
+        if ($request->action === 'approve') {
+            $workflowSyncService = app(\App\Services\WorkflowSyncService::class);
+            $registrationForm = $scholar->registrationForm;
+            if ($registrationForm) {
+                $workflowSyncService->syncRegistrationWorkflow($registrationForm, 'supervisor_approve', Auth::user());
+            }
+        }
 
         $message = match($request->action) {
             'approve' => 'Scholar form approved successfully!',
@@ -843,5 +892,77 @@ class ScholarController extends Controller
             return $this->errorResponse('Office note file not found.');
         }
         return response()->download($filePath, 'supervisor_selection_office_note_' . $assignment->id . '.pdf');
+    }
+
+    /**
+     * Show topic change response form
+     */
+    public function showTopicChangeResponseForm(\App\Models\Synopsis $synopsis)
+    {
+        $scholar = Auth::user()->scholar;
+
+        // Check if this synopsis belongs to the scholar
+        if ($synopsis->scholar_id !== $scholar->id) {
+            abort(403, 'Unauthorized access.');
+        }
+
+        // Check if there's a pending topic change proposal
+        if (!$synopsis->canRespondToTopicChange()) {
+            abort(403, 'No pending topic change proposal found.');
+        }
+
+        // Load relationships
+        $synopsis->load(['topicChangeProposedBy']);
+
+        return view('scholar.synopsis.topic-change-response', compact('synopsis'));
+    }
+
+    /**
+     * Respond to topic change proposal
+     */
+    public function respondToTopicChange(Request $request, \App\Models\Synopsis $synopsis)
+    {
+        $scholar = Auth::user()->scholar;
+
+        // Check if this synopsis belongs to the scholar
+        if ($synopsis->scholar_id !== $scholar->id) {
+            abort(403, 'Unauthorized access.');
+        }
+
+        // Check if there's a pending topic change proposal
+        if (!$synopsis->canRespondToTopicChange()) {
+            abort(403, 'No pending topic change proposal found.');
+        }
+
+        $request->validate([
+            'response' => 'required|in:accept,reject',
+            'remarks' => 'required|string|max:1000',
+        ]);
+
+        if ($request->response === 'accept') {
+            // Accept the topic change
+            $synopsis->update([
+                'proposed_topic' => $synopsis->proposed_topic_change,
+                'topic_change_status' => 'accepted_by_scholar',
+                'topic_change_responded_at' => now(),
+                'scholar_response_remarks' => $request->remarks,
+            ]);
+
+            $message = 'Topic change accepted. Your synopsis has been updated with the new topic.';
+        } else {
+            // Reject the topic change
+            $synopsis->update([
+                'topic_change_status' => 'rejected_by_scholar',
+                'topic_change_responded_at' => now(),
+                'scholar_response_remarks' => $request->remarks,
+            ]);
+
+            $message = 'Topic change rejected. Your original topic remains unchanged.';
+        }
+
+        // Notify supervisor about the response
+        $synopsis->topicChangeProposedBy->notify(new \App\Notifications\TopicChangeResponseNotification($synopsis, $request->response));
+
+        return redirect()->route('scholar.dashboard')->with('success', $message);
     }
 }

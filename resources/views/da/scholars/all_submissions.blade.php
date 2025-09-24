@@ -8,7 +8,7 @@
     <div class="py-12">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
             <!-- Summary Cards -->
-            <div class="grid grid-cols-1 md:grid-cols-5 gap-6 mb-8">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
                 <div class="bg-blue-50 p-6 rounded-lg shadow-md">
                     <div class="text-2xl font-bold text-blue-600">{{ $scholars->count() }}</div>
                     <div class="text-sm text-blue-800">Total Scholars</div>
@@ -25,10 +25,6 @@
                     <div class="text-2xl font-bold text-purple-600">{{ $thesisSubmissions->count() }}</div>
                     <div class="text-sm text-purple-800">Thesis Submissions</div>
                 </div>
-                <div class="bg-indigo-50 p-6 rounded-lg shadow-md">
-                    <div class="text-2xl font-bold text-indigo-600">{{ $courseworkExemptions->count() }}</div>
-                    <div class="text-sm text-indigo-800">Coursework Exemptions</div>
-                </div>
             </div>
 
             <!-- Tabs Navigation -->
@@ -42,9 +38,6 @@
                     </button>
                     <button onclick="showTab('thesis')" id="thesis-tab" class="tab-button whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm">
                         Thesis Submissions ({{ $thesisSubmissions->count() }})
-                    </button>
-                    <button onclick="showTab('coursework')" id="coursework-tab" class="tab-button whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm">
-                        Coursework Exemptions ({{ $courseworkExemptions->count() }})
                     </button>
                 </nav>
             </div>
@@ -79,7 +72,13 @@
                                                     {{ Str::limit($synopsis->proposed_topic, 50) }}
                                                 </td>
                                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                                    {{ $synopsis->rac->supervisor->user->name ?? 'N/A' }}
+                                                    @if($synopsis->rac && $synopsis->rac->supervisor)
+                                                        {{ $synopsis->rac->supervisor->user->name }}
+                                                    @elseif($synopsis->scholar->currentSupervisor && $synopsis->scholar->currentSupervisor->supervisor)
+                                                        {{ $synopsis->scholar->currentSupervisor->supervisor->user->name }}
+                                                    @else
+                                                        N/A
+                                                    @endif
                                                 </td>
                                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                                     {{ $synopsis->submission_date->format('M d, Y') }}
@@ -253,75 +252,6 @@
                 </div>
             </div>
 
-            <!-- Coursework Exemptions Tab -->
-            <div id="coursework-content" class="tab-content hidden">
-                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                    <div class="p-6 text-gray-900">
-                        <h3 class="text-lg font-medium text-gray-900 mb-4">Coursework Exemption Requests</h3>
-                        @if ($courseworkExemptions->isEmpty())
-                            <p class="text-gray-600">No coursework exemption requests found.</p>
-                        @else
-                            <div class="overflow-x-auto">
-                                <table class="min-w-full divide-y divide-gray-200">
-                                    <thead class="bg-gray-50">
-                                        <tr>
-                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Scholar</th>
-                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Exemption Type</th>
-                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Supervisor</th>
-                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Request Date</th>
-                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody class="bg-white divide-y divide-gray-200">
-                                        @foreach ($courseworkExemptions as $exemption)
-                                            <tr>
-                                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                                                    {{ $exemption->scholar->user->name }}
-                                                </td>
-                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                                    {{ ucfirst(str_replace('_', ' ', $exemption->exemption_type)) }}
-                                                </td>
-                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                                    {{ $exemption->supervisor->user->name ?? 'N/A' }}
-                                                </td>
-                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                                    {{ $exemption->created_at->format('M d, Y') }}
-                                                </td>
-                                                <td class="px-6 py-4 whitespace-nowrap">
-                                                    @php
-                                                        $statusColors = [
-                                                            'pending_supervisor_approval' => 'bg-yellow-100 text-yellow-800',
-                                                            'pending_hod_approval' => 'bg-blue-100 text-blue-800',
-                                                            'pending_da_approval' => 'bg-indigo-100 text-indigo-800',
-                                                            'pending_so_approval' => 'bg-purple-100 text-purple-800',
-                                                            'pending_ar_approval' => 'bg-pink-100 text-pink-800',
-                                                            'pending_dr_approval' => 'bg-red-100 text-red-800',
-                                                            'pending_hvc_approval' => 'bg-orange-100 text-orange-800',
-                                                            'approved' => 'bg-green-100 text-green-800',
-                                                            'rejected' => 'bg-red-100 text-red-800',
-                                                        ];
-                                                    @endphp
-                                                    <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full {{ $statusColors[$exemption->status] ?? 'bg-gray-100 text-gray-800' }}">
-                                                        {{ ucfirst(str_replace('_', ' ', $exemption->status)) }}
-                                                    </span>
-                                                </td>
-                                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                                    @if($exemption->supporting_documents)
-                                                        <a href="{{ Storage::url($exemption->supporting_documents) }}" target="_blank" class="text-blue-600 hover:text-blue-900">Download</a>
-                                                    @else
-                                                        <span class="text-gray-400">No documents</span>
-                                                    @endif
-                                                </td>
-                                            </tr>
-                                        @endforeach
-                                    </tbody>
-                                </table>
-                            </div>
-                        @endif
-                    </div>
-                </div>
-            </div>
         </div>
     </div>
 

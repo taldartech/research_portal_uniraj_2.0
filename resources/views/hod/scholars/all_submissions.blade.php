@@ -72,7 +72,13 @@
                                                     {{ Str::limit($synopsis->proposed_topic, 50) }}
                                                 </td>
                                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                                    {{ $synopsis->rac->supervisor->user->name ?? 'N/A' }}
+                                                    @if($synopsis->rac && $synopsis->rac->supervisor)
+                                                        {{ $synopsis->rac->supervisor->user->name }}
+                                                    @elseif($synopsis->scholar->currentSupervisor && $synopsis->scholar->currentSupervisor->supervisor)
+                                                        {{ $synopsis->scholar->currentSupervisor->supervisor->user->name }}
+                                                    @else
+                                                        N/A
+                                                    @endif
                                                 </td>
                                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                                     {{ $synopsis->submission_date->format('M d, Y') }}

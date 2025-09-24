@@ -57,6 +57,8 @@ class Scholar extends Model
         'post_graduate_university',
         'post_graduate_year',
         'post_graduate_percentage',
+        // Multiple academic qualifications
+        'academic_qualifications',
         'net_slet_csir_gate_exam',
         'net_slet_csir_gate_year',
         'net_slet_csir_gate_roll_number',
@@ -101,6 +103,7 @@ class Scholar extends Model
         'supervisor_letter_date' => 'date',
         'co_supervisor_letter_date' => 'date',
         'post_graduate_percentage' => 'decimal:2',
+        'academic_qualifications' => 'array',
         'registration_form_submitted_at' => 'datetime',
         'registration_documents' => 'array',
         'supervisor_certificate_completed' => 'boolean',
@@ -111,6 +114,7 @@ class Scholar extends Model
         'registration_letter_generated_at' => 'datetime',
         'registration_letter_signed_at' => 'datetime',
         'coursework_completed' => 'boolean',
+        'synopsis_submitted_at' => 'datetime',
     ];
 
     public function user()

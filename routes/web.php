@@ -95,6 +95,10 @@ Route::prefix('scholar')->name('scholar.')->middleware(['auth'])->group(function
         // Registration Form Download
         Route::get('/registration-form/{registrationForm}/download', [App\Http\Controllers\RegistrationFormController::class, 'downloadRegistrationForm'])->name('registration_form.download');
 
+        // Topic Change Response Routes
+        Route::get('/synopsis/{synopsis}/topic-change-response', [App\Http\Controllers\ScholarController::class, 'showTopicChangeResponseForm'])->name('synopsis.topic-change-response');
+        Route::post('/synopsis/{synopsis}/topic-change-response', [App\Http\Controllers\ScholarController::class, 'respondToTopicChange'])->name('synopsis.topic-change-response.store');
+
         // Late Submission Request
         Route::get('/late-submission/request', [App\Http\Controllers\LateSubmissionController::class, 'showRequestForm'])->name('late_submission.request');
         Route::post('/late-submission/request', [App\Http\Controllers\LateSubmissionController::class, 'submitRequest'])->name('late_submission.submit');
@@ -204,6 +208,7 @@ Route::prefix('hod')->name('hod.')->middleware(['auth', UserTypeMiddleware::clas
     Route::get('/admissions/download-template', [HODController::class, 'downloadMeritListTemplate'])->name('admissions.download_template');
     Route::get('/admissions/view-merit-lists', [HODController::class, 'viewMeritLists'])->name('admissions.view_merit_lists');
     Route::get('/scholars', [HODController::class, 'listScholars'])->name('scholars.list');
+    Route::get('/scholars/submissions', [HODController::class, 'listScholarsWithSubmissions'])->name('scholars.submissions');
     Route::get('/scholars/all-submissions', [HODController::class, 'listAllScholarSubmissions'])->name('scholars.all_submissions');
     Route::get('/scholars/{scholar}', [HODController::class, 'viewScholarDetails'])->name('scholars.show');
     Route::get('/scholars/{scholar}/assign-supervisor', [HODController::class, 'assignSupervisorForm'])->name('scholars.assign_supervisor');
@@ -512,3 +517,10 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
 Route::get('/debug-login', function () {
     return view('debug-login');
 })->name('debug.login');
+
+// Workflow Dashboard routes
+Route::middleware(['auth'])->group(function () {
+    Route::get('/workflow/dashboard', [\App\Http\Controllers\WorkflowDashboardController::class, 'index'])->name('workflow.dashboard');
+    Route::get('/workflow/scholar/{scholar}/status', [\App\Http\Controllers\WorkflowDashboardController::class, 'getScholarWorkflowStatus'])->name('workflow.scholar.status');
+    Route::get('/workflow/pending-items', [\App\Http\Controllers\WorkflowDashboardController::class, 'getPendingItems'])->name('workflow.pending.items');
+});

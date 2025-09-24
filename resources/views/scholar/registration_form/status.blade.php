@@ -16,11 +16,15 @@
                                 <h3 class="text-lg font-medium text-gray-900">Registration Form Details</h3>
                                 <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium
                                     @if($registrationForm->status === 'generated') bg-blue-100 text-blue-800
-                                    @elseif($registrationForm->status === 'signed_by_ar') bg-yellow-100 text-yellow-800
                                     @elseif($registrationForm->status === 'signed_by_dr') bg-green-100 text-green-800
                                     @elseif($registrationForm->status === 'completed') bg-green-100 text-green-800
+                                    @elseif($registrationForm->status === 'downloaded') bg-gray-100 text-gray-800
                                     @else bg-gray-100 text-gray-800 @endif">
-                                    {{ ucfirst(str_replace('_', ' ', $registrationForm->status)) }}
+                                    @if($registrationForm->status === 'signed_by_dr' || $registrationForm->status === 'completed')
+                                        Signed by DR
+                                    @else
+                                        {{ ucfirst(str_replace('_', ' ', $registrationForm->status)) }}
+                                    @endif
                                 </span>
                             </div>
 
@@ -63,35 +67,7 @@
                                     </div>
                                 </div>
 
-                                <!-- AR Signature Status -->
-                                @if($registrationForm->signed_by_ar_at)
-                                    <div class="flex items-center">
-                                        <div class="flex-shrink-0">
-                                            <div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
-                                                <svg class="w-5 h-5 text-green-600" fill="currentColor" viewBox="0 0 20 20">
-                                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
-                                                </svg>
-                                            </div>
-                                        </div>
-                                        <div class="ml-4">
-                                            <p class="text-sm font-medium text-gray-900">Signed by AR</p>
-                                            <p class="text-xs text-gray-500">{{ $registrationForm->signed_by_ar_at->format('M d, Y H:i') }}</p>
-                                        </div>
-                                    </div>
-                                @else
-                                    <div class="flex items-center">
-                                        <div class="flex-shrink-0">
-                                            <div class="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center">
-                                                <svg class="w-5 h-5 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
-                                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path>
-                                                </svg>
-                                            </div>
-                                        </div>
-                                        <div class="ml-4">
-                                            <p class="text-sm font-medium text-gray-500">Pending AR Signature</p>
-                                        </div>
-                                    </div>
-                                @endif
+                                <!-- AR Signature Status - REMOVED (no longer required) -->
 
                                 <!-- DR Signature Status -->
                                 @if($registrationForm->signed_by_dr_at)

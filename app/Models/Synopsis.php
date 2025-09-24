@@ -14,6 +14,13 @@ class Synopsis extends Model
         'scholar_id',
         'rac_id',
         'proposed_topic',
+        'proposed_topic_change',
+        'topic_change_reason',
+        'topic_change_proposed_at',
+        'topic_change_proposed_by',
+        'topic_change_status',
+        'topic_change_responded_at',
+        'scholar_response_remarks',
         'synopsis_file',
         'submission_date',
         'status',
@@ -49,6 +56,8 @@ class Synopsis extends Model
 
     protected $casts = [
         'submission_date' => 'date',
+        'topic_change_proposed_at' => 'datetime',
+        'topic_change_responded_at' => 'datetime',
         'supervisor_approved_at' => 'datetime',
         'hod_approved_at' => 'datetime',
         'da_approved_at' => 'datetime',
@@ -72,6 +81,11 @@ class Synopsis extends Model
     public function rejectedBy()
     {
         return $this->belongsTo(User::class, 'rejected_by');
+    }
+
+    public function topicChangeProposedBy()
+    {
+        return $this->belongsTo(User::class, 'topic_change_proposed_by');
     }
 
     public function originalSynopsis()
@@ -111,5 +125,36 @@ class Synopsis extends Model
             'rejected_by_hvc' => 'Head of Verification Committee',
             default => 'Unknown'
         };
+    }
+
+    // Helper methods for topic change workflow
+    public function hasTopicChangeProposal()
+    {
+        return !is_null($this->topic_change_status);
+    }
+
+    public function isTopicChangePending()
+    {
+        return $this->topic_change_status === 'pending_scholar_response';
+    }
+
+    public function isTopicChangeAccepted()
+    {
+        return $this->topic_change_status === 'accepted_by_scholar';
+    }
+
+    public function isTopicChangeRejected()
+    {
+        return $this->topic_change_status === 'rejected_by_scholar';
+    }
+
+    public function canProposeTopicChange()
+    {
+        return $this->status === 'pending_supervisor_approval' && !$this->hasTopicChangeProposal();
+    }
+
+    public function canRespondToTopicChange()
+    {
+        return $this->isTopicChangePending();
     }
 }

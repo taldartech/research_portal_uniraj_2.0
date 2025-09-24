@@ -78,7 +78,7 @@ class SOController extends Controller
     public function listPendingSynopses()
     {
         $synopses = \App\Models\Synopsis::where('status', 'pending_so_approval')
-            ->with(['scholar.user', 'rac.supervisor.user', 'supervisorApprover', 'hodApprover', 'daApprover'])
+            ->with(['scholar.user', 'rac.supervisor.user', 'scholar.currentSupervisor.supervisor.user', 'supervisorApprover', 'hodApprover', 'daApprover'])
             ->latest()
             ->get();
 
@@ -94,7 +94,15 @@ class SOController extends Controller
             abort(403, 'This synopsis is not pending SO approval.');
         }
 
-        $synopsis->load(['scholar.user', 'rac.supervisor.user', 'supervisorApprover', 'hodApprover', 'daApprover']);
+        $synopsis->load([
+            'scholar.user',
+            'scholar.admission.department',
+            'scholar.currentSupervisor.supervisor.user',
+            'rac.supervisor.user',
+            'supervisorApprover',
+            'hodApprover',
+            'daApprover'
+        ]);
 
         return view('so.synopses.approve', compact('synopsis'));
     }
@@ -113,23 +121,24 @@ class SOController extends Controller
             'remarks' => 'required|string|max:500',
         ]);
 
+        // Use WorkflowSyncService for syncing
+        $workflowSyncService = app(\App\Services\WorkflowSyncService::class);
+
         if ($request->action === 'approve') {
             $synopsis->update([
-                'status' => 'pending_ar_approval',
-                'so_approver_id' => Auth::id(),
-                'so_approved_at' => now(),
                 'so_remarks' => $request->remarks,
             ]);
 
+            // Sync workflow
+            $workflowSyncService->syncSynopsisWorkflow($synopsis, 'so_approve', Auth::user());
             $message = 'Synopsis approved and forwarded to Assistant Registrar.';
         } else {
             $synopsis->update([
-                'status' => 'rejected',
-                'so_approver_id' => Auth::id(),
-                'so_approved_at' => now(),
                 'so_remarks' => $request->remarks,
             ]);
 
+            // Sync workflow
+            $workflowSyncService->syncSynopsisWorkflow($synopsis, 'so_reject', Auth::user());
             $message = 'Synopsis rejected.';
         }
 
@@ -220,7 +229,7 @@ class SOController extends Controller
         $scholars = \App\Models\Scholar::with(['user', 'admission.department'])->get();
 
         // Get all synopses
-        $synopses = \App\Models\Synopsis::with(['scholar.user', 'rac.supervisor.user', 'scholar.admission.department'])
+        $synopses = \App\Models\Synopsis::with(['scholar.user', 'rac.supervisor.user', 'scholar.currentSupervisor.supervisor.user', 'scholar.admission.department'])
             ->latest()
             ->get();
 

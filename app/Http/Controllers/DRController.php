@@ -78,7 +78,7 @@ class DRController extends Controller
     public function listPendingSynopses()
     {
         $synopses = \App\Models\Synopsis::where('status', 'pending_dr_approval')
-            ->with(['scholar.user', 'rac.supervisor.user', 'supervisorApprover', 'hodApprover', 'daApprover', 'soApprover', 'arApprover'])
+            ->with(['scholar.user', 'rac.supervisor.user', 'scholar.currentSupervisor.supervisor.user', 'supervisorApprover', 'hodApprover', 'daApprover', 'soApprover', 'arApprover'])
             ->latest()
             ->get();
 
@@ -94,7 +94,17 @@ class DRController extends Controller
             abort(403, 'This synopsis is not pending DR approval.');
         }
 
-        $synopsis->load(['scholar.user', 'rac.supervisor.user', 'supervisorApprover', 'hodApprover', 'daApprover', 'soApprover', 'arApprover']);
+        $synopsis->load([
+            'scholar.user',
+            'scholar.admission.department',
+            'scholar.currentSupervisor.supervisor.user',
+            'rac.supervisor.user',
+            'supervisorApprover',
+            'hodApprover',
+            'daApprover',
+            'soApprover',
+            'arApprover'
+        ]);
 
         return view('dr.synopses.approve', compact('synopsis'));
     }
@@ -113,23 +123,24 @@ class DRController extends Controller
             'remarks' => 'required|string|max:500',
         ]);
 
+        // Use WorkflowSyncService for syncing
+        $workflowSyncService = app(\App\Services\WorkflowSyncService::class);
+
         if ($request->action === 'approve') {
             $synopsis->update([
-                'status' => 'pending_hvc_approval',
-                'dr_approver_id' => Auth::id(),
-                'dr_approved_at' => now(),
                 'dr_remarks' => $request->remarks,
             ]);
 
+            // Sync workflow
+            $workflowSyncService->syncSynopsisWorkflow($synopsis, 'dr_approve', Auth::user());
             $message = 'Synopsis approved and forwarded to Hon\'ble Vice Chancellor';
         } else {
             $synopsis->update([
-                'status' => 'rejected',
-                'dr_approver_id' => Auth::id(),
-                'dr_approved_at' => now(),
                 'dr_remarks' => $request->remarks,
             ]);
 
+            // Sync workflow
+            $workflowSyncService->syncSynopsisWorkflow($synopsis, 'dr_reject', Auth::user());
             $message = 'Synopsis rejected.';
         }
 
@@ -220,7 +231,7 @@ class DRController extends Controller
         $scholars = \App\Models\Scholar::with(['user', 'admission.department'])->get();
 
         // Get all synopses
-        $synopses = \App\Models\Synopsis::with(['scholar.user', 'rac.supervisor.user', 'scholar.admission.department'])
+        $synopses = \App\Models\Synopsis::with(['scholar.user', 'rac.supervisor.user', 'scholar.currentSupervisor.supervisor.user', 'scholar.admission.department'])
             ->latest()
             ->get();
 

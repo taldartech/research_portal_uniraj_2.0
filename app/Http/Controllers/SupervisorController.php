@@ -124,6 +124,15 @@ class SupervisorController extends Controller
         if (! $this->isAssignedSupervisor($synopsis->scholar)) {
             abort(403, 'Unauthorized action.');
         }
+
+        // Load additional relationships for registration details
+        $synopsis->load([
+            'scholar.user',
+            'scholar.admission.department',
+            'scholar.currentSupervisor.supervisor.user',
+            'rac.supervisor.user'
+        ]);
+
         return view('supervisor.synopsis.approve', compact('synopsis'));
     }
 
@@ -141,32 +150,45 @@ class SupervisorController extends Controller
             'action' => 'required|in:approve,reject',
             'remarks' => 'required|string|max:500',
             'rac_minutes_file' => 'required_if:action,approve|file|mimes:pdf|max:2048',
+            'research_topic' => 'nullable|string|max:1000',
         ]);
+
+        // Use WorkflowSyncService for syncing
+        $workflowSyncService = app(\App\Services\WorkflowSyncService::class);
 
         if ($request->action === 'approve') {
             // Upload RAC minutes file
             $racMinutesPath = $request->file('rac_minutes_file')->store('rac_minutes', 'public');
 
             $synopsis->update([
-                'status' => 'pending_hod_approval',
-                'supervisor_approver_id' => Auth::id(),
-                'supervisor_approved_at' => now(),
                 'supervisor_remarks' => $request->remarks,
                 'rac_minutes_file' => $racMinutesPath,
             ]);
 
+            // Update scholar's research topic if provided
+            if ($request->filled('research_topic')) {
+                $synopsis->scholar->update([
+                    'research_topic_title' => $request->research_topic,
+                ]);
+            }
+
+            // Sync workflow
+            $workflowSyncService->syncSynopsisWorkflow($synopsis, 'supervisor_approve', Auth::user());
             $message = 'Synopsis approved and forwarded to HOD with RAC minutes.';
         } else {
             $synopsis->update([
-                'status' => 'rejected_by_supervisor',
-                'supervisor_approver_id' => Auth::id(),
-                'supervisor_approved_at' => now(),
                 'supervisor_remarks' => $request->remarks,
-                'rejected_by' => Auth::id(),
-                'rejected_at' => now(),
-                'rejection_reason' => $request->remarks,
-                'rejection_count' => $synopsis->rejection_count + 1,
             ]);
+
+            // Update scholar's research topic if provided
+            if ($request->filled('research_topic')) {
+                $synopsis->scholar->update([
+                    'research_topic_title' => $request->research_topic,
+                ]);
+            }
+
+            // Sync workflow
+            $workflowSyncService->syncSynopsisWorkflow($synopsis, 'supervisor_reject', Auth::user());
 
             $message = 'Synopsis rejected.';
         }
@@ -198,11 +220,19 @@ class SupervisorController extends Controller
     public function listPendingSynopses()
     {
         $supervisor = $this->getSupervisor();
-        $pendingSynopses = Synopsis::whereHas('rac', function ($query) use ($supervisor) {
-                                    $query->where('supervisor_id', $supervisor->id);
+        $pendingSynopses = Synopsis::where('status', 'pending_supervisor_approval')
+                                ->where(function ($query) use ($supervisor) {
+                                    // Look for synopses through RAC (traditional workflow)
+                                    $query->whereHas('rac', function ($racQuery) use ($supervisor) {
+                                        $racQuery->where('supervisor_id', $supervisor->id);
+                                    })
+                                    // OR look for synopses through current supervisor assignment (new workflow)
+                                    ->orWhereHas('scholar.currentSupervisor', function ($assignmentQuery) use ($supervisor) {
+                                        $assignmentQuery->where('supervisor_id', $supervisor->id)
+                                                      ->where('status', 'assigned');
+                                    });
                                 })
-                                ->where('status', 'pending_supervisor_approval')
-                                ->with(['scholar.user', 'rac.supervisor.user'])
+                                ->with(['scholar.user', 'rac.supervisor.user', 'scholar.currentSupervisor.supervisor.user'])
                                 ->get();
 
         return view('supervisor.synopsis.pending', compact('pendingSynopses'));
@@ -534,10 +564,18 @@ class SupervisorController extends Controller
             ->get();
 
         // Get all synopses for these scholars
-        $synopses = \App\Models\Synopsis::whereHas('rac', function ($query) use ($supervisor) {
-            $query->where('supervisor_id', $supervisor->id);
+        $synopses = \App\Models\Synopsis::where(function ($query) use ($supervisor) {
+            // Look for synopses through RAC (traditional workflow)
+            $query->whereHas('rac', function ($racQuery) use ($supervisor) {
+                $racQuery->where('supervisor_id', $supervisor->id);
+            })
+            // OR look for synopses through current supervisor assignment (new workflow)
+            ->orWhereHas('scholar.currentSupervisor', function ($assignmentQuery) use ($supervisor) {
+                $assignmentQuery->where('supervisor_id', $supervisor->id)
+                              ->where('status', 'assigned');
+            });
         })
-        ->with(['scholar.user', 'rac.supervisor.user'])
+        ->with(['scholar.user', 'rac.supervisor.user', 'scholar.currentSupervisor.supervisor.user'])
         ->latest()
         ->get();
 

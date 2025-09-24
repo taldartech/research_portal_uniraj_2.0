@@ -57,10 +57,12 @@ class RegistrationFormController extends Controller
             'scholar_id' => $scholar->id,
             'dispatch_number' => $dispatchNumber,
             'form_file_path' => '', // Will be updated after PDF generation
-            'status' => 'generated',
             'generated_by_da_id' => Auth::id(),
-            'generated_at' => now(),
         ]);
+
+        // Use WorkflowSyncService for syncing
+        $workflowSyncService = app(\App\Services\WorkflowSyncService::class);
+        $workflowSyncService->syncRegistrationWorkflow($registrationForm, 'da_generate', Auth::user());
 
         // Generate PDF form (placeholder - in real implementation, use a PDF library)
         $formContent = $this->generateFormContent($scholar, $registrationForm);
@@ -89,7 +91,7 @@ class RegistrationFormController extends Controller
         }
 
         // Check if form is in correct status
-        if (!in_array($registrationForm->status, ['generated', 'signed_by_ar'])) {
+        if ($registrationForm->status !== 'generated') {
             abort(403, 'Registration form is not ready for DR signature.');
         }
 
@@ -97,20 +99,24 @@ class RegistrationFormController extends Controller
         $signaturePath = 'signatures/dr_' . $registrationForm->id . '_' . time() . '.png';
         Storage::disk('public')->put($signaturePath, 'DR Signature Placeholder');
 
+        // Use WorkflowSyncService for syncing
+        $workflowSyncService = app(\App\Services\WorkflowSyncService::class);
+
         // Update registration form
         $registrationForm->update([
-            'status' => 'signed_by_dr',
-            'signed_by_dr_id' => Auth::id(),
-            'signed_by_dr_at' => now(),
             'dr_signature_file' => $signaturePath,
         ]);
+
+        // Sync workflow
+        $workflowSyncService->syncRegistrationWorkflow($registrationForm, 'dr_sign', Auth::user());
 
         return redirect()->back()->with('success', 'Registration form signed by Deputy Registrar.');
     }
 
     /**
-     * AR signs the registration form
+     * AR signs the registration form - DISABLED (no longer needed)
      */
+    /*
     public function signByAR(RegistrationForm $registrationForm)
     {
         // Check if user is AR
@@ -127,24 +133,25 @@ class RegistrationFormController extends Controller
         $signaturePath = 'signatures/ar_' . $registrationForm->id . '_' . time() . '.png';
         Storage::disk('public')->put($signaturePath, 'AR Signature Placeholder');
 
+        // Use WorkflowSyncService for syncing
+        $workflowSyncService = app(\App\Services\WorkflowSyncService::class);
+
         // Update registration form
         $registrationForm->update([
-            'status' => 'signed_by_ar',
-            'signed_by_ar_id' => Auth::id(),
-            'signed_by_ar_at' => now(),
             'ar_signature_file' => $signaturePath,
         ]);
 
+        // Sync workflow
+        $workflowSyncService->syncRegistrationWorkflow($registrationForm, 'ar_sign', Auth::user());
+
         // If both DR and AR have signed, mark as completed
         if ($registrationForm->signed_by_dr_id && $registrationForm->signed_by_ar_id) {
-            $registrationForm->update(['status' => 'completed']);
-
-            // Enroll the scholar
-            $registrationForm->scholar->enroll();
+            $workflowSyncService->syncRegistrationWorkflow($registrationForm, 'complete', Auth::user());
         }
 
         return redirect()->back()->with('success', 'Registration form signed by Assistant Registrar.');
     }
+    */
 
     /**
      * Scholar downloads the registration form
@@ -164,9 +171,13 @@ class RegistrationFormController extends Controller
         // Increment download count
         $registrationForm->incrementDownloadCount();
 
+        // Determine file extension based on file type
+        $fileExtension = pathinfo($registrationForm->form_file_path, PATHINFO_EXTENSION);
+        $downloadFileName = 'Registration_Form_' . $registrationForm->dispatch_number . '.' . $fileExtension;
+
         // Return file download
         return response()->download(storage_path('app/public/' . $registrationForm->form_file_path),
-            'Registration_Form_' . $registrationForm->dispatch_number . '.pdf');
+            $downloadFileName);
     }
 
     /**
@@ -243,7 +254,7 @@ class RegistrationFormController extends Controller
      */
     public function listPendingForDR()
     {
-        $registrationForms = RegistrationForm::where('status', 'pending_dr_signature')
+        $registrationForms = RegistrationForm::where('status', 'generated')
             ->with(['scholar', 'generatedByDA'])
             ->latest()
             ->get();
@@ -252,8 +263,9 @@ class RegistrationFormController extends Controller
     }
 
     /**
-     * List pending registration forms for AR
+     * List pending registration forms for AR - DISABLED (no longer needed)
      */
+    /*
     public function listPendingForAR()
     {
         $registrationForms = RegistrationForm::where('status', 'pending_ar_signature')
@@ -263,4 +275,5 @@ class RegistrationFormController extends Controller
 
         return view('ar.registration_forms.pending', compact('registrationForms'));
     }
+    */
 }

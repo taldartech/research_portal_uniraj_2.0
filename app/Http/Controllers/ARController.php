@@ -78,7 +78,7 @@ class ARController extends Controller
     public function listPendingSynopses()
     {
         $synopses = \App\Models\Synopsis::where('status', 'pending_ar_approval')
-            ->with(['scholar.user', 'rac.supervisor.user', 'supervisorApprover', 'hodApprover', 'daApprover', 'soApprover'])
+            ->with(['scholar.user', 'rac.supervisor.user', 'scholar.currentSupervisor.supervisor.user', 'supervisorApprover', 'hodApprover', 'daApprover', 'soApprover'])
             ->latest()
             ->get();
 
@@ -94,7 +94,16 @@ class ARController extends Controller
             abort(403, 'This synopsis is not pending AR approval.');
         }
 
-        $synopsis->load(['scholar.user', 'rac.supervisor.user', 'supervisorApprover', 'hodApprover', 'daApprover', 'soApprover']);
+        $synopsis->load([
+            'scholar.user',
+            'scholar.admission.department',
+            'scholar.currentSupervisor.supervisor.user',
+            'rac.supervisor.user',
+            'supervisorApprover',
+            'hodApprover',
+            'daApprover',
+            'soApprover'
+        ]);
 
         return view('ar.synopses.approve', compact('synopsis'));
     }
@@ -113,23 +122,24 @@ class ARController extends Controller
             'remarks' => 'required|string|max:500',
         ]);
 
+        // Use WorkflowSyncService for syncing
+        $workflowSyncService = app(\App\Services\WorkflowSyncService::class);
+
         if ($request->action === 'approve') {
             $synopsis->update([
-                'status' => 'pending_dr_approval',
-                'ar_approver_id' => Auth::id(),
-                'ar_approved_at' => now(),
                 'ar_remarks' => $request->remarks,
             ]);
 
+            // Sync workflow
+            $workflowSyncService->syncSynopsisWorkflow($synopsis, 'ar_approve', Auth::user());
             $message = 'Synopsis approved and forwarded to Deputy Registrar.';
         } else {
             $synopsis->update([
-                'status' => 'rejected',
-                'ar_approver_id' => Auth::id(),
-                'ar_approved_at' => now(),
                 'ar_remarks' => $request->remarks,
             ]);
 
+            // Sync workflow
+            $workflowSyncService->syncSynopsisWorkflow($synopsis, 'ar_reject', Auth::user());
             $message = 'Synopsis rejected.';
         }
 
@@ -220,7 +230,7 @@ class ARController extends Controller
         $scholars = \App\Models\Scholar::with(['user', 'admission.department'])->get();
 
         // Get all synopses
-        $synopses = \App\Models\Synopsis::with(['scholar.user', 'rac.supervisor.user', 'scholar.admission.department'])
+        $synopses = \App\Models\Synopsis::with(['scholar.user', 'rac.supervisor.user', 'scholar.currentSupervisor.supervisor.user', 'scholar.admission.department'])
             ->latest()
             ->get();
 
