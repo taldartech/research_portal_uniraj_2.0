@@ -10,79 +10,86 @@
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                 <div class="p-6 text-gray-900">
                     @if($pendingPreferences->count() > 0)
-                        <div class="space-y-6">
-                            @foreach($pendingPreferences as $scholarId => $preferences)
-                                @php
-                                    $scholar = $preferences->first()->scholar;
-                                @endphp
-                                <div class="border border-gray-200 rounded-lg p-6">
-                                    <div class="flex justify-between items-start mb-4">
-                                        <div>
-                                            <h3 class="text-lg font-semibold text-gray-900">
-                                                {{ $scholar->user->name }}
-                                            </h3>
-                                            <p class="text-sm text-gray-600">
-                                                Scholar ID: SCH-{{ str_pad($scholar->id, 6, '0', STR_PAD_LEFT) }}
-                                            </p>
-                                            <p class="text-sm text-gray-600">
-                                                Department: {{ $scholar->admission->department->name }}
-                                            </p>
-                                        </div>
-                                        <div class="text-right">
-                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-                                                {{ $preferences->count() }} Preference{{ $preferences->count() > 1 ? 's' : '' }}
-                                            </span>
-                                            <p class="text-xs text-gray-500 mt-1">
-                                                Submitted: {{ $preferences->first()->created_at->format('M d, Y H:i') }}
-                                            </p>
-                                        </div>
-                                    </div>
-
-                                    <div class="space-y-3 mb-4">
-                                        @foreach($preferences as $preference)
-                                            <div class="bg-gray-50 p-3 rounded">
-                                                <div class="flex justify-between items-start">
-                                                    <div>
-                                                        <h4 class="font-medium text-gray-900">
-                                                            {{ $preference->preference_order }}{{ $preference->preference_order == 1 ? 'st' : ($preference->preference_order == 2 ? 'nd' : 'rd') }} Preference
-                                                        </h4>
-                                                        <p class="text-sm text-gray-600">
-                                                            <strong>Supervisor:</strong> {{ $preference->supervisor->user->name }}
-                                                        </p>
-                                                        <p class="text-sm text-gray-600">
-                                                            <strong>Specialization:</strong> {{ $preference->supervisor->research_specialization }}
-                                                        </p>
-                                                        <p class="text-sm text-gray-600 mt-2">
-                                                            <strong>Justification:</strong> {{ $preference->justification }}
-                                                        </p>
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full divide-y divide-gray-200">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Scholar</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Department</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">1st Preference</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">2nd Preference</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">3rd Preference</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Submitted</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="bg-white divide-y divide-gray-200">
+                                    @foreach($pendingPreferences as $scholarId => $preferences)
+                                        @php
+                                            $scholar = $preferences->first()->scholar;
+                                            $preference1 = $preferences->where('preference_order', 1)->first();
+                                            $preference2 = $preferences->where('preference_order', 2)->first();
+                                            $preference3 = $preferences->where('preference_order', 3)->first();
+                                        @endphp
+                                        <tr class="hover:bg-gray-50">
+                                            <td class="px-6 py-4 whitespace-nowrap">
+                                                <div class="flex items-center">
+                                                    <div class="flex-shrink-0 h-10 w-10">
+                                                        <div class="h-10 w-10 rounded-full bg-indigo-100 flex items-center justify-center">
+                                                            <span class="text-sm font-medium text-indigo-600">
+                                                                {{ substr($scholar->user->name, 0, 2) }}
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                    <div class="ml-4">
+                                                        <div class="text-sm font-medium text-gray-900">{{ $scholar->user->name }}</div>
+                                                        <div class="text-sm text-gray-500">SCH-{{ str_pad($scholar->id, 6, '0', STR_PAD_LEFT) }}</div>
                                                     </div>
                                                 </div>
-                                            </div>
-                                        @endforeach
-                                    </div>
-
-                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-4">
-                                        <div>
-                                            <h4 class="font-medium text-gray-900 mb-2">Scholar Details</h4>
-                                            <div class="bg-gray-50 p-3 rounded">
-                                                <p class="text-sm"><strong>Research Area:</strong> {{ $scholar->research_area ?? 'Not specified' }}</p>
-                                                <p class="text-sm"><strong>Email:</strong> {{ $scholar->user->email }}</p>
-                                                <p class="text-sm"><strong>Contact:</strong> {{ $scholar->contact_number ?? 'Not provided' }}</p>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div class="flex space-x-4 pt-4 border-t border-gray-200">
-                                        <a href="{{ route('hod.supervisor_preferences.approve', $scholarId) }}"
-                                           class="inline-flex items-center px-4 py-2 bg-blue-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-blue-700 focus:bg-blue-700 active:bg-blue-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition ease-in-out duration-150">
-                                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                            </svg>
-                                            Review & Approve
-                                        </a>
-                                    </div>
-                                </div>
-                            @endforeach
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                                {{ $scholar->admission->department->name }}
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                                @if($preference1)
+                                                    <div class="font-medium">{{ $preference1->supervisor->user->name }}</div>
+                                                    <div class="text-xs text-gray-500">{{ $preference1->supervisor->research_specialization }}</div>
+                                                @else
+                                                    <span class="text-gray-400">Not specified</span>
+                                                @endif
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                                @if($preference2)
+                                                    <div class="font-medium">{{ $preference2->supervisor->user->name }}</div>
+                                                    <div class="text-xs text-gray-500">{{ $preference2->supervisor->research_specialization }}</div>
+                                                @else
+                                                    <span class="text-gray-400">Not specified</span>
+                                                @endif
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                                @if($preference3)
+                                                    <div class="font-medium">{{ $preference3->supervisor->user->name }}</div>
+                                                    <div class="text-xs text-gray-500">{{ $preference3->supervisor->research_specialization }}</div>
+                                                @else
+                                                    <span class="text-gray-400">Not specified</span>
+                                                @endif
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                {{ $preferences->first()->created_at->format('M d, Y') }}
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                                <a href="{{ route('hod.supervisor_preferences.approve', $scholarId) }}"
+                                                   class="inline-flex items-center px-3 py-1 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                                                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                                    </svg>
+                                                    Review & Approve
+                                                </a>
+                                            </td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
                         </div>
                     @else
                         <div class="text-center py-1">

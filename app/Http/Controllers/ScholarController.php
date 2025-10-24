@@ -125,26 +125,52 @@ class ScholarController extends Controller
 
             // Document Upload (arrays) - optional if documents already exist
             'document_types' => 'nullable|array',
-            'document_types.*' => 'required_with:registration_documents.*|string|in:degree_certificate,marksheet,net_certificate,slet_certificate,csir_certificate,gate_certificate,mpat_certificate,noc_letter,other',
+            'document_types.*' => 'nullable|string|in:degree_certificate,marksheet,net_certificate,slet_certificate,csir_certificate,gate_certificate,mpat_certificate,noc_letter,other',
             'registration_documents' => 'nullable|array',
-            'registration_documents.*' => 'required_with:document_types.*|file|mimes:pdf,doc,docx,jpg,jpeg,png|max:5120',
+            'registration_documents.*' => 'nullable|file|mimes:pdf,doc,docx,jpg,jpeg,png|max:5120',
 
             // Synopsis
             'synopsis_topic' => 'nullable|string|max:255',
             'synopsis_file' => 'nullable|file|mimes:pdf,doc,docx|max:2048',
         ]);
 
+        // Custom validation: if document_types array has non-empty values, ensure corresponding files exist
+        if ($request->has('document_types') && $request->hasFile('registration_documents')) {
+            $documentTypes = $request->input('document_types', []);
+            $files = $request->file('registration_documents', []);
+
+            // Filter out empty document types
+            $nonEmptyTypes = array_filter($documentTypes, function($type) {
+                return !empty($type);
+            });
+
+            // If there are non-empty document types, ensure we have corresponding files
+            if (!empty($nonEmptyTypes) && count($files) !== count($nonEmptyTypes)) {
+                return redirect()->back()
+                    ->withErrors(['registration_documents' => 'Number of uploaded files must match the number of selected document types.'])
+                    ->withInput();
+            }
+        }
+
         // Handle file uploads
         $uploadedDocuments = [];
-        if ($request->hasFile('registration_documents')) {
-            foreach ($request->file('registration_documents') as $file) {
-                $filename = time() . '_' . $file->getClientOriginalName();
-                $path = $file->storeAs('registration_documents/' . $scholar->id, $filename, 'public');
-                $uploadedDocuments[] = [
-                    'filename' => $filename,
-                    'path' => $path,
-                    'uploaded_at' => now()->toISOString(),
-                ];
+        if ($request->hasFile('registration_documents') && $request->has('document_types')) {
+            $documentTypes = array_filter($request->input('document_types', []), function($type) {
+                return !empty($type);
+            });
+            $files = $request->file('registration_documents');
+
+            foreach ($files as $index => $file) {
+                if ($file && isset($documentTypes[$index])) {
+                    $filename = time() . '_' . $file->getClientOriginalName();
+                    $path = $file->storeAs('registration_documents/' . $scholar->id, $filename, 'public');
+                    $uploadedDocuments[] = [
+                        'type' => $documentTypes[$index],
+                        'filename' => $filename,
+                        'path' => $path,
+                        'uploaded_at' => now()->toISOString(),
+                    ];
+                }
             }
         }
 
