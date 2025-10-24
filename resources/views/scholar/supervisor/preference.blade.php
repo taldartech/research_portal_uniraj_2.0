@@ -29,26 +29,6 @@
                             </div>
                         @endforeach
 
-                        <!-- Office Note Download -->
-                        @if($submittedPreference->office_note_generated)
-                            {{-- <div class="mt-4 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
-                                <h4 class="text-md font-semibold mb-2 text-gray-900 dark:text-gray-100">Office Note</h4>
-                                <div class="flex justify-between items-center">
-                                    <div>
-                                        <span class="text-sm text-gray-600 dark:text-gray-400">
-                                            Generated: {{ $submittedPreference->office_note_generated_at->format('M d, Y H:i') }}
-                                        </span>
-                                    </div>
-                                    <a href="{{ route('scholar.supervisor_assignment.office_note.download', $submittedPreference) }}"
-                                       class="inline-flex items-center px-3 py-1 bg-blue-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-blue-700 focus:bg-blue-700 active:bg-blue-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition ease-in-out duration-150">
-                                        <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                                        </svg>
-                                        Download Office Note
-                                    </a>
-                                </div>
-                            </div> --}}
-                        @endif
 
                         <p class="mt-4">You have already submitted a supervisor preference. You cannot submit another one until this one is processed.</p>
                     @else

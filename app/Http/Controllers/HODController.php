@@ -1012,14 +1012,14 @@ class HODController extends Controller
             abort(403, 'No department assigned.');
         }
 
-        // Get supervisor assignments from scholars in HOD's department that are pending HOD approval
-        // Only show assignments where the scholar doesn't already have an approved assignment
-        $pendingAssignments = \App\Models\SupervisorAssignment::whereHas('scholar', function ($query) use ($department) {
+        // Get supervisor preferences from scholars in HOD's department that are pending approval
+        // Only show preferences where the scholar doesn't already have an approved assignment
+        $pendingPreferences = \App\Models\SupervisorPreference::whereHas('scholar', function ($query) use ($department) {
             $query->whereHas('admission', function ($q) use ($department) {
                 $q->where('department_id', $department->id);
             });
         })
-        ->where('status', 'pending_hod_approval')
+        ->where('status', 'pending')
         ->whereDoesntHave('scholar', function ($query) {
             $query->whereHas('supervisorAssignments', function ($q) {
                 $q->where('status', 'assigned');
@@ -1027,9 +1027,10 @@ class HODController extends Controller
         })
         ->with(['scholar.user', 'supervisor.user'])
         ->orderBy('created_at', 'desc')
-        ->get();
+        ->get()
+        ->groupBy('scholar_id');
 
-        return view('hod.supervisor_assignments.pending', compact('pendingAssignments'));
+        return view('hod.supervisor_assignments.pending', compact('pendingPreferences'));
     }
 
     /**

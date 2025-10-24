@@ -411,7 +411,7 @@ class ScholarController extends Controller
             $request->supervisor_2_id,
             $request->supervisor_3_id
         ]);
-        
+
         if (count($selectedSupervisors) !== count(array_unique($selectedSupervisors))) {
             return redirect()->back()->withErrors([
                 'supervisor_selection' => 'You cannot select the same supervisor for multiple preferences.'
@@ -420,7 +420,7 @@ class ScholarController extends Controller
 
         // Create supervisor preferences
         $preferences = [];
-        
+
         // First preference (required)
         $preferences[] = [
             'scholar_id' => $scholar->id,
@@ -531,7 +531,7 @@ class ScholarController extends Controller
 
         \App\Models\ProgressReport::create([
             'scholar_id' => $scholar->id,
-            'supervisor_id' => $supervisor->id,
+            'supervisor_id' => $supervisor->supervisor_id,
             'hod_id' => $hod->id,
             'report_file' => $path,
             'submission_date' => now(),
