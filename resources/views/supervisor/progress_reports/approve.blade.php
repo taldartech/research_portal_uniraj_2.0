@@ -107,14 +107,14 @@
 
                     <!-- Approval Form -->
                     <div class="mb-8">
-                        <h3 class="text-lg font-semibold text-gray-900 mb-4">Supervisor Decision</h3>
+                        <h3 class="text-lg font-semibold text-gray-900 mb-4">Supervisor Remark</h3>
                         <form action="{{ route('staff.progress_reports.approve.store', $progressReport) }}" method="POST" class="space-y-6">
                             @csrf
 
                             <div>
-                                <label for="action" class="block text-sm font-medium text-gray-700">Decision</label>
+                                <label for="action" class="block text-sm font-medium text-gray-700">Remark</label>
                                 <select id="action" name="action" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500" required>
-                                    <option value="">Select Decision</option>
+                                    <option value="">Select Remark</option>
                                     <option value="approve">Approve</option>
                                     <option value="reject">Reject</option>
                                 </select>
@@ -135,7 +135,7 @@
 
                                 <button type="submit"
                                         class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded">
-                                    Submit Decision
+                                    Submit Remark
                                 </button>
                             </div>
                         </form>

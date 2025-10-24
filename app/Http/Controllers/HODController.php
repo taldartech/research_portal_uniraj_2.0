@@ -1033,6 +1033,142 @@ class HODController extends Controller
     }
 
     /**
+     * List pending supervisor preferences
+     */
+    public function listPendingSupervisorPreferences()
+    {
+        $user = auth()->user();
+        if ($user->user_type !== 'hod') {
+            abort(403, 'Unauthorized access.');
+        }
+
+        $department = $user->departmentManaging;
+        if (!$department) {
+            abort(403, 'No department assigned.');
+        }
+
+        // Get supervisor preferences from scholars in HOD's department that are pending approval
+        $pendingPreferences = \App\Models\SupervisorPreference::whereHas('scholar', function ($query) use ($department) {
+            $query->whereHas('admission', function ($q) use ($department) {
+                $q->where('department_id', $department->id);
+            });
+        })
+        ->where('status', 'pending')
+        ->whereDoesntHave('scholar', function ($query) {
+            $query->whereHas('supervisorAssignments', function ($q) {
+                $q->where('status', 'assigned');
+            });
+        })
+        ->with(['scholar.user', 'supervisor.user'])
+        ->orderBy('created_at', 'desc')
+        ->get()
+        ->groupBy('scholar_id');
+
+        return view('hod.supervisor_preferences.pending', compact('pendingPreferences'));
+    }
+
+    /**
+     * Show supervisor preferences approval form
+     */
+    public function showSupervisorPreferencesApprovalForm($scholarId)
+    {
+        $user = auth()->user();
+        if ($user->user_type !== 'hod') {
+            abort(403, 'Unauthorized access.');
+        }
+
+        $department = $user->departmentManaging;
+        if (!$department) {
+            abort(403, 'No department assigned.');
+        }
+
+        $scholar = \App\Models\Scholar::whereHas('admission', function ($query) use ($department) {
+            $query->where('department_id', $department->id);
+        })->findOrFail($scholarId);
+
+        // Get all preferences for this scholar
+        $preferences = $scholar->supervisorPreferences()
+            ->where('status', 'pending')
+            ->with('supervisor.user')
+            ->orderBy('preference_order')
+            ->get();
+
+        if ($preferences->isEmpty()) {
+            return redirect()->route('hod.supervisor_preferences.pending')
+                ->with('error', 'No pending preferences found for this scholar.');
+        }
+
+        return view('hod.supervisor_preferences.approve', compact('scholar', 'preferences'));
+    }
+
+    /**
+     * Approve supervisor preferences
+     */
+    public function approveSupervisorPreferences(Request $request, $scholarId)
+    {
+        $user = auth()->user();
+        if ($user->user_type !== 'hod') {
+            abort(403, 'Unauthorized access.');
+        }
+
+        $department = $user->departmentManaging;
+        if (!$department) {
+            abort(403, 'No department assigned.');
+        }
+
+        $request->validate([
+            'selected_preference_id' => 'required|exists:supervisor_preferences,id',
+            'remarks' => 'nullable|string|max:1000',
+        ]);
+
+        $scholar = \App\Models\Scholar::whereHas('admission', function ($query) use ($department) {
+            $query->where('department_id', $department->id);
+        })->findOrFail($scholarId);
+
+        $selectedPreference = \App\Models\SupervisorPreference::where('id', $request->selected_preference_id)
+            ->where('scholar_id', $scholarId)
+            ->where('status', 'pending')
+            ->firstOrFail();
+
+        // Approve the selected preference
+        $selectedPreference->update([
+            'status' => 'approved',
+            'approved_at' => now(),
+            'approved_by' => auth()->id(),
+            'remarks' => $request->remarks,
+        ]);
+
+        // Reject all other preferences for this scholar
+        \App\Models\SupervisorPreference::where('scholar_id', $scholarId)
+            ->where('id', '!=', $selectedPreference->id)
+            ->where('status', 'pending')
+            ->update([
+                'status' => 'rejected',
+                'rejected_at' => now(),
+                'rejected_by' => auth()->id(),
+            ]);
+
+        // Create supervisor assignment
+        \App\Models\SupervisorAssignment::create([
+            'scholar_id' => $scholarId,
+            'supervisor_id' => $selectedPreference->supervisor_id,
+            'assigned_date' => now(),
+            'status' => 'assigned',
+            'justification' => $selectedPreference->justification,
+            'approved_at' => now(),
+            'approved_by' => auth()->id(),
+        ]);
+
+        // Update scholar status
+        $scholar->update([
+            'status' => 'assigned',
+        ]);
+
+        return redirect()->route('hod.supervisor_preferences.pending')
+            ->with('success', 'Supervisor preferences approved successfully!');
+    }
+
+    /**
      * Approve supervisor assignment
      */
     public function approveSupervisorAssignment(\App\Models\SupervisorAssignment $assignment)

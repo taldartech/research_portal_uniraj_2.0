@@ -368,10 +368,14 @@ class ScholarController extends Controller
             return redirect()->route('scholar.dashboard')->with('error', 'You already have an assigned supervisor.');
         }
 
-        $submittedPreference = $scholar->submittedSupervisorPreference()->with('supervisor.user')->first();
+        $submittedPreferences = $scholar->supervisorPreferences()
+            ->where('status', 'pending')
+            ->with('supervisor.user')
+            ->orderBy('preference_order')
+            ->get();
 
         $supervisors = Supervisor::with('user')->get();
-        return view('scholar.supervisor.preference', compact('supervisors', 'submittedPreference'));
+        return view('scholar.supervisor.preference', compact('supervisors', 'submittedPreferences'));
     }
 
 
@@ -383,39 +387,81 @@ class ScholarController extends Controller
         }
 
         $request->validate([
-            'preferred_supervisor_id' => 'required|exists:supervisors,id',
-            'justification' => 'required|string',
+            'supervisor_1_id' => 'required|exists:supervisors,id',
+            'justification_1' => 'required|string',
+            'supervisor_2_id' => 'nullable|exists:supervisors,id',
+            'justification_2' => 'nullable|string',
+            'supervisor_3_id' => 'nullable|exists:supervisors,id',
+            'justification_3' => 'nullable|string',
         ]);
 
-        // Check if scholar already has a pending assignment
-        $existingPendingAssignment = $scholar->supervisorAssignments()
-            ->where('status', 'pending_hod_approval')
-            ->first();
+        // Check if scholar already has pending preferences
+        $existingPreferences = $scholar->supervisorPreferences()
+            ->where('status', 'pending')
+            ->count();
 
-        if ($existingPendingAssignment) {
+        if ($existingPreferences > 0) {
             return redirect()->route('scholar.supervisor.preference')
-                ->with('error', 'You already have a pending supervisor assignment. Please wait for HOD approval.');
+                ->with('error', 'You already have pending supervisor preferences. Please wait for HOD approval.');
         }
 
-        $assignment = SupervisorAssignment::create([
-            'scholar_id' => $scholar->id,
-            'supervisor_id' => $request->preferred_supervisor_id,
-            'assigned_date' => now(),
-            'status' => 'pending_hod_approval',
-            'justification' => $request->justification,
+        // Validate that all selected supervisors are different
+        $selectedSupervisors = array_filter([
+            $request->supervisor_1_id,
+            $request->supervisor_2_id,
+            $request->supervisor_3_id
         ]);
-
-        // Auto-generate office note for supervisor selection request
-        try {
-            $officeNoteService = new \App\Services\OfficeNoteGenerationService();
-            $officeNoteService->generateSupervisorSelectionOfficeNote($assignment);
-            $message = 'Supervisor preference submitted and office note generated.';
-        } catch (\Exception $e) {
-            Log::error('Failed to generate office note for assignment ' . $assignment->id . ': ' . $e->getMessage());
-            $message = 'Supervisor preference submitted, but office note generation failed. Please contact support.';
+        
+        if (count($selectedSupervisors) !== count(array_unique($selectedSupervisors))) {
+            return redirect()->back()->withErrors([
+                'supervisor_selection' => 'You cannot select the same supervisor for multiple preferences.'
+            ]);
         }
 
-        return redirect()->route('scholar.supervisor.preference')->with('success', $message);
+        // Create supervisor preferences
+        $preferences = [];
+        
+        // First preference (required)
+        $preferences[] = [
+            'scholar_id' => $scholar->id,
+            'supervisor_id' => $request->supervisor_1_id,
+            'preference_order' => 1,
+            'justification' => $request->justification_1,
+            'status' => 'pending',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ];
+
+        // Second preference (optional)
+        if ($request->supervisor_2_id) {
+            $preferences[] = [
+                'scholar_id' => $scholar->id,
+                'supervisor_id' => $request->supervisor_2_id,
+                'preference_order' => 2,
+                'justification' => $request->justification_2,
+                'status' => 'pending',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ];
+        }
+
+        // Third preference (optional)
+        if ($request->supervisor_3_id) {
+            $preferences[] = [
+                'scholar_id' => $scholar->id,
+                'supervisor_id' => $request->supervisor_3_id,
+                'preference_order' => 3,
+                'justification' => $request->justification_3,
+                'status' => 'pending',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ];
+        }
+
+        // Insert all preferences
+        \App\Models\SupervisorPreference::insert($preferences);
+
+        return redirect()->route('scholar.supervisor.preference')->with('success', 'Supervisor preferences submitted successfully!');
     }
 
 

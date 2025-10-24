@@ -65,7 +65,7 @@
                     @if($request->supporting_documents)
                         <div class="mb-6 p-4 bg-green-50 rounded-lg">
                             <h3 class="text-lg font-medium text-green-900 mb-2">Supporting Documents</h3>
-                            <a href="{{ Storage::url($request->supporting_documents) }}" target="_blank" 
+                            <a href="{{ Storage::url($request->supporting_documents) }}" target="_blank"
                                class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
                                 <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
@@ -75,18 +75,18 @@
                         </div>
                     @endif
 
-                    <!-- SO Decision Form -->
+                    <!-- SO Remark Form -->
                     <div class="mt-8 p-6 bg-white border border-gray-200 rounded-lg">
-                        <h3 class="text-lg font-medium text-gray-900 mb-4">SO Decision</h3>
+                        <h3 class="text-lg font-medium text-gray-900 mb-4">SO Remark</h3>
                         <form method="POST" action="{{ route('so.capacity_requests.process', $request) }}">
                             @csrf
                             @method('POST')
 
                             <!-- Action Selection -->
                             <div class="mb-4">
-                                <label for="action" class="block text-sm font-medium text-gray-700 mb-2">Decision</label>
+                                <label for="action" class="block text-sm font-medium text-gray-700 mb-2">Remark</label>
                                 <select id="action" name="action" class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500" required>
-                                    <option value="">Select Decision</option>
+                                    <option value="">Select Remark</option>
                                     <option value="approve" {{ old('action') == 'approve' ? 'selected' : '' }}>Approve</option>
                                     <option value="reject" {{ old('action') == 'reject' ? 'selected' : '' }}>Reject</option>
                                 </select>
@@ -106,16 +106,16 @@
 
                             <!-- Action Buttons -->
                             <div class="flex items-center justify-end space-x-4">
-                                <a href="{{ route('so.capacity_requests.pending') }}" 
+                                <a href="{{ route('so.capacity_requests.pending') }}"
                                    class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
                                     Cancel
                                 </a>
-                                <button type="submit" 
+                                <button type="submit"
                                         class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
                                     <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                                     </svg>
-                                    Submit Decision
+                                    Submit Remark
                                 </button>
                             </div>
                         </form>

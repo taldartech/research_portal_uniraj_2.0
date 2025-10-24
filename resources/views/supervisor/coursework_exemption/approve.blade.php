@@ -11,34 +11,34 @@
                 <div class="p-6 text-gray-900">
                     <div class="mb-6">
                         <h3 class="text-lg font-medium text-gray-900 mb-4">Coursework Exemption Details</h3>
-                        
+
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
                                 <label class="block text-sm font-medium text-gray-700">Scholar Name</label>
                                 <p class="mt-1 text-sm text-gray-900">{{ $exemption->scholar->user->name }}</p>
                             </div>
-                            
+
                             <div>
                                 <label class="block text-sm font-medium text-gray-700">RAC</label>
                                 <p class="mt-1 text-sm text-gray-900">{{ $exemption->rac->name ?? 'N/A' }}</p>
                             </div>
-                            
+
                             <div>
                                 <label class="block text-sm font-medium text-gray-700">Reason</label>
                                 <p class="mt-1 text-sm text-gray-900">{{ $exemption->reason }}</p>
                             </div>
-                            
+
                             <div>
                                 <label class="block text-sm font-medium text-gray-700">Submission Date</label>
                                 <p class="mt-1 text-sm text-gray-900">{{ $exemption->created_at->format('Y-m-d H:i') }}</p>
                             </div>
                         </div>
-                        
+
                         @if($exemption->minutes_file)
                         <div class="mt-4">
                             <label class="block text-sm font-medium text-gray-700">RAC Minutes</label>
-                            <a href="{{ Storage::url($exemption->minutes_file) }}" 
-                               target="_blank" 
+                            <a href="{{ Storage::url($exemption->minutes_file) }}"
+                               target="_blank"
                                class="mt-1 text-sm text-indigo-600 hover:text-indigo-900">
                                 Download RAC Minutes
                             </a>
@@ -48,9 +48,9 @@
 
                     <form method="POST" action="{{ route('staff.coursework_exemption.approve.store', $exemption) }}">
                         @csrf
-                        
+
                         <div class="mb-6">
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Your Decision</label>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Your Remark</label>
                             <div class="space-y-2">
                                 <label class="inline-flex items-center">
                                     <input type="radio" name="action" value="approve" class="form-radio text-green-600" required>
@@ -68,9 +68,9 @@
                             <label for="supervisor_remarks" class="block text-sm font-medium text-gray-700 mb-2">
                                 Your Remarks
                             </label>
-                            <textarea name="supervisor_remarks" 
-                                      id="supervisor_remarks" 
-                                      rows="4" 
+                            <textarea name="supervisor_remarks"
+                                      id="supervisor_remarks"
+                                      rows="4"
                                       class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                                       placeholder="Add your comments or feedback...">{{ old('supervisor_remarks') }}</textarea>
                             @error('supervisor_remarks')
@@ -79,13 +79,13 @@
                         </div>
 
                         <div class="flex items-center justify-end space-x-3">
-                            <a href="{{ route('staff.coursework_exemption.pending') }}" 
+                            <a href="{{ route('staff.coursework_exemption.pending') }}"
                                class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded">
                                 Cancel
                             </a>
-                            <button type="submit" 
+                            <button type="submit"
                                     class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
-                                Submit Decision
+                                Submit Remark
                             </button>
                         </div>
                     </form>

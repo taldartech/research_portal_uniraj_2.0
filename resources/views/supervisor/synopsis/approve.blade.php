@@ -199,7 +199,7 @@
 
                             <div class="flex items-center justify-end mt-4">
                                 <x-primary-button>
-                                    {{ __('Submit Decision') }}
+                                    {{ __('Submit Remark') }}
                                 </x-primary-button>
                             </div>
                         </form>

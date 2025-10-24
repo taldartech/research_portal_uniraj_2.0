@@ -144,6 +144,11 @@ class Scholar extends Model
         )->where('supervisor_assignments.status', 'assigned');
     }
 
+    public function supervisorPreferences()
+    {
+        return $this->hasMany(SupervisorPreference::class)->orderBy('preference_order');
+    }
+
     public function currentSupervisor()
     {
         return $this->hasOne(SupervisorAssignment::class)->where('status', 'assigned')->latestOfMany();

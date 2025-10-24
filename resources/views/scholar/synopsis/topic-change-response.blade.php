@@ -70,8 +70,8 @@
                             <ul class="text-sm text-orange-700 space-y-1">
                                 <li>• If you <strong>accept</strong> the topic change, your synopsis will be updated with the new topic.</li>
                                 <li>• If you <strong>reject</strong> the topic change, your original topic will remain unchanged.</li>
-                                <li>• Your supervisor will be notified of your decision.</li>
-                                <li>• This decision cannot be undone once submitted.</li>
+                                <li>• Your supervisor will be notified of your Remark.</li>
+                                <li>• This Remark cannot be undone once submitted.</li>
                             </ul>
                         </div>
 

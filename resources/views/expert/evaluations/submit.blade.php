@@ -42,17 +42,17 @@
                         @csrf
 
                         <div class="mb-6">
-                            <label for="decision" class="block text-sm font-medium text-gray-700 mb-2">
-                                Evaluation Decision <span class="text-red-500">*</span>
+                            <label for="Remark" class="block text-sm font-medium text-gray-700 mb-2">
+                                Evaluation Remark <span class="text-red-500">*</span>
                             </label>
-                            <select name="decision" id="decision" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500" required>
-                                <option value="">Select Decision</option>
-                                <option value="approved" {{ old('decision') === 'approved' ? 'selected' : '' }}>Approved</option>
-                                <option value="approved_with_minor_revisions" {{ old('decision') === 'approved_with_minor_revisions' ? 'selected' : '' }}>Approved with Minor Revisions</option>
-                                <option value="approved_with_major_revisions" {{ old('decision') === 'approved_with_major_revisions' ? 'selected' : '' }}>Approved with Major Revisions</option>
-                                <option value="rejected" {{ old('decision') === 'rejected' ? 'selected' : '' }}>Rejected</option>
+                            <select name="Remark" id="Remark" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500" required>
+                                <option value="">Select Remark</option>
+                                <option value="approved" {{ old('Remark') === 'approved' ? 'selected' : '' }}>Approved</option>
+                                <option value="approved_with_minor_revisions" {{ old('Remark') === 'approved_with_minor_revisions' ? 'selected' : '' }}>Approved with Minor Revisions</option>
+                                <option value="approved_with_major_revisions" {{ old('Remark') === 'approved_with_major_revisions' ? 'selected' : '' }}>Approved with Major Revisions</option>
+                                <option value="rejected" {{ old('Remark') === 'rejected' ? 'selected' : '' }}>Rejected</option>
                             </select>
-                            @error('decision')
+                            @error('Remark')
                                 <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
                             @enderror
                         </div>
@@ -105,7 +105,7 @@
                                 <div class="ml-3">
                                     <h3 class="text-sm font-medium text-yellow-800">Important Notice</h3>
                                     <div class="mt-2 text-sm text-yellow-700">
-                                        <p>Please ensure your evaluation is thorough and constructive. Your decision will significantly impact the scholar's academic progress.</p>
+                                        <p>Please ensure your evaluation is thorough and constructive. Your Remark will significantly impact the scholar's academic progress.</p>
                                     </div>
                                 </div>
                             </div>

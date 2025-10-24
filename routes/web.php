@@ -218,6 +218,11 @@ Route::prefix('hod')->name('hod.')->middleware(['auth', UserTypeMiddleware::clas
     Route::get('/supervisor-assignments/pending', [HODController::class, 'listPendingSupervisorAssignments'])->name('supervisor_assignments.pending');
     Route::patch('/supervisor-assignments/{assignment}/approve', [HODController::class, 'approveSupervisorAssignment'])->name('supervisor_assignments.approve');
     Route::patch('/supervisor-assignments/{assignment}/reject', [HODController::class, 'rejectSupervisorAssignment'])->name('supervisor_assignments.reject');
+
+    // Supervisor Preferences Routes
+    Route::get('/supervisor-preferences/pending', [HODController::class, 'listPendingSupervisorPreferences'])->name('supervisor_preferences.pending');
+    Route::get('/supervisor-preferences/{scholarId}/approve', [HODController::class, 'showSupervisorPreferencesApprovalForm'])->name('supervisor_preferences.approve');
+    Route::post('/supervisor-preferences/{scholarId}/approve', [HODController::class, 'approveSupervisorPreferences'])->name('supervisor_preferences.approve.store');
     Route::get('/synopsis/pending', [HODController::class, 'listPendingSynopses'])->name('synopsis.pending');
     Route::get('/synopsis/{synopsis}/approve', [HODController::class, 'approveSynopsisForm'])->name('synopsis.approve');
     Route::post('/synopsis/{synopsis}/approve', [HODController::class, 'approveSynopsis'])->name('synopsis.approve.store');
