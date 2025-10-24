@@ -510,6 +510,7 @@ class ScholarController extends Controller
         // Check if a report already exists for the current month
         $existingReport = \App\Models\ProgressReport::where('scholar_id', $scholar->id)
             ->where('report_period', $currentMonth)
+            ->where('status', '!=', 'rejected')
             ->first();
 
         return view('scholar.progress_report.submit', compact('allowedMonths', 'currentMonth', 'existingReport'));
@@ -539,10 +540,11 @@ class ScholarController extends Controller
             'supervisor_change_request' => 'boolean',
         ]);
 
-        // Check if a progress report already exists for this month
+        // Check if a non-rejected progress report already exists for this month
         $existingReport = \App\Models\ProgressReport::where('scholar_id', $scholar->id)
             ->where('report_period', $request->report_period)
-            ->exists();
+            ->where('status', '!=', 'rejected')
+            ->first();
 
         if ($existingReport) {
             return redirect()->back()->withErrors([
@@ -550,12 +552,18 @@ class ScholarController extends Controller
             ])->withInput();
         }
 
+        // Check if this is a resubmission of a rejected report
+        $rejectedReport = \App\Models\ProgressReport::where('scholar_id', $scholar->id)
+            ->where('report_period', $request->report_period)
+            ->where('status', 'rejected')
+            ->first();
+
         $path = $request->file('report_file')->store('progress_reports', 'public');
 
         $supervisor = $scholar->currentSupervisor;
         $hod = $scholar->admission->department->hod;
 
-        \App\Models\ProgressReport::create([
+        $progressReportData = [
             'scholar_id' => $scholar->id,
             'supervisor_id' => $supervisor->supervisor_id,
             'hod_id' => $hod->id,
@@ -566,9 +574,24 @@ class ScholarController extends Controller
             'cancellation_request' => $request->boolean('cancellation_request'),
             'supervisor_change_request' => $request->boolean('supervisor_change_request'),
             'status' => 'pending_supervisor_approval',
-        ]);
+        ];
 
-        return redirect()->route('scholar.progress_report.submit')->with('success', 'Progress report submitted for supervisor approval.');
+        // If this is a resubmission, link it to the original rejected report
+        if ($rejectedReport) {
+            $progressReportData['original_report_id'] = $rejectedReport->id;
+            $progressReportData['rejection_count'] = ($rejectedReport->rejection_count ?? 0) + 1;
+
+            // Update the original report to mark it as superseded
+            $rejectedReport->update(['status' => 'superseded']);
+        }
+
+        \App\Models\ProgressReport::create($progressReportData);
+
+        $message = $rejectedReport
+            ? 'Progress report resubmitted successfully for supervisor approval.'
+            : 'Progress report submitted for supervisor approval.';
+
+        return redirect()->route('scholar.progress_report.submit')->with('success', $message);
     }
 
 

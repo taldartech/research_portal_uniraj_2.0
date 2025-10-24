@@ -96,7 +96,7 @@
                                                 </td>
                                                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                                                     @if($synopsis->status === 'pending_supervisor_approval')
-                                                        <a href="{{ route('staff.synopsis.approve', $synopsis) }}" class="text-indigo-600 hover:text-indigo-900">Review & Approve</a>
+                                                        <a href="{{ route('staff.scholars.review', $synopsis->scholar) }}" class="text-indigo-600 hover:text-indigo-900">Review & Approve</a>
                                                     @else
                                                         <a href="{{ Storage::url($synopsis->synopsis_file) }}" target="_blank" class="text-blue-600 hover:text-blue-900">View File</a>
                                                     @endif

@@ -363,13 +363,13 @@
                             </div>
                         @endif
 
-                        <!-- MPAT Information -->
+                        <!-- PhD admission Information Information -->
                         @if($scholar->mpat_year || $scholar->mpat_roll_number || $scholar->mpat_merit_number || $scholar->mpat_subject)
                             <div class="mb-6">
-                                <h4 class="text-md font-medium text-gray-900 mb-3">MPAT</h4>
+                                <h4 class="text-md font-medium text-gray-900 mb-3">PhD admission Information</h4>
                                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div>
-                                        <label class="block text-sm font-medium text-gray-700">MPAT Year</label>
+                                        <label class="block text-sm font-medium text-gray-700">PhD admission Information Year</label>
                                         <p class="mt-1 text-sm text-gray-900">{{ $scholar->mpat_year ?? 'Not provided' }}</p>
                                     </div>
                                     <div>
@@ -433,46 +433,6 @@
                     @if($scholar->synopsis_topic || $scholar->synopsis_file || $scholar->synopsis_submitted_at || $scholar->synopses->isNotEmpty())
                         <div class="mb-8">
                             <h3 class="text-lg font-medium text-gray-900 mb-4">Synopsis Information</h3>
-
-                            <!-- Registration Form Synopsis -->
-                            @if($scholar->synopsis_topic || $scholar->synopsis_file || $scholar->synopsis_submitted_at)
-                                <div class="mb-6">
-                                    <h4 class="text-md font-medium text-gray-900 mb-3">Registration Form Synopsis</h4>
-                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                        <div>
-                                            <label class="block text-sm font-medium text-gray-700">Research Topic/Title</label>
-                                            <p class="mt-1 text-sm text-gray-900">{{ $scholar->synopsis_topic ?? 'Not provided' }}</p>
-                                        </div>
-                                        <div>
-                                            <label class="block text-sm font-medium text-gray-700">Synopsis Status</label>
-                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
-                                                @if($scholar->synopsis_status === 'approved') bg-green-100 text-green-800
-                                                @elseif($scholar->synopsis_status === 'rejected') bg-red-100 text-red-800
-                                                @elseif(in_array($scholar->synopsis_status, ['pending_supervisor_approval', 'pending_hod_approval', 'pending_da_approval', 'pending_so_approval', 'pending_ar_approval', 'pending_dr_approval', 'pending_hvc_approval'])) bg-yellow-100 text-yellow-800
-                                                @else bg-gray-100 text-gray-800 @endif">
-                                                {{ ucfirst(str_replace('_', ' ', $scholar->synopsis_status ?? 'not_submitted')) }}
-                                            </span>
-                                        </div>
-                                        @if($scholar->synopsis_submitted_at)
-                                            <div>
-                                                <label class="block text-sm font-medium text-gray-700">Submitted At</label>
-                                                <p class="mt-1 text-sm text-gray-900">{{ $scholar->synopsis_submitted_at->format('M d, Y H:i') }}</p>
-                                            </div>
-                                        @endif
-                                        @if($scholar->synopsis_file)
-                                            <div>
-                                                <label class="block text-sm font-medium text-gray-700">Synopsis File</label>
-                                                <p class="mt-1 text-sm text-gray-900">
-                                                    <a href="{{ Storage::url($scholar->synopsis_file) }}" target="_blank" class="text-blue-600 hover:text-blue-800">
-                                                        View Synopsis Document
-                                                    </a>
-                                                </p>
-                                            </div>
-                                        @endif
-                                    </div>
-                                </div>
-                            @endif
-
                             <!-- Formal Synopsis Submissions -->
                             @if($scholar->synopses->isNotEmpty())
                                 <div class="mb-6">
@@ -656,9 +616,9 @@
                         </a>
 
                         <div class="flex space-x-2">
-                            <a href="{{ route('staff.scholars.verify_data', $scholar) }}"
+                            <a href="{{ route('staff.scholars.review', $scholar) }}"
                                class="inline-flex items-center px-4 py-2 bg-blue-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-blue-700 focus:bg-blue-700 active:bg-blue-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition ease-in-out duration-150">
-                                Verify Data
+                                Review Scholar
                             </a>
                         </div>
                     </div>

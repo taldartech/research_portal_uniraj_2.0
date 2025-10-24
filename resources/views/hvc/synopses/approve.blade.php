@@ -76,7 +76,7 @@
                                 <span class="text-gray-900">{{ $synopsis->scholar->net_slet_csir_gate_exam ?? 'N/A' }}</span>
                             </div>
                             <div>
-                                <span class="font-medium text-gray-700">MPAT Year:</span>
+                                <span class="font-medium text-gray-700">PhD admission Information Year:</span>
                                 <span class="text-gray-900">{{ $synopsis->scholar->mpat_year ?? 'N/A' }}</span>
                             </div>
                         </div>

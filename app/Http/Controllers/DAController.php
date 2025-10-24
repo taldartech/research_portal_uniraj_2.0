@@ -298,7 +298,7 @@ class DAController extends Controller
             }
         } else {
             $report->update([
-                'status' => 'rejected_by_da',
+                'status' => 'rejected',
                 'da_approver_id' => Auth::id(),
                 'da_approved_at' => now(),
                 'da_remarks' => $request->remarks,

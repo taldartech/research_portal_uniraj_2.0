@@ -164,12 +164,10 @@ Route::prefix('staff')->name('staff.')->middleware(['auth'])->group(function () 
         Route::get('/scholars', [App\Http\Controllers\SupervisorController::class, 'listScholars'])->name('scholars.list');
         Route::get('/scholars/all-submissions', [App\Http\Controllers\SupervisorController::class, 'listAllScholarSubmissions'])->name('scholars.all_submissions');
         Route::get('/scholars/{scholar}', [App\Http\Controllers\SupervisorController::class, 'viewScholarDetails'])->name('scholars.show');
-        Route::get('/scholars/{scholar}/verify-data', [App\Http\Controllers\SupervisorController::class, 'verifyScholarDataForm'])->name('scholars.verify_data');
-        Route::patch('/scholars/{scholar}/verify-data', [App\Http\Controllers\SupervisorController::class, 'verifyScholarData'])->name('scholars.verify_data.update');
+        Route::get('/scholars/{scholar}/review', [App\Http\Controllers\SupervisorController::class, 'reviewScholarForm'])->name('scholars.review');
+        Route::patch('/scholars/{scholar}/review', [App\Http\Controllers\SupervisorController::class, 'reviewScholar'])->name('scholars.review.update');
         Route::get('/rac-minutes/upload', [App\Http\Controllers\SupervisorController::class, 'uploadRacMinutesForm'])->name('rac_minutes.upload');
         Route::post('/rac-minutes', [App\Http\Controllers\SupervisorController::class, 'storeRacMinutes'])->name('rac_minutes.store');
-        Route::get('/synopsis/{synopsis}/approve', [App\Http\Controllers\SupervisorController::class, 'approveSynopsisForm'])->name('synopsis.approve');
-        Route::patch('/synopsis/{synopsis}/approve', [App\Http\Controllers\SupervisorController::class, 'approveSynopsis'])->name('synopsis.approve.update');
         Route::get('/thesis-evaluation/experts', [App\Http\Controllers\SupervisorController::class, 'suggestExpertsForm'])->name('thesis_evaluation.experts');
         Route::post('/thesis-evaluation/experts', [App\Http\Controllers\SupervisorController::class, 'storeExpertsSuggestion'])->name('thesis_evaluation.experts.store');
         Route::get('/coursework-exemption/request/{scholar}', [App\Http\Controllers\SupervisorController::class, 'courseworkExemptionRequestForm'])->name('coursework_exemption.request');

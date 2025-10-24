@@ -120,7 +120,7 @@
                                     {{ $scholar->supervisor_certificate_completed ? 'Completed' : 'Pending' }}
                                 </span>
                             </div>
-                            <div class="flex items-center justify-between p-3 bg-white dark:bg-gray-800 rounded-lg border">
+                            {{-- <div class="flex items-center justify-between p-3 bg-white dark:bg-gray-800 rounded-lg border">
                                 <div class="flex items-center">
                                     <svg class="w-5 h-5 mr-2 {{ $scholar->hod_certificate_completed ? 'text-green-500' : 'text-gray-400' }}" fill="currentColor" viewBox="0 0 20 20">
                                         <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
@@ -130,7 +130,7 @@
                                 <span class="text-sm {{ $scholar->hod_certificate_completed ? 'text-green-600' : 'text-gray-500' }}">
                                     {{ $scholar->hod_certificate_completed ? 'Completed' : 'Pending' }}
                                 </span>
-                            </div>
+                            </div> --}}
                         </div>
                     </div>
 
@@ -407,34 +407,34 @@
                                 </div>
                             </div>
 
-                            <!-- MPAT Information -->
+                            <!-- PhD admission Information Information -->
                             <div class="border-t border-gray-200 dark:border-gray-700 pt-6">
-                                <h4 class="text-md font-medium text-gray-900 dark:text-gray-100 mb-4">MPAT Information</h4>
+                                <h4 class="text-md font-medium text-gray-900 dark:text-gray-100 mb-4">PhD admission Information Information</h4>
 
                                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     <div>
-                                        <x-input-label for="mpat_year" :value="__('MPAT Year')" />
+                                        <x-input-label for="mpat_year" :value="__('PhD admission Information Year')" />
                                         <x-text-input id="mpat_year" name="mpat_year" type="text" class="mt-1 block w-full"
                                             :value="old('mpat_year', $scholar->mpat_year)" />
                                         <x-input-error :messages="$errors->get('mpat_year')" class="mt-2" />
                                     </div>
 
                                     <div>
-                                        <x-input-label for="mpat_roll_number" :value="__('MPAT Roll Number')" />
+                                        <x-input-label for="mpat_roll_number" :value="__('PhD admission Information Roll Number')" />
                                         <x-text-input id="mpat_roll_number" name="mpat_roll_number" type="text" class="mt-1 block w-full"
                                             :value="old('mpat_roll_number', $scholar->mpat_roll_number)" />
                                         <x-input-error :messages="$errors->get('mpat_roll_number')" class="mt-2" />
                                     </div>
 
                                     <div>
-                                        <x-input-label for="mpat_merit_number" :value="__('MPAT Merit Number')" />
+                                        <x-input-label for="mpat_merit_number" :value="__('PhD admission Information Merit Number')" />
                                         <x-text-input id="mpat_merit_number" name="mpat_merit_number" type="text" class="mt-1 block w-full"
                                             :value="old('mpat_merit_number', $scholar->mpat_merit_number)" />
                                         <x-input-error :messages="$errors->get('mpat_merit_number')" class="mt-2" />
                                     </div>
 
                                     <div>
-                                        <x-input-label for="mpat_subject" :value="__('MPAT Subject')" />
+                                        <x-input-label for="mpat_subject" :value="__('PhD admission Information Subject')" />
                                         <x-text-input id="mpat_subject" name="mpat_subject" type="text" class="mt-1 block w-full"
                                             :value="old('mpat_subject', $scholar->mpat_subject)" />
                                         <x-input-error :messages="$errors->get('mpat_subject')" class="mt-2" />
@@ -517,7 +517,7 @@
                                                 <option value="slet_certificate">SLET Certificate</option>
                                                 <option value="csir_certificate">CSIR Certificate</option>
                                                 <option value="gate_certificate">GATE Certificate</option>
-                                                <option value="mpat_certificate">MPAT Certificate</option>
+                                                <option value="mpat_certificate">PhD admission Information Certificate</option>
                                                 <option value="noc_letter">NOC Letter</option>
                                                 <option value="other">Other</option>
                                             </select>
@@ -722,7 +722,7 @@
                                 <option value="slet_certificate">SLET Certificate</option>
                                 <option value="csir_certificate">CSIR Certificate</option>
                                 <option value="gate_certificate">GATE Certificate</option>
-                                <option value="mpat_certificate">MPAT Certificate</option>
+                                <option value="mpat_certificate">PhD admission Information Certificate</option>
                                 <option value="noc_letter">NOC Letter</option>
                                 <option value="other">Other</option>
                             </select>

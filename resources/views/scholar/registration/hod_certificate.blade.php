@@ -95,13 +95,13 @@
                                             <label class="inline-flex items-center">
                                                 <input type="radio" name="eligibility_criteria" value="mpat" class="form-radio"
                                                     {{ old('eligibility_criteria') == 'mpat' ? 'checked' : '' }}>
-                                                <span class="ml-2">B. MPAT</span>
+                                                <span class="ml-2">B. PhD admission Information</span>
                                             </label>
 
                                             <div id="mpat_details" class="mt-2 ml-6 {{ old('eligibility_criteria') == 'mpat' ? '' : 'hidden' }}">
                                                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                                     <div>
-                                                        <x-input-label for="mpat_year" :value="__('MPAT Year')" />
+                                                        <x-input-label for="mpat_year" :value="__('PhD admission Information Year')" />
                                                         <x-text-input id="mpat_year" name="mpat_year" type="text" class="mt-1 block w-full"
                                                             :value="old('mpat_year')" placeholder="e.g., 2023" />
                                                     </div>

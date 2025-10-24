@@ -59,16 +59,20 @@ class SupervisorController extends Controller
         return view('supervisor.scholars.show', compact('scholar'));
     }
 
-    public function verifyScholarDataForm(Scholar $scholar)
+    public function reviewScholarForm(Scholar $scholar)
     {
         // Ensure the supervisor is assigned to this scholar
         if (! $this->isAssignedSupervisor($scholar)) {
             abort(403, 'Unauthorized action.');
         }
-        return view('supervisor.scholars.verify_data', compact('scholar'));
+
+        // Load synopsis if it exists
+        $synopsis = $scholar->synopsis;
+
+        return view('supervisor.scholars.review', compact('scholar', 'synopsis'));
     }
 
-    public function verifyScholarData(Request $request, Scholar $scholar)
+    public function reviewScholar(Request $request, Scholar $scholar)
     {
         // Ensure the supervisor is assigned to this scholar
         if (! $this->isAssignedSupervisor($scholar)) {
@@ -76,15 +80,54 @@ class SupervisorController extends Controller
         }
 
         $request->validate([
+            'action' => 'required|in:verify_data,approve_synopsis,reject_synopsis',
             'date_of_confirmation' => 'nullable|date',
             'enrollment_number' => 'nullable|string|max:255',
             'research_area' => 'nullable|string|max:255',
-            // Add other fields that a supervisor can verify
+            'research_topic' => 'nullable|string|max:500',
+            'remarks' => 'required|string|max:500',
         ]);
 
-        $scholar->update($request->all());
+        if ($request->action === 'verify_data') {
+            // Update scholar data
+            $scholar->update($request->only(['date_of_confirmation', 'enrollment_number', 'research_area']));
+            return $this->successResponse('Scholar data verified successfully.', 'staff.scholars.list');
+        }
 
-        return $this->successResponse('Scholar data verified successfully.', 'staff.scholars.list');
+        // Handle synopsis approval/rejection
+        $synopsis = $scholar->synopsis;
+        if (!$synopsis) {
+            return redirect()->back()->withErrors(['synopsis' => 'No synopsis found for this scholar.']);
+        }
+
+        if ($synopsis->status !== 'pending_supervisor_approval') {
+            return redirect()->back()->withErrors(['synopsis' => 'This synopsis is not pending supervisor approval.']);
+        }
+
+        if ($request->action === 'approve_synopsis') {
+            $synopsis->update([
+                'status' => 'supervisor_approved',
+                'supervisor_approved_at' => now(),
+                'supervisor_remarks' => $request->remarks,
+            ]);
+
+            // Update research topic if provided
+            if ($request->research_topic) {
+                $scholar->update(['research_topic' => $request->research_topic]);
+            }
+
+            return $this->successResponse('Synopsis approved successfully.', 'staff.scholars.list');
+        } elseif ($request->action === 'reject_synopsis') {
+            $synopsis->update([
+                'status' => 'supervisor_rejected',
+                'supervisor_rejected_at' => now(),
+                'supervisor_remarks' => $request->remarks,
+            ]);
+
+            return $this->successResponse('Synopsis rejected successfully.', 'staff.scholars.list');
+        }
+
+        return redirect()->back()->withErrors(['action' => 'Invalid action specified.']);
     }
 
     public function uploadRacMinutesForm()
@@ -119,82 +162,6 @@ class SupervisorController extends Controller
         return $this->successResponse('RAC minutes uploaded successfully.');
     }
 
-    public function approveSynopsisForm(Synopsis $synopsis)
-    {
-        if (! $this->isAssignedSupervisor($synopsis->scholar)) {
-            abort(403, 'Unauthorized action.');
-        }
-
-        // Load additional relationships for registration details
-        $synopsis->load([
-            'scholar.user',
-            'scholar.admission.department',
-            'scholar.currentSupervisor.supervisor.user',
-            'rac.supervisor.user'
-        ]);
-
-        return view('supervisor.synopsis.approve', compact('synopsis'));
-    }
-
-    public function approveSynopsis(Request $request, Synopsis $synopsis)
-    {
-        if (! $this->isAssignedSupervisor($synopsis->scholar)) {
-            abort(403, 'Unauthorized action.');
-        }
-
-        if ($synopsis->status !== 'pending_supervisor_approval') {
-            abort(403, 'This synopsis is not pending supervisor approval.');
-        }
-
-        $request->validate([
-            'action' => 'required|in:approve,reject',
-            'remarks' => 'required|string|max:500',
-            'rac_minutes_file' => 'required_if:action,approve|file|mimes:pdf|max:2048',
-            'research_topic' => 'nullable|string|max:1000',
-        ]);
-
-        // Use WorkflowSyncService for syncing
-        $workflowSyncService = app(\App\Services\WorkflowSyncService::class);
-
-        if ($request->action === 'approve') {
-            // Upload RAC minutes file
-            $racMinutesPath = $request->file('rac_minutes_file')->store('rac_minutes', 'public');
-
-            $synopsis->update([
-                'supervisor_remarks' => $request->remarks,
-                'rac_minutes_file' => $racMinutesPath,
-            ]);
-
-            // Update scholar's research topic if provided
-            if ($request->filled('research_topic')) {
-                $synopsis->scholar->update([
-                    'research_topic_title' => $request->research_topic,
-                ]);
-            }
-
-            // Sync workflow
-            $workflowSyncService->syncSynopsisWorkflow($synopsis, 'supervisor_approve', Auth::user());
-            $message = 'Synopsis approved and forwarded to HOD with RAC minutes.';
-        } else {
-            $synopsis->update([
-                'supervisor_remarks' => $request->remarks,
-            ]);
-
-            // Update scholar's research topic if provided
-            if ($request->filled('research_topic')) {
-                $synopsis->scholar->update([
-                    'research_topic_title' => $request->research_topic,
-                ]);
-            }
-
-            // Sync workflow
-            $workflowSyncService->syncSynopsisWorkflow($synopsis, 'supervisor_reject', Auth::user());
-
-            $message = 'Synopsis rejected.';
-        }
-
-        return redirect()->route('staff.synopsis.pending')->with('success', $message);
-    }
 
     public function suggestExpertsForm()
     {

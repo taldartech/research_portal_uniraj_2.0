@@ -28,7 +28,7 @@
                                         <td class="px-6 py-4 whitespace-nowrap">{{ $synopsis->proposed_topic }}</td>
                                         <td class="px-6 py-4 whitespace-nowrap">{{ $synopsis->submission_date->format('Y-m-d') }}</td>
                                         <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                            <a href="{{ route('staff.synopsis.approve', $synopsis) }}" class="text-indigo-600 hover:text-indigo-900">Review & Approve</a>
+                                            <a href="{{ route('staff.scholars.review', $synopsis->scholar) }}" class="text-indigo-600 hover:text-indigo-900">Review & Approve</a>
                                         </td>
                                     </tr>
                                 @endforeach
