@@ -414,7 +414,7 @@ class ScholarController extends Controller
 
         $request->validate([
             'supervisor_1_id' => 'required|exists:supervisors,id',
-            'justification_1' => 'required|string',
+            'justification_1' => 'nullable|string',
             'supervisor_2_id' => 'nullable|exists:supervisors,id',
             'justification_2' => 'nullable|string',
             'supervisor_3_id' => 'nullable|exists:supervisors,id',
@@ -452,7 +452,7 @@ class ScholarController extends Controller
             'scholar_id' => $scholar->id,
             'supervisor_id' => $request->supervisor_1_id,
             'preference_order' => 1,
-            'justification' => $request->justification_1,
+            'remarks' => $request->remarks,
             'status' => 'pending',
             'created_at' => now(),
             'updated_at' => now(),

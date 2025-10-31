@@ -28,6 +28,7 @@ class Synopsis extends Model
         'supervisor_approved_at',
         'supervisor_remarks',
         'rac_minutes_file',
+        'rac_meeting_date',
         'hod_approver_id',
         'hod_approved_at',
         'hod_remarks',
@@ -52,10 +53,12 @@ class Synopsis extends Model
         'rejection_reason',
         'rejection_count',
         'original_synopsis_id',
+        'drc_date'
     ];
 
     protected $casts = [
         'submission_date' => 'date',
+        'rac_meeting_date' => 'date',
         'topic_change_proposed_at' => 'datetime',
         'topic_change_responded_at' => 'datetime',
         'supervisor_approved_at' => 'datetime',

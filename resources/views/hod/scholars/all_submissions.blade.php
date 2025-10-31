@@ -30,7 +30,10 @@
             <!-- Tabs Navigation -->
             <div class="mb-6">
                 <nav class="flex space-x-8" aria-label="Tabs">
-                    <button onclick="showTab('synopses')" id="synopses-tab" class="tab-button active whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm">
+                    <button onclick="showTab('scholar')" id="scholar-tab" class="tab-button active whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm">
+                        Scholar List ({{ $scholars->count() }})
+                    </button>
+                    <button onclick="showTab('synopses')" id="synopses-tab" class="tab-button whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm">
                         Synopses ({{ $synopses->count() }})
                     </button>
                     <button onclick="showTab('progress')" id="progress-tab" class="tab-button whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm">
@@ -40,6 +43,49 @@
                         Thesis Submissions ({{ $thesisSubmissions->count() }})
                     </button>
                 </nav>
+            </div>
+
+            <!-- Scholar List Tab -->
+            <div id="scholar-content" class="tab-content hidden">
+                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+                    <div class="p-6 text-gray-900">
+                        <h3 class="text-lg font-medium text-gray-900 mb-4">Scholar List</h3>
+                        @if ($scholars->isEmpty())
+                            <p class="text-gray-600">No scholars found.</p>
+                        @else
+                            <div class="overflow-x-auto">
+                                <table class="min-w-full divide-y divide-gray-200">
+                                    <thead class="bg-gray-50">
+                                        <tr>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Scholar</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Department</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="bg-white divide-y divide-gray-200">
+                                        @foreach ($scholars as $scholar)
+                                            <tr>
+                                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                                    {{ $scholar->user->name }}
+                                                </td>
+                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                    {{ $scholar->admission->department->name ?? 'N/A' }}
+                                                </td>
+                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                    {{ $scholar->status }}
+                                                </td>
+                                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                                    <a href="{{ route('hod.scholars.show', $scholar) }}" class="text-blue-600 hover:text-blue-900">View</a>
+                                                </td>
+                                            </tr>
+                                        @endforeach
+                                    </tbody>
+                                </table>
+                            </div>
+                        @endif
+                    </div>
+                </div>
             </div>
 
             <!-- Synopses Tab -->

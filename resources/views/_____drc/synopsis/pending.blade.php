@@ -36,14 +36,14 @@
                                                 @method('PATCH')
                                                 <input type="hidden" name="action" value="approve">
                                                 <input type="hidden" name="remarks" value="Approved by HOD">
-                                                <x-primary-button class="ml-3">Approve</x-primary-button>
+                                                <x-primary-button class="ml-3">Satisfied</x-primary-button>
                                             </form>
                                             <form method="POST" action="{{ route('drc.synopsis.approve', $synopsis) }}" class="inline-block ml-2">
                                                 @csrf
                                                 @method('PATCH')
                                                 <input type="hidden" name="action" value="reject">
                                                 <input type="hidden" name="remarks" value="Rejected by HOD">
-                                                <x-danger-button class="ml-3">Reject</x-danger-button>
+                                                <x-danger-button class="ml-3">Unsatisfied</x-danger-button>
                                             </form>
                                         </td>
                                     </tr>

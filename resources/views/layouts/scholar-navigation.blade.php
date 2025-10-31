@@ -74,6 +74,11 @@
                     @else
                         <p class="inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-sm font-medium leading-5 text-gray-500 focus:outline-none focus:border-indigo-700 transition duration-150 ease-in-out">Awaiting Supervisor Assignment</p>
                     @endif
+
+                    {{-- DRC Minutes - Accessible to all roles --}}
+                    <x-nav-link :href="route('drc_minutes.index')" :active="request()->routeIs('drc_minutes.*')">
+                        {{ __('DRC Minutes') }}
+                    </x-nav-link>
                 </div>
             </div>
 
@@ -156,6 +161,11 @@
                     {{ __('Late Submission Status') }}
                 </x-responsive-nav-link>
             @endif
+
+            {{-- DRC Minutes - Accessible to all roles --}}
+            <x-responsive-nav-link :href="route('drc_minutes.index')" :active="request()->routeIs('drc_minutes.*')">
+                {{ __('DRC Minutes') }}
+            </x-responsive-nav-link>
         </div>
 
         <!-- Responsive Settings Options -->

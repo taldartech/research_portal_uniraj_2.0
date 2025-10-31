@@ -288,20 +288,8 @@
                                 </svg>
                                 Download RAC Minutes
                             </a>
-                        </div>
-                    @endif
-
-                    <!-- DRC Minutes (if uploaded by HOD) -->
-                    @if($synopsis->drc_minutes_file)
-                        <div class="mb-6 p-4 bg-blue-50 rounded-lg">
-                            <h3 class="text-lg font-medium text-blue-900 mb-2">DRC Minutes (Uploaded by HOD)</h3>
-                            <a href="{{ Storage::url($synopsis->drc_minutes_file) }}" target="_blank"
-                               class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-                                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                                </svg>
-                                Download DRC Minutes
-                            </a>
+                            <h4 class="text-lg font-medium text-red-900 mb-2">DRC Date: {{ $synopsis->drc_date ? $synopsis->drc_date : 'N/A' }}</h4>
+                            <h4 class="text-lg font-medium text-red-900 mb-2">DRC file: <a target="_blank" href="{{ $synopsis->drc_minutes_file }}" class="text-blue-600 hover:text-blue-900">View</a></h4>
                         </div>
                     @endif
 
@@ -319,18 +307,18 @@
 
                     <!-- DR Remark Form -->
                     <div class="mt-8 p-6 bg-white border border-gray-200 rounded-lg">
-                        <h3 class="text-lg font-medium text-gray-900 mb-4">DR Remark</h3>
+                        <h3 class="text-lg font-medium text-gray-900 mb-4">DR Recommendation</h3>
                         <form method="POST" action="{{ route('dr.synopses.process', $synopsis) }}">
                             @csrf
                             @method('POST')
 
                             <!-- Action Selection -->
                             <div class="mb-4">
-                                <label for="action" class="block text-sm font-medium text-gray-700 mb-2">Remark</label>
+                                <label for="action" class="block text-sm font-medium text-gray-700 mb-2">Recommendation <span class="text-red-500">*</span></label>
                                 <select id="action" name="action" class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500" required>
-                                    <option value="">Select Remark</option>
-                                    <option value="approve" {{ old('action') == 'approve' ? 'selected' : '' }}>Approve</option>
-                                    <option value="reject" {{ old('action') == 'reject' ? 'selected' : '' }}>Reject</option>
+                                    <option value="">Select Recommendation</option>
+                                    <option value="approve" {{ old('action') == 'approve' ? 'selected' : '' }}>Approved</option>
+                                    <option value="reject" {{ old('action') == 'reject' ? 'selected' : '' }}>Not - Approved</option>
                                 </select>
                                 @error('action')
                                     <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
@@ -339,7 +327,7 @@
 
                             <!-- Remarks -->
                             <div class="mb-6">
-                                <label for="remarks" class="block text-sm font-medium text-gray-700 mb-2">Your Comments</label>
+                                <label for="remarks" class="block text-sm font-medium text-gray-700 mb-2">Remarks <span class="text-red-500">*</span></label>
                                 <textarea id="remarks" name="remarks" rows="4" class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500" placeholder="Enter your comments..." required>{{ old('remarks') }}</textarea>
                                 @error('remarks')
                                     <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
@@ -357,7 +345,7 @@
                                     <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                                     </svg>
-                                    Submit Remark
+                                    Submit Recommendation
                                 </button>
                             </div>
                         </form>

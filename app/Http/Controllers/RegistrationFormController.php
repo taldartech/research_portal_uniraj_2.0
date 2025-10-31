@@ -295,17 +295,17 @@ class RegistrationFormController extends Controller
     }
 
     /**
-     * List pending registration forms for AR - DISABLED (no longer needed)
+     * List pending registration forms for AR
      */
-    /*
     public function listPendingForAR()
     {
-        $registrationForms = RegistrationForm::where('status', 'pending_ar_signature')
-            ->with(['scholar', 'generatedByDA'])
+        // AR signs after DR, so pending forms are those signed by DR but not yet by AR
+        $registrationForms = RegistrationForm::where('status', 'signed_by_dr')
+            ->whereNull('signed_by_ar_id')
+            ->with(['scholar', 'generatedByDA', 'signedByDR'])
             ->latest()
             ->get();
 
         return view('ar.registration_forms.pending', compact('registrationForms'));
     }
-    */
 }

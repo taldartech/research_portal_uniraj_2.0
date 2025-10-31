@@ -197,6 +197,10 @@ Route::prefix('staff')->name('staff.')->middleware(['auth'])->group(function () 
         Route::get('/late-submission/pending', [App\Http\Controllers\LateSubmissionController::class, 'listPendingForSupervisor'])->name('late_submission.pending');
         Route::get('/late-submission/{lateSubmissionRequest}/approve', [App\Http\Controllers\LateSubmissionController::class, 'showApprovalForm'])->name('late_submission.approve');
         Route::post('/late-submission/{lateSubmissionRequest}/approve', [App\Http\Controllers\LateSubmissionController::class, 'processApproval'])->name('late_submission.process');
+
+        // RAC Committee Submission Routes
+        Route::get('/scholars/{scholar}/rac-committee/submit', [App\Http\Controllers\SupervisorController::class, 'submitRACCommitteeForm'])->name('rac_committee.submit');
+        Route::post('/scholars/{scholar}/rac-committee/submit', [App\Http\Controllers\SupervisorController::class, 'storeRACCommitteeSubmission'])->name('rac_committee.store');
     });
 });
 
@@ -247,6 +251,15 @@ Route::prefix('hod')->name('hod.')->middleware(['auth', UserTypeMiddleware::clas
     // Late Submission Request Routes
     Route::get('/late-submission/pending', [App\Http\Controllers\LateSubmissionController::class, 'listPendingForHOD'])->name('late_submission.pending');
     Route::post('/late-submission/{lateSubmissionRequest}/approve', [App\Http\Controllers\LateSubmissionController::class, 'processHODApproval'])->name('late_submission.process');
+
+    // DRC Minutes CRUD Routes
+    Route::resource('drc-minutes', App\Http\Controllers\HODDRCMinutesController::class)->names('drc_minutes');
+    Route::get('/drc-minutes/{drc_minute}/download', [App\Http\Controllers\HODDRCMinutesController::class, 'download'])->name('drc_minutes.download');
+
+    // RAC Committee Submission Routes
+    Route::get('/rac-committee-submissions/pending', [HODController::class, 'listPendingRACCommitteeSubmissions'])->name('rac_committee.pending');
+    Route::get('/rac-committee-submissions/{racCommitteeSubmission}/approve', [HODController::class, 'showRACCommitteeApprovalForm'])->name('rac_committee.approve');
+    Route::post('/rac-committee-submissions/{racCommitteeSubmission}/approve', [HODController::class, 'processRACCommitteeApproval'])->name('rac_committee.approve.store');
 });
 
 // DRC Routes (managed by HOD)
@@ -294,6 +307,7 @@ Route::prefix('da')->name('da.')->middleware(['auth', UserTypeMiddleware::class]
 
     // All Scholar Submissions
     Route::get('/scholars/all-submissions', [DAController::class, 'listAllScholarSubmissions'])->name('scholars.all_submissions');
+    Route::get('/scholars/{scholar}', [DAController::class, 'viewScholarDetails'])->name('scholars.show');
 
     // Registration Form Routes
     Route::get('/registration-forms/eligible-scholars', [App\Http\Controllers\RegistrationFormController::class, 'listEligibleScholars'])->name('registration_forms.eligible_scholars');
@@ -366,6 +380,7 @@ Route::prefix('so')->name('so.')->middleware(['auth', UserTypeMiddleware::class]
 
     // All Scholar Submissions
     Route::get('/scholars/all-submissions', [SOController::class, 'listAllScholarSubmissions'])->name('scholars.all_submissions');
+    Route::get('/scholars/{scholar}', [SOController::class, 'viewScholarDetails'])->name('scholars.show');
 });
 
 // AR (Assistant Registrar) Routes
@@ -394,6 +409,7 @@ Route::prefix('ar')->name('ar.')->middleware(['auth', UserTypeMiddleware::class]
 
     // All Scholar Submissions
     Route::get('/scholars/all-submissions', [ARController::class, 'listAllScholarSubmissions'])->name('scholars.all_submissions');
+    Route::get('/scholars/{scholar}', [ARController::class, 'viewScholarDetails'])->name('scholars.show');
 
     // Registration Forms
     Route::get('/registration-forms/pending', [App\Http\Controllers\RegistrationFormController::class, 'listPendingForAR'])->name('registration_forms.pending');
@@ -426,6 +442,7 @@ Route::prefix('dr')->name('dr.')->middleware(['auth', UserTypeMiddleware::class]
 
     // All Scholar Submissions
     Route::get('/scholars/all-submissions', [DRController::class, 'listAllScholarSubmissions'])->name('scholars.all_submissions');
+    Route::get('/scholars/{scholar}', [DRController::class, 'viewScholarDetails'])->name('scholars.show');
 
     // Registration Forms
     Route::get('/registration-forms/pending', [App\Http\Controllers\RegistrationFormController::class, 'listPendingForDR'])->name('registration_forms.pending');
@@ -458,6 +475,7 @@ Route::prefix('hvc')->name('hvc.')->middleware(['auth', UserTypeMiddleware::clas
 
     // All Scholar Submissions
     Route::get('/scholars/all-submissions', [HVCController::class, 'listAllScholarSubmissions'])->name('scholars.all_submissions');
+    Route::get('/scholars/{scholar}', [HVCController::class, 'viewScholarDetails'])->name('scholars.show');
 
     // Thesis Approval Routes
     Route::get('/thesis/pending-approval', [HVCController::class, 'listPendingThesisApprovals'])->name('thesis.pending_approval');
@@ -545,3 +563,13 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/workflow/scholar/{scholar}/status', [\App\Http\Controllers\WorkflowDashboardController::class, 'getScholarWorkflowStatus'])->name('workflow.scholar.status');
     Route::get('/workflow/pending-items', [\App\Http\Controllers\WorkflowDashboardController::class, 'getPendingItems'])->name('workflow.pending.items');
 });
+
+// DRC Minutes Routes (accessible to all authenticated users except scholars)
+Route::middleware(['auth', App\Http\Middleware\ExcludeScholarMiddleware::class])
+    ->prefix('drc-minutes')
+    ->name('drc_minutes.')
+    ->group(function () {
+        Route::get('/', [App\Http\Controllers\DRCMinutesController::class, 'index'])->name('index');
+        Route::get('/{drc_minute}', [App\Http\Controllers\DRCMinutesController::class, 'show'])->name('show');
+        Route::get('/{drc_minute}/download', [App\Http\Controllers\DRCMinutesController::class, 'download'])->name('download');
+    });

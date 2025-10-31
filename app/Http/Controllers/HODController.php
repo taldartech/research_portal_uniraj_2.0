@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use App\Models\Scholar;
 use App\Models\Synopsis;
+use App\Models\RACCommitteeSubmission;
 use Illuminate\Support\Facades\Auth;
 use Maatwebsite\Excel\Facades\Excel;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
@@ -415,6 +416,17 @@ class HODController extends Controller
             return redirect()->route('hod.scholars.show', $scholar)->with('info', 'Scholar already has an assigned supervisor.');
         }
 
+        // Get supervisor preferences for this scholar
+        $preferences = $scholar->supervisorPreferences()
+            ->where('status', 'pending')
+            ->with(['supervisor.user', 'supervisor' => function($query) {
+                $query->with(['assignedScholars' => function ($q) {
+                    $q->wherePivot('status', 'assigned');
+                }]);
+            }])
+            ->orderBy('preference_order')
+            ->get();
+
         $supervisors = \App\Models\Supervisor::whereHas('user', function ($query) use ($hodDepartment) {
                                             $query->where('department_id', $hodDepartment->id);
                                         })
@@ -426,7 +438,7 @@ class HODController extends Controller
                                             return $supervisor->canAcceptMoreScholars();
                                         });
 
-        return view('hod.scholars.assign_supervisor', compact('scholar', 'supervisors', 'pendingAssignments'));
+        return view('hod.scholars.assign_supervisor', compact('scholar', 'supervisors', 'pendingAssignments', 'preferences'));
     }
 
     public function storeSupervisorAssignment(Request $request, Scholar $scholar)
@@ -442,11 +454,62 @@ class HODController extends Controller
             return redirect()->route('hod.scholars.show', $scholar)->with('info', 'Scholar already has an assigned supervisor.');
         }
 
-        $request->validate([
-            'supervisor_id' => 'required|exists:supervisors,id',
-        ]);
+        // Determine if selecting from preferences or manual selection
+        $assignmentType = $request->input('assignment_type', 'manual'); // 'preference' or 'manual'
 
-        $supervisor = \App\Models\Supervisor::where('id', $request->supervisor_id)
+        if ($assignmentType === 'preference') {
+            // Validate preference selection
+            $request->validate([
+                'selected_preference_id' => 'required|exists:supervisor_preferences,id',
+                'remarks' => 'nullable|string|max:1000',
+            ]);
+
+            $selectedPreference = \App\Models\SupervisorPreference::where('id', $request->selected_preference_id)
+                ->where('scholar_id', $scholar->id)
+                ->where('status', 'pending')
+                ->with('supervisor')
+                ->firstOrFail();
+
+            $supervisorId = $selectedPreference->supervisor_id;
+            $justification = $selectedPreference->justification;
+
+            // Approve the selected preference
+            $selectedPreference->update([
+                'status' => 'approved',
+                'approved_at' => now(),
+                'approved_by' => auth()->id(),
+                'remarks' => $request->remarks,
+            ]);
+
+            // Reject all other preferences for this scholar
+            \App\Models\SupervisorPreference::where('scholar_id', $scholar->id)
+                ->where('id', '!=', $selectedPreference->id)
+                ->where('status', 'pending')
+                ->update([
+                    'status' => 'rejected',
+                    'rejected_at' => now(),
+                    'rejected_by' => auth()->id(),
+                ]);
+        } else {
+            // Manual selection
+            $request->validate([
+                'supervisor_id' => 'required|exists:supervisors,id',
+            ]);
+
+            $supervisorId = $request->supervisor_id;
+            $justification = null;
+
+            // Reject all pending preferences if manually selecting
+            \App\Models\SupervisorPreference::where('scholar_id', $scholar->id)
+                ->where('status', 'pending')
+                ->update([
+                    'status' => 'rejected',
+                    'rejected_at' => now(),
+                    'rejected_by' => auth()->id(),
+                ]);
+        }
+
+        $supervisor = \App\Models\Supervisor::where('id', $supervisorId)
                                         ->whereHas('user', function ($query) use ($hodDepartment) {
                                             $query->where('department_id', $hodDepartment->id);
                                         })
@@ -474,17 +537,22 @@ class HODController extends Controller
         // Create the new assignment with 'assigned' status (directly assigned by HOD)
         \App\Models\SupervisorAssignment::create([
             'scholar_id' => $scholar->id,
-            'supervisor_id' => $supervisor->id,
+            'supervisor_id' => $supervisorId,
             'assigned_date' => now(),
             'status' => 'assigned', // Directly assigned by HOD
             'approved_at' => now(),
             'approved_by' => auth()->id(),
+            'justification' => $justification,
         ]);
 
         // Update scholar status to reflect supervisor assignment
         $scholar->update(['status' => 'supervisor_assigned']);
 
-        return redirect()->route('hod.scholars.list')->with('success', 'Supervisor assigned successfully.');
+        $message = $assignmentType === 'preference'
+            ? 'Supervisor assigned successfully from preferences.'
+            : 'Supervisor assigned successfully.';
+
+        return redirect()->route('hod.scholars.list')->with('success', $message);
     }
 
     public function listSupervisors()
@@ -564,7 +632,7 @@ class HODController extends Controller
         $request->validate([
             'action' => 'required|in:approve,reject',
             'remarks' => 'required|string|max:500',
-            'drc_minutes_file' => 'required_if:action,approve|file|mimes:pdf|max:2048',
+            'drc_date' => 'required',
         ]);
 
         // Use WorkflowSyncService for syncing
@@ -572,19 +640,18 @@ class HODController extends Controller
 
         if ($request->action === 'approve') {
             // Upload DRC minutes file
-            $drcMinutesPath = $request->file('drc_minutes_file')->store('drc_minutes', 'public');
-
             $synopsis->update([
                 'hod_remarks' => $request->remarks,
-                'drc_minutes_file' => $drcMinutesPath,
+                'drc_date' => $request->drc_date,
             ]);
 
             // Sync workflow
             $workflowSyncService->syncSynopsisWorkflow($synopsis, 'hod_approve', Auth::user());
-            $message = 'Synopsis approved and forwarded to DA with DRC minutes.';
+            $message = 'Synopsis approved and forwarded to DA.';
         } else {
             $synopsis->update([
                 'hod_remarks' => $request->remarks,
+                'drc_date' => $request->drc_date,
             ]);
 
             // Sync workflow
@@ -812,11 +879,20 @@ class HODController extends Controller
         ->latest()
         ->get();
 
+        // Get all RAC committee submissions for these scholars
+        $racCommitteeSubmissions = \App\Models\RACCommitteeSubmission::whereHas('scholar.admission', function ($query) use ($hodDepartment) {
+            $query->where('department_id', $hodDepartment->id);
+        })
+        ->with(['scholar.user', 'scholar.admission.department', 'supervisor.user', 'hod'])
+        ->latest()
+        ->get();
+
         return view('hod.scholars.all_submissions', compact(
             'scholars',
             'synopses',
             'progressReports',
-            'thesisSubmissions'
+            'thesisSubmissions',
+            'racCommitteeSubmissions'
         ));
     }
 
@@ -1239,5 +1315,93 @@ class HODController extends Controller
         ]);
 
         return $this->successResponse('Supervisor assignment rejected successfully.');
+    }
+
+    /**
+     * List pending RAC committee submissions for HOD approval
+     */
+    public function listPendingRACCommitteeSubmissions()
+    {
+        $hodDepartment = auth()->user()->departmentManaging;
+
+        if (!$hodDepartment) {
+            abort(403, 'You are not assigned as HOD to any department.');
+        }
+
+        $submissions = RACCommitteeSubmission::whereHas('scholar.admission', function ($query) use ($hodDepartment) {
+            $query->where('department_id', $hodDepartment->id);
+        })
+        ->where('status', 'pending_hod_approval')
+        ->with(['scholar.user', 'supervisor.user'])
+        ->latest()
+        ->get();
+
+        return view('hod.rac_committee.pending', compact('submissions'));
+    }
+
+    /**
+     * Show approval form for RAC committee submission
+     */
+    public function showRACCommitteeApprovalForm(RACCommitteeSubmission $racCommitteeSubmission)
+    {
+        $hodDepartment = auth()->user()->departmentManaging;
+
+        if (!$hodDepartment || $racCommitteeSubmission->scholar->admission->department_id !== $hodDepartment->id) {
+            abort(403, 'Unauthorized action.');
+        }
+
+        if ($racCommitteeSubmission->status !== 'pending_hod_approval') {
+            abort(403, 'This RAC committee submission is not pending approval.');
+        }
+
+        $racCommitteeSubmission->load(['scholar.user', 'supervisor.user', 'scholar.admission.department']);
+
+        return view('hod.rac_committee.approve', compact('racCommitteeSubmission'));
+    }
+
+    /**
+     * Process RAC committee submission approval/rejection
+     */
+    public function processRACCommitteeApproval(Request $request, RACCommitteeSubmission $racCommitteeSubmission)
+    {
+        $hodDepartment = auth()->user()->departmentManaging;
+
+        if (!$hodDepartment || $racCommitteeSubmission->scholar->admission->department_id !== $hodDepartment->id) {
+            abort(403, 'Unauthorized action.');
+        }
+
+        if ($racCommitteeSubmission->status !== 'pending_hod_approval') {
+            abort(403, 'This RAC committee submission is not pending approval.');
+        }
+
+        $request->validate([
+            'action' => 'required|in:approve,reject',
+            'drc_date' => 'required|date',
+            'hod_remarks' => 'required|string|max:1000',
+        ]);
+
+        if ($request->action === 'approve') {
+            $racCommitteeSubmission->update([
+                'status' => 'approved',
+                'hod_id' => Auth::id(),
+                'drc_date' => $request->drc_date,
+                'hod_remarks' => $request->hod_remarks,
+                'approved_at' => now(),
+            ]);
+
+            $message = 'RAC committee members approved successfully.';
+        } else {
+            $racCommitteeSubmission->update([
+                'status' => 'rejected',
+                'hod_id' => Auth::id(),
+                'drc_date' => $request->drc_date,
+                'hod_remarks' => $request->hod_remarks,
+                'rejected_at' => now(),
+            ]);
+
+            $message = 'RAC committee submission rejected.';
+        }
+
+        return redirect()->route('hod.rac_committee.pending')->with('success', $message);
     }
 }

@@ -75,6 +75,12 @@
             <x-nav-link :href="route('hod.viva.examinations')" :active="request()->routeIs('hod.viva.*')">
                 {{ __('Viva Examinations') }}
             </x-nav-link>
+            <x-nav-link :href="route('hod.drc_minutes.index')" :active="request()->routeIs('hod.drc_minutes.*')">
+                {{ __('Manage DRC Minutes') }}
+            </x-nav-link>
+            <x-nav-link :href="route('hod.rac_committee.pending')" :active="request()->routeIs('hod.rac_committee.*')">
+                {{ __('RAC Committee Submissions') }}
+            </x-nav-link>
         @endif
 
         @if(Auth::user()->user_type === 'dean')
@@ -239,6 +245,15 @@
             <x-nav-link :href="route('expert.evaluations.list')" :active="request()->routeIs('expert.evaluations.list')">
                 {{ __('My Thesis Evaluations') }}
             </x-nav-link>
+        @endif
+        @if(Auth::user()->user_type != 'hod')
+
+            {{-- DRC Minutes - Accessible to all roles --}}
+            <div class="pt-4 mt-4 border-t border-gray-200">
+                <x-nav-link :href="route('drc_minutes.index')" :active="request()->routeIs('drc_minutes.*')">
+                    {{ __('DRC Minutes') }}
+                </x-nav-link>
+            </div>
         @endif
 
         {{-- Add more staff roles and their specific links here --}}

@@ -69,7 +69,7 @@
                             <h4 class="text-lg font-medium text-orange-800 mb-2">Important Notice</h4>
                             <ul class="text-sm text-orange-700 space-y-1">
                                 <li>• If you <strong>accept</strong> the topic change, your synopsis will be updated with the new topic.</li>
-                                <li>• If you <strong>reject</strong> the topic change, your original topic will remain unchanged.</li>
+                                <li>• If you <strong>Not - Approved</strong> the topic change, your original topic will remain unchanged.</li>
                                 <li>• Your supervisor will be notified of your Remark.</li>
                                 <li>• This Remark cannot be undone once submitted.</li>
                             </ul>

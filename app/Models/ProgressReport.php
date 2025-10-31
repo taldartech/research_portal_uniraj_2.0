@@ -27,6 +27,7 @@ class ProgressReport extends Model
         'supervisor_approver_id',
         'supervisor_approved_at',
         'supervisor_remarks',
+        'rac_meeting_date',
         'hod_approver_id',
         'hod_approved_at',
         'hod_remarks',
@@ -55,6 +56,7 @@ class ProgressReport extends Model
 
     protected $casts = [
         'submission_date' => 'date',
+        'rac_meeting_date' => 'date',
         'supervisor_approved_at' => 'datetime',
         'hod_approved_at' => 'datetime',
         'da_approved_at' => 'datetime',

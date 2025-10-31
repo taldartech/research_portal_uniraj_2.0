@@ -21,12 +21,11 @@
                         @foreach($submittedPreferences as $preference)
                             <div class="mb-4 p-4 border rounded-lg">
                                 <p><strong>Preference {{ $preference->preference_order }}:</strong> {{ $preference->supervisor->user->name }}</p>
-                                <p><strong>Justification:</strong> {{ $preference->justification }}</p>
                                 <p><strong>Status:</strong> {{ ucfirst(str_replace('_', ' ', $preference->status)) }}</p>
-                                @if ($preference->remarks)
-                                    <p><strong>Remarks:</strong> {{ $preference->remarks }}</p>
-                                @endif
                             </div>
+                            @if ($preference->remarks)
+                                <p><strong>Remarks:</strong> {{ $preference->remarks }}</p>
+                            @endif
                         @endforeach
 
 
@@ -48,11 +47,6 @@
                                     </x-select-input>
                                     <x-input-error :messages="$errors->get('supervisor_1_id')" class="mt-2" />
                                 </div>
-                                <div class="mb-4">
-                                    <x-input-label for="justification_1" :value="__('Justification')" />
-                                    <x-textarea-input id="justification_1" name="justification_1" class="block mt-1 w-full" rows="3" required>{{ old('justification_1') }}</x-textarea-input>
-                                    <x-input-error :messages="$errors->get('justification_1')" class="mt-2" />
-                                </div>
                             </div>
 
                             <!-- Supervisor Preference 2 -->
@@ -67,11 +61,6 @@
                                         @endforeach
                                     </x-select-input>
                                     <x-input-error :messages="$errors->get('supervisor_2_id')" class="mt-2" />
-                                </div>
-                                <div class="mb-4">
-                                    <x-input-label for="justification_2" :value="__('Justification')" />
-                                    <x-textarea-input id="justification_2" name="justification_2" class="block mt-1 w-full" rows="3">{{ old('justification_2') }}</x-textarea-input>
-                                    <x-input-error :messages="$errors->get('justification_2')" class="mt-2" />
                                 </div>
                             </div>
 
@@ -88,11 +77,11 @@
                                     </x-select-input>
                                     <x-input-error :messages="$errors->get('supervisor_3_id')" class="mt-2" />
                                 </div>
-                                <div class="mb-4">
-                                    <x-input-label for="justification_3" :value="__('Justification')" />
-                                    <x-textarea-input id="justification_3" name="justification_3" class="block mt-1 w-full" rows="3">{{ old('justification_3') }}</x-textarea-input>
-                                    <x-input-error :messages="$errors->get('justification_3')" class="mt-2" />
-                                </div>
+                            </div>
+                            <div class="mb-4">
+                                <x-input-label for="remarks" :value="__('Remark')" />
+                                <x-textarea-input id="remarks" name="remarks" class="block mt-1 w-full" rows="3">{{ old('remarks') }}</x-textarea-input>
+                                <x-input-error :messages="$errors->get('remarks')" class="mt-2" />
                             </div>
 
                             <div class="flex items-center justify-end mt-4">

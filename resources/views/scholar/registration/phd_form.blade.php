@@ -3,7 +3,7 @@
         <div class="flex items-center justify-between">
             <div>
                 <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
-                    {{ __('Ph.D. Registration Form') }}
+                    {{ __('Profile Update') }}
                 </h2>
                 <nav class="flex mt-2" aria-label="Breadcrumb">
                     <ol class="inline-flex items-center space-x-1 md:space-x-3">
@@ -55,8 +55,8 @@
                     <div class="mb-8 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-gray-700 dark:to-gray-600 rounded-lg p-6 border-l-4 border-blue-500">
                         <div class="flex items-center justify-between mb-4">
                             <div>
-                                <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Registration Status</h3>
-                                <p class="text-sm text-gray-600 dark:text-gray-400">Track your Ph.D. registration progress</p>
+                                <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Profile update </h3>
+                                <p class="text-sm text-gray-600 dark:text-gray-400">Track your profile progress</p>
                             </div>
                             <div class="text-right">
                                 <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium
@@ -108,8 +108,8 @@
                         </div>
 
                         <!-- Certificate Status -->
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div class="flex items-center justify-between p-3 bg-white dark:bg-gray-800 rounded-lg border">
+                        {{-- <div class="grid grid-cols-1 md:grid-cols-2 gap-4"> --}}
+                            {{-- <div class="flex items-center justify-between p-3 bg-white dark:bg-gray-800 rounded-lg border">
                                 <div class="flex items-center">
                                     <svg class="w-5 h-5 mr-2 {{ $scholar->supervisor_certificate_completed ? 'text-green-500' : 'text-gray-400' }}" fill="currentColor" viewBox="0 0 20 20">
                                         <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
@@ -119,7 +119,7 @@
                                 <span class="text-sm {{ $scholar->supervisor_certificate_completed ? 'text-green-600' : 'text-gray-500' }}">
                                     {{ $scholar->supervisor_certificate_completed ? 'Completed' : 'Pending' }}
                                 </span>
-                            </div>
+                            </div> --}}
                             {{-- <div class="flex items-center justify-between p-3 bg-white dark:bg-gray-800 rounded-lg border">
                                 <div class="flex items-center">
                                     <svg class="w-5 h-5 mr-2 {{ $scholar->hod_certificate_completed ? 'text-green-500' : 'text-gray-400' }}" fill="currentColor" viewBox="0 0 20 20">
@@ -131,7 +131,7 @@
                                     {{ $scholar->hod_certificate_completed ? 'Completed' : 'Pending' }}
                                 </span>
                             </div> --}}
-                        </div>
+                        {{-- </div> --}}
                     </div>
 
                     <form method="POST" action="{{ route('scholar.registration.phd_form.store') }}" enctype="multipart/form-data" class="space-y-8">
@@ -145,21 +145,21 @@
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <!-- Basic Profile Details -->
                                 <div>
-                                    <x-input-label for="first_name" :value="__('First Name')" />
+                                    <x-input-label for="first_name" :value="__('First Name')" :required="true"/>
                                     <x-text-input id="first_name" name="first_name" type="text" class="mt-1 block w-full"
                                         :value="old('first_name', $scholar->first_name)" required />
                                     <x-input-error :messages="$errors->get('first_name')" class="mt-2" />
                                 </div>
 
                                 <div>
-                                    <x-input-label for="last_name" :value="__('Last Name')" />
+                                    <x-input-label for="last_name" :value="__('Last Name')" :required="true"/>
                                     <x-text-input id="last_name" name="last_name" type="text" class="mt-1 block w-full"
                                         :value="old('last_name', $scholar->last_name)" required />
                                     <x-input-error :messages="$errors->get('last_name')" class="mt-2" />
                                 </div>
 
                                 <div>
-                                    <x-input-label for="email" :value="__('Email Address')" />
+                                    <x-input-label for="email" :value="__('Email Address')" :required="true"/>
                                     <x-text-input id="email" name="email" type="email" class="mt-1 block w-full"
                                         :value="old('email', $scholar->user->email)" required readonly />
                                     <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Email cannot be changed</p>
@@ -167,21 +167,21 @@
                                 </div>
 
                                 <div>
-                                    <x-input-label for="contact_number" :value="__('Mobile Number')" />
+                                    <x-input-label for="contact_number" :value="__('Mobile Number')" :required="true"/>
                                     <x-text-input id="contact_number" name="contact_number" type="text" class="mt-1 block w-full"
                                         :value="old('contact_number', $scholar->contact_number)" required />
                                     <x-input-error :messages="$errors->get('contact_number')" class="mt-2" />
                                 </div>
 
                                 <div>
-                                    <x-input-label for="date_of_birth" :value="__('Date of Birth')" />
+                                    <x-input-label for="date_of_birth" :value="__('Date of Birth')" :required="true"/>
                                     <x-text-input id="date_of_birth" name="date_of_birth" type="date" class="mt-1 block w-full"
                                         :value="old('date_of_birth', $scholar->date_of_birth ? $scholar->date_of_birth->format('Y-m-d') : '')" required />
                                     <x-input-error :messages="$errors->get('date_of_birth')" class="mt-2" />
                                 </div>
 
                                 <div>
-                                    <x-input-label for="gender" :value="__('Gender')" />
+                                    <x-input-label for="gender" :value="__('Gender')" :required="true"/>
                                     <select id="gender" name="gender" class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 dark:focus:border-indigo-600 focus:ring-indigo-500 dark:focus:ring-indigo-600 rounded-md shadow-sm" required>
                                         <option value="">Select Gender</option>
                                         <option value="Male" {{ old('gender', $scholar->gender) == 'Male' ? 'selected' : '' }}>Male</option>
@@ -192,13 +192,13 @@
                                 </div>
 
                                 <div>
-                                    <x-input-label for="address" :value="__('Address')" />
+                                    <x-input-label for="address" :value="__('Address')" :required="true"/>
                                     <textarea id="address" name="address" rows="3" class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 dark:focus:border-indigo-600 focus:ring-indigo-500 dark:focus:ring-indigo-600 rounded-md shadow-sm" required>{{ old('address', $scholar->address) }}</textarea>
                                     <x-input-error :messages="$errors->get('address')" class="mt-2" />
                                 </div>
 
                                 <div>
-                                    <x-input-label for="research_area" :value="__('Research Area')" />
+                                    <x-input-label for="research_area" :value="__('Research Area')" :required="true"/>
                                     <x-text-input id="research_area" name="research_area" type="text" class="mt-1 block w-full"
                                         :value="old('research_area', $scholar->research_area)" required />
                                     <x-input-error :messages="$errors->get('research_area')" class="mt-2" />
@@ -212,28 +212,28 @@
 
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div>
-                                    <x-input-label for="father_name" :value="__('Father\'s Name')" />
+                                    <x-input-label for="father_name" :value="__('Father\'s Name')"/>
                                     <x-text-input id="father_name" name="father_name" type="text" class="mt-1 block w-full"
-                                        :value="old('father_name', $scholar->father_name)" required />
+                                        :value="old('father_name', $scholar->father_name)"/>
                                     <x-input-error :messages="$errors->get('father_name')" class="mt-2" />
                                 </div>
 
                                 <div>
-                                    <x-input-label for="mother_name" :value="__('Mother\'s Name')" />
+                                    <x-input-label for="mother_name" :value="__('Mother\'s Name')" :required="true"/>
                                     <x-text-input id="mother_name" name="mother_name" type="text" class="mt-1 block w-full"
                                         :value="old('mother_name', $scholar->mother_name)" required />
                                     <x-input-error :messages="$errors->get('mother_name')" class="mt-2" />
                                 </div>
 
                                 <div>
-                                    <x-input-label for="nationality" :value="__('Nationality')" />
+                                    <x-input-label for="nationality" :value="__('Nationality')" :required="true"/>
                                     <x-text-input id="nationality" name="nationality" type="text" class="mt-1 block w-full"
                                         :value="old('nationality', $scholar->nationality)" required />
                                     <x-input-error :messages="$errors->get('nationality')" class="mt-2" />
                                 </div>
 
                                 <div>
-                                    <x-input-label for="category" :value="__('Category')" />
+                                    <x-input-label for="category" :value="__('Category')" :required="true"/>
                                     <select id="category" name="category" class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 dark:focus:border-indigo-600 focus:ring-indigo-500 dark:focus:ring-indigo-600 rounded-md shadow-sm" required>
                                         <option value="">Select Category</option>
                                         <option value="General" {{ old('category', $scholar->category) == 'General' ? 'selected' : '' }}>General</option>
@@ -248,7 +248,7 @@
                                 </div>
 
                                 <div>
-                                    <x-input-label for="occupation" :value="__('Occupation')" />
+                                    <x-input-label for="occupation" :value="__('Occupation')" :required="true"/>
                                     <x-text-input id="occupation" name="occupation" type="text" class="mt-1 block w-full"
                                         :value="old('occupation', $scholar->occupation)" required />
                                     <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">(N.O.C. from the employer be attached)</p>
@@ -334,28 +334,28 @@
 
                                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                                             <div>
-                                                <x-input-label for="post_graduate_degree_{{ $i + 1 }}" :value="__('Degree/Qualification')" />
+                                                <x-input-label for="post_graduate_degree_{{ $i + 1 }}" :value="__('Degree/Qualification')" :required="true"/>
                                                 <x-text-input id="post_graduate_degree_{{ $i + 1 }}" name="post_graduate_degrees[]" type="text" class="mt-1 block w-full"
                                                     :value="old('post_graduate_degrees.' . $i, $savedQualifications[$i]['degree'] ?? $scholar->post_graduate_degree)" placeholder="e.g., M.Sc., M.A., M.Tech, etc." required />
                                                 <x-input-error :messages="$errors->get('post_graduate_degrees')" class="mt-2" />
                                             </div>
 
                                             <div>
-                                                <x-input-label for="post_graduate_university_{{ $i + 1 }}" :value="__('University/Institution')" />
+                                                <x-input-label for="post_graduate_university_{{ $i + 1 }}" :value="__('University/Institution')"  :required="true"/>
                                                 <x-text-input id="post_graduate_university_{{ $i + 1 }}" name="post_graduate_universities[]" type="text" class="mt-1 block w-full"
                                                     :value="old('post_graduate_universities.' . $i, $savedQualifications[$i]['university'] ?? $scholar->post_graduate_university)" placeholder="Name of university or institution" required />
                                                 <x-input-error :messages="$errors->get('post_graduate_universities')" class="mt-2" />
                                             </div>
 
                                             <div>
-                                                <x-input-label for="post_graduate_year_{{ $i + 1 }}" :value="__('Year of Completion')" />
+                                                <x-input-label for="post_graduate_year_{{ $i + 1 }}" :value="__('Year of Completion')"  :required="true"/>
                                                 <x-text-input id="post_graduate_year_{{ $i + 1 }}" name="post_graduate_years[]" type="text" class="mt-1 block w-full"
                                                     :value="old('post_graduate_years.' . $i, $savedQualifications[$i]['year'] ?? $scholar->post_graduate_year)" placeholder="e.g., 2020" required />
                                                 <x-input-error :messages="$errors->get('post_graduate_years')" class="mt-2" />
                                             </div>
 
                                             <div>
-                                                <x-input-label for="post_graduate_percentage_{{ $i + 1 }}" :value="__('Percentage/CGPA')" />
+                                                <x-input-label for="post_graduate_percentage_{{ $i + 1 }}" :value="__('Percentage/CGPA')"  :required="true"/>
                                                 <x-text-input id="post_graduate_percentage_{{ $i + 1 }}" name="post_graduate_percentages[]" type="number" step="0.01" class="mt-1 block w-full"
                                                     :value="old('post_graduate_percentages.' . $i, $savedQualifications[$i]['percentage'] ?? $scholar->post_graduate_percentage)" placeholder="e.g., 85.5 or 8.5" required />
                                                 <x-input-error :messages="$errors->get('post_graduate_percentages')" class="mt-2" />
@@ -508,7 +508,7 @@
 
                                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <div>
-                                            <x-input-label for="document_type_1" :value="__('Document Type')" />
+                                            <x-input-label for="document_type_1" :value="__('Document Type')"  :required="true"/>
                                             <select id="document_type_1" name="document_types[]" class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 dark:focus:border-indigo-600 focus:ring-indigo-500 dark:focus:ring-indigo-600 rounded-md shadow-sm" {{ !$scholar->registration_documents || count($scholar->registration_documents) == 0 ? 'required' : '' }}>
                                                 <option value="">Select Document Type</option>
                                                 <option value="degree_certificate">Degree Certificate</option>
@@ -525,7 +525,7 @@
                                         </div>
 
                                         <div>
-                                            <x-input-label for="registration_documents_1" :value="__('Upload Document')" />
+                                            <x-input-label for="registration_documents_1" :value="__('Upload Document')"  :required="true"/>
                                             <input id="registration_documents_1" name="registration_documents[]" type="file"
                                                 class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
                                                 accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" {{ !$scholar->registration_documents || count($scholar->registration_documents) == 0 ? 'required' : '' }}>
@@ -574,9 +574,9 @@
 
                             <div class="space-y-6">
                                 <div>
-                                    <x-input-label for="synopsis_topic" :value="__('Research Topic/Title')" />
+                                    <x-input-label for="synopsis_topic" :value="__('Research Topic/Title')" :required=true/>
                                     <x-text-input id="synopsis_topic" name="synopsis_topic" type="text" class="mt-1 block w-full"
-                                        :value="old('synopsis_topic', $scholar->synopsis_topic)" placeholder="Enter your research topic or title" />
+                                        :value="old('synopsis_topic', $scholar->synopsis_topic)" placeholder="Enter your research topic or title" required/>
                                     <x-input-error :messages="$errors->get('synopsis_topic')" class="mt-2" />
                                     <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
                                         Provide a clear and concise title for your research work.
@@ -584,15 +584,6 @@
                                 </div>
 
                                 <div>
-                                    <x-input-label for="synopsis_file" :value="__('Synopsis Document (PDF, DOC, DOCX)')" />
-                                    <input id="synopsis_file" name="synopsis_file" type="file"
-                                        class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
-                                        accept=".pdf,.doc,.docx">
-                                    <x-input-error :messages="$errors->get('synopsis_file')" class="mt-2" />
-                                    <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                                        Upload your detailed research synopsis document (max 2MB).
-                                    </p>
-
                                     @if($scholar->synopsis_file)
                                         <div class="mt-2 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
                                             <div class="flex items-center">
@@ -605,6 +596,15 @@
                                                 Submitted on: {{ $scholar->synopsis_submitted_at ? $scholar->synopsis_submitted_at->format('M d, Y') : 'N/A' }}
                                             </p>
                                         </div>
+                                    @else
+                                        <x-input-label for="synopsis_file" :value="__('Synopsis Document (PDF, DOC, DOCX)')" :required="true"/>
+                                        <input id="synopsis_file" name="synopsis_file" type="file"
+                                            class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
+                                            accept=".pdf,.doc,.docx" required>
+                                        <x-input-error :messages="$errors->get('synopsis_file')" class="mt-2" />
+                                        <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                                            Upload your detailed research synopsis document (max 2MB).
+                                        </p>
                                     @endif
                                 </div>
                             </div>

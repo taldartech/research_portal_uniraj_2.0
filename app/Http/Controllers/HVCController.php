@@ -558,4 +558,14 @@ class HVCController extends Controller
 
         return view('hvc.scholars.all_submissions', compact('scholars', 'synopses', 'progressReports', 'thesisSubmissions', 'courseworkExemptions'));
     }
+
+    /**
+     * View scholar details
+     */
+    public function viewScholarDetails(\App\Models\Scholar $scholar)
+    {
+        $scholar->load(['user', 'admission.department', 'supervisorAssignments.supervisor.user', 'synopses']);
+
+        return view('hvc.scholars.show', compact('scholar'));
+    }
 }

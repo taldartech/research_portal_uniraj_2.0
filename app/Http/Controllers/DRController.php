@@ -252,4 +252,14 @@ class DRController extends Controller
 
         return view('dr.scholars.all_submissions', compact('scholars', 'synopses', 'progressReports', 'thesisSubmissions', 'courseworkExemptions'));
     }
+
+    /**
+     * View scholar details
+     */
+    public function viewScholarDetails(\App\Models\Scholar $scholar)
+    {
+        $scholar->load(['user', 'admission.department', 'supervisorAssignments.supervisor.user', 'synopses']);
+
+        return view('dr.scholars.show', compact('scholar'));
+    }
 }

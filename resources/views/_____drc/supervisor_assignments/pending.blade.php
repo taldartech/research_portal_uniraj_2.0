@@ -34,13 +34,13 @@
                                                 @csrf
                                                 @method('PATCH')
                                                 <input type="hidden" name="status" value="approved">
-                                                <x-primary-button class="ml-3">Approve</x-primary-button>
+                                                <x-primary-button class="ml-3">Satisfied</x-primary-button>
                                             </form>
                                             <form method="POST" action="{{ route('drc.supervisor_assignments.approve', $assignment) }}" class="inline-block ml-2">
                                                 @csrf
                                                 @method('PATCH')
                                                 <input type="hidden" name="status" value="rejected">
-                                                <x-danger-button class="ml-3">Reject</x-danger-button>
+                                                <x-danger-button class="ml-3">Unsatisfied</x-danger-button>
                                             </form>
                                         </td>
                                     </tr>

@@ -51,8 +51,8 @@
                             <x-input-label for="action" :value="__('Remark')" />
                             <select id="action" name="action" class="block mt-1 w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 dark:focus:border-indigo-600 focus:ring-indigo-500 dark:focus:ring-indigo-600 rounded-md shadow-sm" required>
                                 <option value="">Select Remark</option>
-                                <option value="approve">Approve</option>
-                                <option value="reject">Reject</option>
+                                <option value="approve">Satisfied</option>
+                                <option value="reject">Unsatisfied</option>
                             </select>
                             <x-input-error :messages="$errors->get('action')" class="mt-2" />
                         </div>

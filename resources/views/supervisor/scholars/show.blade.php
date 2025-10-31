@@ -608,6 +608,94 @@
                         </div>
                     </div>
 
+                    <!-- RAC Committee Submission History -->
+                    <div class="mb-8">
+                        <h3 class="text-lg font-medium text-gray-900 mb-4">RAC Committee Members - Complete History</h3>
+                        @php
+                            $racSubmissions = \App\Models\RACCommitteeSubmission::where('scholar_id', $scholar->id)
+                                ->with('supervisor.user', 'hod')
+                                ->latest()
+                                ->get();
+                        @endphp
+
+                        @if($racSubmissions->isEmpty())
+                            <p class="text-gray-500 mb-4">No RAC committee submissions yet.</p>
+                        @else
+                            <div class="space-y-4 mb-4">
+                                @foreach($racSubmissions as $index => $racSubmission)
+                                    <div class="border border-gray-200 rounded-lg p-4 bg-gray-50">
+                                        <div class="flex justify-between items-start mb-3">
+                                            <h4 class="text-md font-semibold text-gray-900">
+                                                Submission #{{ $racSubmissions->count() - $index }}
+                                            </h4>
+                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                                                @if($racSubmission->status === 'approved') bg-green-100 text-green-800
+                                                @elseif($racSubmission->status === 'pending_hod_approval') bg-yellow-100 text-yellow-800
+                                                @else bg-red-100 text-red-800 @endif">
+                                                {{ ucwords(str_replace('_', ' ', $racSubmission->status)) }}
+                                            </span>
+                                        </div>
+
+                                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                                            <div>
+                                                <label class="block text-sm font-medium text-gray-700">Member 1</label>
+                                                <p class="mt-1 text-sm text-gray-900">{{ $racSubmission->member1_name }}</p>
+                                            </div>
+                                            <div>
+                                                <label class="block text-sm font-medium text-gray-700">Member 2</label>
+                                                <p class="mt-1 text-sm text-gray-900">{{ $racSubmission->member2_name }}</p>
+                                            </div>
+                                            <div>
+                                                <label class="block text-sm font-medium text-gray-700">Submitted By</label>
+                                                <p class="mt-1 text-sm text-gray-900">{{ $racSubmission->supervisor->user->name }}</p>
+                                                <p class="text-xs text-gray-500">{{ $racSubmission->created_at->format('M d, Y H:i') }}</p>
+                                            </div>
+                                            @if($racSubmission->drc_date)
+                                                <div>
+                                                    <label class="block text-sm font-medium text-gray-700">DRC Date</label>
+                                                    <p class="mt-1 text-sm text-gray-900">{{ $racSubmission->drc_date->format('M d, Y') }}</p>
+                                                </div>
+                                            @endif
+                                            @if($racSubmission->hod)
+                                                <div>
+                                                    <label class="block text-sm font-medium text-gray-700">Reviewed By</label>
+                                                    <p class="mt-1 text-sm text-gray-900">{{ $racSubmission->hod->name }}</p>
+                                                    @if($racSubmission->approved_at)
+                                                        <p class="text-xs text-gray-500">Approved: {{ $racSubmission->approved_at->format('M d, Y H:i') }}</p>
+                                                    @elseif($racSubmission->rejected_at)
+                                                        <p class="text-xs text-gray-500">Rejected: {{ $racSubmission->rejected_at->format('M d, Y H:i') }}</p>
+                                                    @endif
+                                                </div>
+                                            @endif
+                                            @if($racSubmission->hod_remarks)
+                                                <div>
+                                                    <label class="block text-sm font-medium text-gray-700 mb-2">HOD Remarks/Comments</label>
+                                                    <div class="bg-white p-3 rounded-md border border-gray-200">
+                                                        <p class="text-sm text-gray-900 whitespace-pre-wrap">{{ $racSubmission->hod_remarks }}</p>
+                                                    </div>
+                                                </div>
+                                            @endif
+                                        </div>
+
+                                    </div>
+                                @endforeach
+                            </div>
+                        @endif
+
+                        @if(auth()->user()->user_type === 'supervisor' && $scholar->supervisorAssignments()->where('supervisor_id', auth()->user()->supervisor->id)->where('status', 'assigned')->exists())
+                            <div>
+                                <a href="{{ route('staff.rac_committee.submit', $scholar) }}"
+                                   class="inline-flex items-center px-4 py-2 bg-indigo-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-700 focus:bg-indigo-700 active:bg-indigo-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition ease-in-out duration-150">
+                                    @if($racSubmissions->first() && $racSubmissions->first()->status === 'pending_hod_approval')
+                                        Update RAC Committee Members
+                                    @else
+                                        Submit/Update RAC Committee Members
+                                    @endif
+                                </a>
+                            </div>
+                        @endif
+                    </div>
+
                     <!-- Actions -->
                     <div class="flex justify-between items-center">
                         <a href="{{ route('staff.scholars.list') }}"

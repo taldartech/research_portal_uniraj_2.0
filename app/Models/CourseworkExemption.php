@@ -17,6 +17,7 @@ class CourseworkExemption extends Model
         'drc_id',
         'reason',
         'minutes_file',
+        'rac_meeting_date',
         'request_date',
         'status',
         'dean_approver_id',
@@ -46,6 +47,7 @@ class CourseworkExemption extends Model
 
     protected $casts = [
         'request_date' => 'date',
+        'rac_meeting_date' => 'date',
         'dean_approved_at' => 'datetime',
         'da_approved_at' => 'datetime',
         'so_approved_at' => 'datetime',

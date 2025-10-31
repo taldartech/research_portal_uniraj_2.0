@@ -30,7 +30,10 @@
             <!-- Tabs Navigation -->
             <div class="mb-6">
                 <nav class="flex space-x-8" aria-label="Tabs">
-                    <button onclick="showTab('synopses')" id="synopses-tab" class="tab-button active whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm">
+                    <button onclick="showTab('scholar')" id="scholar-tab" class="tab-button active whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm">
+                        Scholar List ({{ $scholars->count() }})
+                    </button>
+                    <button onclick="showTab('synopses')" id="synopses-tab" class="tab-button whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm">
                         Synopses ({{ $synopses->count() }})
                     </button>
                     <button onclick="showTab('progress')" id="progress-tab" class="tab-button whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm">
@@ -42,8 +45,49 @@
                 </nav>
             </div>
 
+            <!-- Scholar List Tab -->
+            <div id="scholar-content" class="tab-content">
+                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+                    <div class="p-6 text-gray-900">
+                        <h3 class="text-lg font-medium text-gray-900 mb-4">Scholar List</h3>
+                        @if ($scholars->isEmpty())
+                            <p class="text-gray-600">No scholars found.</p>
+                        @else
+                            <div class="overflow-x-auto">
+                                <table class="min-w-full divide-y divide-gray-200">
+                                    <thead class="bg-gray-50">
+                                        <tr>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Scholar</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Department</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="bg-white divide-y divide-gray-200">
+                                        @foreach ($scholars as $scholar)
+                                            <tr>
+                                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                                    {{ $scholar->user->name }}
+                                                </td>
+                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                    {{ $scholar->admission->department->name }}
+                                                </td>
+                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                    {{ $scholar->status }}
+                                                </td>
+                                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                                    <a href="{{ route('da.scholars.show', $scholar) }}" class="text-blue-600 hover:text-blue-900">View</a>
+                                            </tr>
+                                        @endforeach
+                                </table>
+                            </div>
+                        @endif
+                    </div>
+                </div>
+            </div>
+
             <!-- Synopses Tab -->
-            <div id="synopses-content" class="tab-content">
+            <div id="synopses-content" class="tab-content hidden">
                 <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                     <div class="p-6 text-gray-900">
                         <h3 class="text-lg font-medium text-gray-900 mb-4">Synopsis Submissions</h3>
@@ -246,6 +290,91 @@
                                         @endforeach
                                     </tbody>
                                 </table>
+                            </div>
+                        @endif
+                    </div>
+                </div>
+            </div>
+
+            <!-- RAC Committee Submissions Tab -->
+            <div id="rac-committee-content" class="tab-content hidden">
+                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+                    <div class="p-6 text-gray-900">
+                        <h3 class="text-lg font-medium text-gray-900 mb-4">RAC Committee Submissions - Complete History</h3>
+                        @if ($racCommitteeSubmissions->isEmpty())
+                            <p class="text-gray-600">No RAC committee submissions found.</p>
+                        @else
+                            <div class="space-y-6">
+                                @foreach ($racCommitteeSubmissions->groupBy('scholar_id') as $scholarId => $submissions)
+                                    @php
+                                        $scholar = $submissions->first()->scholar;
+                                    @endphp
+                                    <div class="border border-gray-200 rounded-lg p-6 bg-gray-50">
+                                        <h4 class="text-md font-semibold text-gray-900 mb-4">
+                                            {{ $scholar->user->name }} ({{ $scholar->admission->department->name ?? 'N/A' }})
+                                        </h4>
+
+                                        <div class="space-y-4">
+                                            @foreach ($submissions as $index => $submission)
+                                                <div class="bg-white border border-gray-200 rounded-lg p-4">
+                                                    <div class="flex justify-between items-start mb-3">
+                                                        <h5 class="text-sm font-semibold text-gray-900">
+                                                            Submission #{{ $submissions->count() - $index }}
+                                                        </h5>
+                                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                                                            @if($submission->status === 'approved') bg-green-100 text-green-800
+                                                            @elseif($submission->status === 'pending_hod_approval') bg-yellow-100 text-yellow-800
+                                                            @else bg-red-100 text-red-800 @endif">
+                                                            {{ ucwords(str_replace('_', ' ', $submission->status)) }}
+                                                        </span>
+                                                    </div>
+
+                                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                                                        <div>
+                                                            <label class="block text-xs font-medium text-gray-700">Member 1</label>
+                                                            <p class="mt-1 text-sm text-gray-900">{{ $submission->member1_name }}</p>
+                                                        </div>
+                                                        <div>
+                                                            <label class="block text-xs font-medium text-gray-700">Member 2</label>
+                                                            <p class="mt-1 text-sm text-gray-900">{{ $submission->member2_name }}</p>
+                                                        </div>
+                                                        <div>
+                                                            <label class="block text-xs font-medium text-gray-700">Submitted By</label>
+                                                            <p class="mt-1 text-sm text-gray-900">{{ $submission->supervisor->user->name }}</p>
+                                                            <p class="text-xs text-gray-500">{{ $submission->created_at->format('M d, Y H:i') }}</p>
+                                                        </div>
+                                                        @if($submission->drc_date)
+                                                            <div>
+                                                                <label class="block text-xs font-medium text-gray-700">DRC Date</label>
+                                                                <p class="mt-1 text-sm text-gray-900">{{ $submission->drc_date->format('M d, Y') }}</p>
+                                                            </div>
+                                                        @endif
+                                                        @if($submission->hod)
+                                                            <div>
+                                                                <label class="block text-xs font-medium text-gray-700">Reviewed By</label>
+                                                                <p class="mt-1 text-sm text-gray-900">{{ $submission->hod->name }}</p>
+                                                                @if($submission->approved_at)
+                                                                    <p class="text-xs text-gray-500">Approved: {{ $submission->approved_at->format('M d, Y H:i') }}</p>
+                                                                @elseif($submission->rejected_at)
+                                                                    <p class="text-xs text-gray-500">Rejected: {{ $submission->rejected_at->format('M d, Y H:i') }}</p>
+                                                                @endif
+                                                            </div>
+                                                        @endif
+                                                    </div>
+
+                                                    @if($submission->hod_remarks)
+                                                        <div class="mt-4 pt-4 border-t border-gray-200">
+                                                            <label class="block text-xs font-medium text-gray-700 mb-2">HOD Remarks/Comments</label>
+                                                            <div class="bg-gray-50 p-3 rounded-md border border-gray-200">
+                                                                <p class="text-sm text-gray-900 whitespace-pre-wrap">{{ $submission->hod_remarks }}</p>
+                                                            </div>
+                                                        </div>
+                                                    @endif
+                                                </div>
+                                            @endforeach
+                                        </div>
+                                    </div>
+                                @endforeach
                             </div>
                         @endif
                     </div>

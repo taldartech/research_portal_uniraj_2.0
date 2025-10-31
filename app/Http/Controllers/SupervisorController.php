@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\CourseworkExemption;
 use App\Models\RAC;
+use App\Models\RACCommitteeSubmission;
 use App\Models\Scholar;
 use App\Models\Supervisor;
 use App\Models\SupervisorAssignment;
@@ -80,12 +81,11 @@ class SupervisorController extends Controller
         }
 
         $request->validate([
-            'action' => 'required|in:verify_data,approve_synopsis,reject_synopsis',
-            'date_of_confirmation' => 'nullable|date',
-            'enrollment_number' => 'nullable|string|max:255',
-            'research_area' => 'nullable|string|max:255',
+            'action' => 'required|in:approve_synopsis,reject_synopsis',
             'research_topic' => 'nullable|string|max:500',
-            'remarks' => 'required|string|max:500',
+            'remarks' => 'nullable|string|max:500',
+            'rac_minutes_file' => 'required|file|mimes:pdf,doc,docx|max:5120',
+            'rac_meeting_date' => 'required|date',
         ]);
 
         if ($request->action === 'verify_data') {
@@ -95,21 +95,46 @@ class SupervisorController extends Controller
         }
 
         // Handle synopsis approval/rejection
-        $synopsis = $scholar->synopsis;
+        $synopsis = $scholar->synopses->first();
         if (!$synopsis) {
             return redirect()->back()->withErrors(['synopsis' => 'No synopsis found for this scholar.']);
         }
-
         if ($synopsis->status !== 'pending_supervisor_approval') {
             return redirect()->back()->withErrors(['synopsis' => 'This synopsis is not pending supervisor approval.']);
         }
 
+        // Upload RAC minutes file (required for approve/reject synopsis)
+        $racMinutesPath = null;
+        if ($request->hasFile('rac_minutes_file')) {
+            $racMinutesPath = $request->file('rac_minutes_file')->store('rac_minutes', 'public');
+        }
+
+        // For approve/reject actions, RAC minutes and date are required
+        if (in_array($request->action, ['approve_synopsis', 'reject_synopsis'])) {
+            if (!$racMinutesPath || !$request->rac_meeting_date) {
+                return redirect()->back()->withErrors([
+                    'rac_minutes_file' => 'RAC minutes file is required for synopsis approval/rejection.',
+                    'rac_meeting_date' => 'RAC meeting date is required for synopsis approval/rejection.'
+                ]);
+            }
+        }
+
+        $updateData = [
+            'supervisor_approved_at' => now(),
+            'supervisor_remarks' => $request->remarks,
+        ];
+
+        // Always include RAC minutes data for approve/reject actions
+        if (in_array($request->action, ['approve_synopsis', 'reject_synopsis'])) {
+            $updateData['rac_minutes_file'] = $racMinutesPath;
+            $updateData['rac_meeting_date'] = $request->rac_meeting_date;
+        }
+
         if ($request->action === 'approve_synopsis') {
-            $synopsis->update([
-                'status' => 'supervisor_approved',
-                'supervisor_approved_at' => now(),
-                'supervisor_remarks' => $request->remarks,
-            ]);
+            $updateData['status'] = 'pending_hod_approval';
+            $updateData['supervisor_approver_id'] = Auth::id();
+            $updateData['supervisor_approved_at'] = now();
+            $synopsis->update($updateData);
 
             // Update research topic if provided
             if ($request->research_topic) {
@@ -118,11 +143,11 @@ class SupervisorController extends Controller
 
             return $this->successResponse('Synopsis approved successfully.', 'staff.scholars.list');
         } elseif ($request->action === 'reject_synopsis') {
-            $synopsis->update([
-                'status' => 'supervisor_rejected',
-                'supervisor_rejected_at' => now(),
-                'supervisor_remarks' => $request->remarks,
-            ]);
+            $updateData['status'] = 'supervisor_rejected';
+            $updateData['rejected_by'] = Auth::id();
+            $updateData['rejected_at'] = now();
+            $updateData['rejection_reason'] = $request->remarks;
+            $synopsis->update($updateData);
 
             return $this->successResponse('Synopsis rejected successfully.', 'staff.scholars.list');
         }
@@ -260,25 +285,30 @@ class SupervisorController extends Controller
         $request->validate([
             'action' => 'required|in:approve,reject',
             'supervisor_remarks' => 'nullable|string|max:1000',
+            'rac_minutes_file' => 'required|file|mimes:pdf,doc,docx|max:5120',
+            'rac_meeting_date' => 'required|date',
         ]);
 
-        if ($request->action === 'approve') {
-            $exemption->update([
-                'status' => 'pending_dean_approval',
-                'supervisor_approved_at' => now(),
-                'supervisor_remarks' => $request->supervisor_remarks,
-            ]);
+        // Upload RAC minutes file
+        $racMinutesPath = $request->file('rac_minutes_file')->store('rac_minutes', 'public');
 
+        $updateData = [
+            'supervisor_approved_at' => now(),
+            'supervisor_remarks' => $request->supervisor_remarks,
+            'minutes_file' => $racMinutesPath,
+            'rac_meeting_date' => $request->rac_meeting_date,
+        ];
+
+        if ($request->action === 'approve') {
+            $updateData['status'] = 'pending_dean_approval';
             $message = 'Coursework exemption approved and forwarded to Dean.';
         } else {
-            $exemption->update([
-                'status' => 'rejected_by_supervisor',
-                'supervisor_remarks' => $request->supervisor_remarks,
-                'rejected_at' => now(),
-            ]);
-
+            $updateData['status'] = 'rejected_by_supervisor';
+            $updateData['rejected_at'] = now();
             $message = 'Coursework exemption rejected.';
         }
+
+        $exemption->update($updateData);
 
         return redirect()->route('staff.coursework_exemption.pending')->with('success', $message);
     }
@@ -462,32 +492,38 @@ class SupervisorController extends Controller
         $request->validate([
             'action' => 'required|in:approve,reject',
             'remarks' => 'required|string|max:500',
+            'rac_minutes_file' => 'required|file|mimes:pdf,doc,docx|max:5120',
+            'rac_meeting_date' => 'required|date',
         ]);
 
         \Illuminate\Support\Facades\Log::info('Action: ' . $request->action);
         \Illuminate\Support\Facades\Log::info('Remarks: ' . $request->remarks);
 
-        if ($request->action === 'approve') {
-            $progressReport->update([
-                'status' => 'pending_hod_approval',
-                'da_approver_id' => Auth::id(),
-                'da_approved_at' => now(),
-                'da_remarks' => $request->remarks,
-            ]);
+        // Upload RAC minutes file
+        $racMinutesPath = $request->file('rac_minutes_file')->store('rac_minutes', 'public');
 
+        $updateData = [
+            'supervisor_approver_id' => Auth::id(),
+            'supervisor_approved_at' => now(),
+            'supervisor_remarks' => $request->remarks,
+            'rac_minutes_file' => $racMinutesPath,
+            'rac_meeting_date' => $request->rac_meeting_date,
+        ];
+
+        if ($request->action === 'approve') {
+            $updateData['status'] = 'pending_hod_approval';
             $message = 'Progress report approved and forwarded to HOD.';
             \Illuminate\Support\Facades\Log::info('Progress report approved successfully');
         } else {
-            $progressReport->update([
-                'status' => 'rejected',
-                'da_approver_id' => Auth::id(),
-                'da_approved_at' => now(),
-                'da_remarks' => $request->remarks,
-            ]);
-
+            $updateData['status'] = 'rejected';
+            $updateData['rejected_by'] = Auth::id();
+            $updateData['rejected_at'] = now();
+            $updateData['rejection_reason'] = $request->remarks;
             $message = 'Progress report rejected.';
             \Illuminate\Support\Facades\Log::info('Progress report rejected');
         }
+
+        $progressReport->update($updateData);
 
         return redirect()->route('staff.progress_reports.pending')->with('success', $message);
     }
@@ -529,31 +565,34 @@ class SupervisorController extends Controller
         $request->validate([
             'action' => 'required|in:approve,reject',
             'remarks' => 'required|string|max:500',
+            'rac_minutes_file' => 'required|file|mimes:pdf,doc,docx|max:5120',
+            'rac_meeting_date' => 'required|date',
         ]);
 
-        if ($request->action === 'approve') {
-            $thesis->update([
-                'status' => 'pending_hod_approval',
-                'supervisor_approver_id' => Auth::id(),
-                'supervisor_approved_at' => now(),
-                'supervisor_remarks' => $request->remarks,
-            ]);
+        // Upload RAC minutes file
+        $racMinutesPath = $request->file('rac_minutes_file')->store('rac_minutes', 'public');
 
+        $updateData = [
+            'supervisor_approver_id' => Auth::id(),
+            'supervisor_approved_at' => now(),
+            'supervisor_remarks' => $request->remarks,
+            'rac_minutes_file' => $racMinutesPath,
+            'rac_meeting_date' => $request->rac_meeting_date,
+        ];
+
+        if ($request->action === 'approve') {
+            $updateData['status'] = 'pending_hod_approval';
             $message = 'Thesis approved and forwarded to HOD.';
         } else {
-            $thesis->update([
-                'status' => 'rejected_by_supervisor',
-                'supervisor_approver_id' => Auth::id(),
-                'supervisor_approved_at' => now(),
-                'supervisor_remarks' => $request->remarks,
-                'rejected_by' => Auth::id(),
-                'rejected_at' => now(),
-                'rejection_reason' => $request->remarks,
-                'rejection_count' => $thesis->rejection_count + 1,
-            ]);
-
+            $updateData['status'] = 'rejected_by_supervisor';
+            $updateData['rejected_by'] = Auth::id();
+            $updateData['rejected_at'] = now();
+            $updateData['rejection_reason'] = $request->remarks;
+            $updateData['rejection_count'] = $thesis->rejection_count + 1;
             $message = 'Thesis rejected by supervisor.';
         }
+
+        $thesis->update($updateData);
 
         return redirect()->route('staff.thesis.pending')->with('success', $message);
     }
@@ -809,5 +848,67 @@ class SupervisorController extends Controller
         }
 
         return response()->download($filePath, 'office_note_' . $vivaExamination->id . '.pdf');
+    }
+
+    /**
+     * Show form to submit/update RAC committee members for a scholar
+     */
+    public function submitRACCommitteeForm(Scholar $scholar)
+    {
+        if (! $this->isAssignedSupervisor($scholar)) {
+            abort(403, 'Unauthorized action.');
+        }
+
+        // Get existing submission if any
+        $existingSubmission = RACCommitteeSubmission::where('scholar_id', $scholar->id)
+            ->where('supervisor_id', Auth::user()->supervisor->id)
+            ->latest()
+            ->first();
+
+        return view('supervisor.rac_committee.submit', compact('scholar', 'existingSubmission'));
+    }
+
+    /**
+     * Store or update RAC committee members submission
+     */
+    public function storeRACCommitteeSubmission(Request $request, Scholar $scholar)
+    {
+        if (! $this->isAssignedSupervisor($scholar)) {
+            abort(403, 'Unauthorized action.');
+        }
+
+        $request->validate([
+            'member1_name' => 'required|string|max:255',
+            'member2_name' => 'required|string|max:255',
+        ]);
+
+        // Check if there's a pending submission
+        $existingSubmission = RACCommitteeSubmission::where('scholar_id', $scholar->id)
+            ->where('supervisor_id', Auth::user()->supervisor->id)
+            ->where('status', 'pending_hod_approval')
+            ->first();
+
+        if ($existingSubmission) {
+            // Update existing pending submission
+            $existingSubmission->update([
+                'member1_name' => $request->member1_name,
+                'member2_name' => $request->member2_name,
+            ]);
+
+            return redirect()->route('staff.scholars.show', $scholar)
+                ->with('success', 'RAC committee members updated successfully. Waiting for HOD approval.');
+        }
+
+        // Create new submission
+        RACCommitteeSubmission::create([
+            'scholar_id' => $scholar->id,
+            'supervisor_id' => Auth::user()->supervisor->id,
+            'member1_name' => $request->member1_name,
+            'member2_name' => $request->member2_name,
+            'status' => 'pending_hod_approval',
+        ]);
+
+        return redirect()->route('staff.scholars.show', $scholar)
+            ->with('success', 'RAC committee members submitted successfully. Waiting for HOD approval.');
     }
 }

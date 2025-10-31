@@ -108,15 +108,15 @@
                     <!-- Approval Form -->
                     <div class="mb-8">
                         <h3 class="text-lg font-semibold text-gray-900 mb-4">Supervisor Remark</h3>
-                        <form action="{{ route('staff.progress_reports.approve.store', $progressReport) }}" method="POST" class="space-y-6">
+                        <form action="{{ route('staff.progress_reports.approve.store', $progressReport) }}" method="POST" enctype="multipart/form-data" class="space-y-6">
                             @csrf
 
                             <div>
                                 <label for="action" class="block text-sm font-medium text-gray-700">Remark</label>
                                 <select id="action" name="action" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500" required>
                                     <option value="">Select Remark</option>
-                                    <option value="approve">Approve</option>
-                                    <option value="reject">Reject</option>
+                                    <option value="approve">Satisfied</option>
+                                    <option value="reject">Unsatisfied</option>
                                 </select>
                                 <x-input-error :messages="$errors->get('action')" class="mt-2" />
                             </div>
@@ -125,6 +125,19 @@
                                 <label for="remarks" class="block text-sm font-medium text-gray-700">Remarks</label>
                                 <textarea id="remarks" name="remarks" rows="4" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500" placeholder="Enter your remarks about this progress report..." required></textarea>
                                 <x-input-error :messages="$errors->get('remarks')" class="mt-2" />
+                            </div>
+
+                            <div>
+                                <label for="rac_minutes_file" class="block text-sm font-medium text-gray-700">RAC Minutes File <span class="text-red-500">*</span></label>
+                                <input type="file" id="rac_minutes_file" name="rac_minutes_file" accept=".pdf,.doc,.docx" class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100" required>
+                                <p class="mt-1 text-xs text-gray-500">Accepted formats: PDF, DOC, DOCX (Max size: 5MB)</p>
+                                <x-input-error :messages="$errors->get('rac_minutes_file')" class="mt-2" />
+                            </div>
+
+                            <div>
+                                <label for="rac_meeting_date" class="block text-sm font-medium text-gray-700">RAC Meeting Date <span class="text-red-500">*</span></label>
+                                <input type="date" id="rac_meeting_date" name="rac_meeting_date" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500" required>
+                                <x-input-error :messages="$errors->get('rac_meeting_date')" class="mt-2" />
                             </div>
 
                             <div class="flex items-center justify-between pt-6 border-t border-gray-200">

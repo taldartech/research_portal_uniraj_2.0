@@ -485,31 +485,10 @@ class Scholar extends Model
 
     public function getNextStep()
     {
-        // Step 1: Synopsis Submission (now part of registration) - MOVED TO FIRST
-        if (!$this->hasSubmittedSynopsis() && !$this->isSynopsisApproved()) {
-            return [
-                'step' => 1,
-                'title' => 'Complete Registration with Synopsis',
-                'description' => 'Complete your registration form including synopsis submission',
-                'route' => 'scholar.registration.phd_form',
-                'status' => 'pending',
-                'icon' => 'synopsis'
-            ];
-        } elseif ($this->isSynopsisPending()) {
-            return [
-                'step' => 1,
-                'title' => 'Synopsis Under Review',
-                'description' => 'Your synopsis is being reviewed by the approval committee',
-                'route' => 'scholar.registration.phd_form',
-                'status' => 'in_progress',
-                'icon' => 'synopsis'
-            ];
-        }
-
-        // Step 2: Supervisor Assignment
+        // Step 1: Supervisor Assignment
         if (!$this->hasAssignedSupervisor()) {
             return [
-                'step' => 2,
+                'step' => 1,
                 'title' => 'Supervisor Assignment',
                 'description' => 'Submit your supervisor preference and wait for approval',
                 'route' => 'scholar.supervisor.preference',
@@ -518,6 +497,26 @@ class Scholar extends Model
             ];
         }
 
+        // Step 2: Synopsis Submission (now part of registration) - MOVED TO FIRST
+        if (!$this->hasSubmittedSynopsis() && !$this->isSynopsisApproved()) {
+            return [
+                'step' => 2,
+                'title' => 'Complete Registration with Synopsis',
+                'description' => 'Complete your registration form including synopsis submission',
+                'route' => 'scholar.registration.phd_form',
+                'status' => 'pending',
+                'icon' => 'synopsis'
+            ];
+        } elseif ($this->isSynopsisPending()) {
+            return [
+                'step' => 2,
+                'title' => 'Synopsis Under Review',
+                'description' => 'Your synopsis is being reviewed by the approval committee',
+                'route' => 'scholar.registration.phd_form',
+                'status' => 'in_progress',
+                'icon' => 'synopsis'
+            ];
+        }
 
         // Step 3: Progress Reports
         $approvedReports = $this->progressReports()->where('status', 'approved')->count();

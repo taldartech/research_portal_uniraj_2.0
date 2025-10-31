@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\SupervisorCapacityIncreaseRequest;
 use App\Models\Scholar;
 use App\Models\OfficeNote;
+use App\Models\RACCommitteeSubmission;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -138,6 +139,7 @@ class DAController extends Controller
         }
 
         $request->validate([
+            'drc_minutes_file' => 'required|url',
             'action' => 'required|in:approve,reject',
             'remarks' => 'required|string|max:500',
         ]);
@@ -148,6 +150,7 @@ class DAController extends Controller
         if ($request->action === 'approve') {
             $synopsis->update([
                 'da_remarks' => $request->remarks,
+                'drc_minutes_file' => $request->drc_minutes_file,
             ]);
 
             // Sync workflow
@@ -156,6 +159,7 @@ class DAController extends Controller
         } else {
             $synopsis->update([
                 'da_remarks' => $request->remarks,
+                'drc_minutes_file' => $request->drc_minutes_file,
             ]);
 
             // Sync workflow
@@ -621,6 +625,21 @@ class DAController extends Controller
             ->latest()
             ->get();
 
-        return view('da.scholars.all_submissions', compact('scholars', 'synopses', 'progressReports', 'thesisSubmissions'));
+        // Get all RAC committee submissions
+        $racCommitteeSubmissions = \App\Models\RACCommitteeSubmission::with(['scholar.user', 'scholar.admission.department', 'supervisor.user', 'hod'])
+            ->latest()
+            ->get();
+
+        return view('da.scholars.all_submissions', compact('scholars', 'synopses', 'progressReports', 'thesisSubmissions', 'racCommitteeSubmissions'));
+    }
+
+    /**
+     * View scholar details
+     */
+    public function viewScholarDetails(Scholar $scholar)
+    {
+        $scholar->load(['user', 'admission.department', 'supervisorAssignments.supervisor.user', 'synopses']);
+
+        return view('da.scholars.show', compact('scholar'));
     }
 }
