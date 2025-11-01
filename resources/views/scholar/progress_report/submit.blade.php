@@ -79,8 +79,56 @@
 
                             <div class="mt-4">
                                 <x-input-label for="report_file" :value="__('Progress Report File (PDF/DOC/DOCX)')" />
-                                <input id="report_file" class="block mt-1 w-full" type="file" name="report_file" required />
+                                <input id="report_file" class="block mt-1 w-full" type="file" name="report_file" accept=".pdf,.doc,.docx" required />
+                                <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Maximum file size: 2MB. Accepted formats: PDF, DOC, DOCX</p>
                                 <x-input-error :messages="$errors->get('report_file')" class="mt-2" />
+                            </div>
+
+                            <!-- Transaction Details Section -->
+                            <div class="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
+                                <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">Transaction Details</h3>
+
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                        <x-input-label for="transaction_amount" :value="__('Transaction Amount')" />
+                                        <input id="transaction_amount" name="transaction_amount" type="number" step="0.01" min="0" class="block mt-1 w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 dark:focus:border-indigo-600 focus:ring-indigo-500 dark:focus:ring-indigo-600 rounded-md shadow-sm" value="{{ old('transaction_amount') }}" required />
+                                        <x-input-error :messages="$errors->get('transaction_amount')" class="mt-2" />
+                                    </div>
+
+                                    <div>
+                                        <x-input-label for="transaction_date" :value="__('Transaction Date')" />
+                                        <input id="transaction_date" name="transaction_date" type="date" class="block mt-1 w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 dark:focus:border-indigo-600 focus:ring-indigo-500 dark:focus:ring-indigo-600 rounded-md shadow-sm" value="{{ old('transaction_date') }}" required />
+                                        <x-input-error :messages="$errors->get('transaction_date')" class="mt-2" />
+                                    </div>
+
+                                    <div>
+                                        <x-input-label for="transaction_no" :value="__('Transaction Number')" />
+                                        <input id="transaction_no" name="transaction_no" type="text" class="block mt-1 w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 dark:focus:border-indigo-600 focus:ring-indigo-500 dark:focus:ring-indigo-600 rounded-md shadow-sm" value="{{ old('transaction_no') }}" required />
+                                        <x-input-error :messages="$errors->get('transaction_no')" class="mt-2" />
+                                    </div>
+
+                                    <div>
+                                        <x-input-label for="pay_mode" :value="__('Payment Mode')" />
+                                        <select id="pay_mode" name="pay_mode" class="block mt-1 w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 dark:focus:border-indigo-600 focus:ring-indigo-500 dark:focus:ring-indigo-600 rounded-md shadow-sm" required>
+                                            <option value="">Select Payment Mode</option>
+                                            <option value="IMPS" {{ old('pay_mode') == 'IMPS' ? 'selected' : '' }}>IMPS</option>
+                                            <option value="NEFT" {{ old('pay_mode') == 'NEFT' ? 'selected' : '' }}>NEFT</option>
+                                            <option value="RTGS" {{ old('pay_mode') == 'RTGS' ? 'selected' : '' }}>RTGS</option>
+                                            <option value="UPI" {{ old('pay_mode') == 'UPI' ? 'selected' : '' }}>UPI</option>
+                                            <option value="Credit Card" {{ old('pay_mode') == 'Credit Card' ? 'selected' : '' }}>Credit Card</option>
+                                            <option value="Debit Card" {{ old('pay_mode') == 'Debit Card' ? 'selected' : '' }}>Debit Card</option>
+                                            <option value="Cash Deposit" {{ old('pay_mode') == 'Cash Deposit' ? 'selected' : '' }}>Cash Deposit</option>
+                                        </select>
+                                        <x-input-error :messages="$errors->get('pay_mode')" class="mt-2" />
+                                    </div>
+                                </div>
+
+                                <div class="mt-4">
+                                    <x-input-label for="receipt_file" :value="__('Receipt File (PDF/Image)')" />
+                                    <input id="receipt_file" class="block mt-1 w-full" type="file" name="receipt_file" accept=".pdf,.jpg,.jpeg,.png" required />
+                                    <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Maximum file size: 2MB. Accepted formats: PDF, JPG, JPEG, PNG</p>
+                                    <x-input-error :messages="$errors->get('receipt_file')" class="mt-2" />
+                                </div>
                             </div>
 
                             <div class="flex items-center justify-end mt-4">

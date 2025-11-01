@@ -52,11 +52,18 @@ class ProgressReport extends Model
         'rejection_reason',
         'rejection_count',
         'original_report_id',
+        'transaction_amount',
+        'transaction_date',
+        'transaction_no',
+        'pay_mode',
+        'receipt_file',
     ];
 
     protected $casts = [
         'submission_date' => 'date',
         'rac_meeting_date' => 'date',
+        'transaction_date' => 'date',
+        'transaction_amount' => 'decimal:2',
         'supervisor_approved_at' => 'datetime',
         'hod_approved_at' => 'datetime',
         'da_approved_at' => 'datetime',
