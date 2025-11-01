@@ -59,25 +59,12 @@
                                 <h4 class="text-lg font-medium text-blue-900 mb-4">Supervisor Preferences</h4>
                                 <p class="text-sm text-blue-700 mb-4">The scholar has submitted the following supervisor preferences. You can select from these preferences or reject them and select manually.</p>
 
-                                <div class="mb-4">
-                                    <label class="inline-flex items-center">
-                                        <input type="radio" name="assignment_type" value="preference" class="form-radio h-4 w-4 text-blue-600" checked onchange="toggleAssignmentType()">
-                                        <span class="ml-2 text-gray-700">Select from Preferences</span>
-                                    </label>
-                                </div>
-                                <div class="mb-4">
-                                    <label class="inline-flex items-center">
-                                        <input type="radio" name="assignment_type" value="manual" class="form-radio h-4 w-4 text-blue-600" onchange="toggleAssignmentType()">
-                                        <span class="ml-2 text-gray-700">Reject Preferences & Select Manually</span>
-                                    </label>
-                                </div>
-
                                 <!-- Preferences Selection (shown when preference is selected) -->
                                 <div id="preferenceSelection" class="mt-4">
                                     <h5 class="text-md font-medium text-gray-900 mb-3">Select Preferred Supervisor:</h5>
                                     <div class="space-y-4">
                                         @foreach($preferences as $preference)
-                                            <div class="border rounded-lg p-4 {{ $loop->first ? 'border-blue-500 bg-blue-50' : 'border-gray-200 bg-white' }}">
+                                            <div class="border rounded-lg p-4 border-gray-200 bg-white">
                                                 <label class="flex items-start cursor-pointer">
                                                     <input type="radio"
                                                            name="selected_preference_id"
@@ -142,36 +129,17 @@
                                     </div>
                                 </div>
                             </div>
-                        @else
-                            <input type="hidden" name="assignment_type" value="manual">
+                            <div class="flex items-center justify-end mt-6">
+                                <a href="{{ route('hod.scholars.show', $scholar) }}"
+                                class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded mr-3">
+                                    Cancel
+                                </a>
+                                <x-primary-button>
+                                    {{ __('Assign Supervisor') }}
+                                </x-primary-button>
+                            </div>
                         @endif
 
-                        <!-- Manual Supervisor Selection (shown when manual is selected or no preferences) -->
-                        <div id="manualSelection" class="mb-4 {{ $preferences->count() > 0 ? 'hidden' : '' }}">
-                            <h4 class="text-lg font-medium text-gray-900 mb-4">Select Supervisor Manually</h4>
-                            <x-input-label for="supervisor_id" :value="__('Select Supervisor')" />
-                            <select id="supervisor_id" name="supervisor_id" class="block mt-1 w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm">
-                                <option value="">Select a Supervisor</option>
-                                @foreach($supervisors as $supervisor)
-                                    <option value="{{ $supervisor->id }}">
-                                        {{ $supervisor->user->name }}
-                                        ({{ $supervisor->supervisor_type_display }} -
-                                        {{ $supervisor->getCurrentScholarCount() }}/{{ $supervisor->getScholarLimit() }} scholars)
-                                    </option>
-                                @endforeach
-                            </select>
-                            <x-input-error :messages="$errors->get('supervisor_id')" class="mt-2" />
-                        </div>
-
-                        <div class="flex items-center justify-end mt-6">
-                            <a href="{{ route('hod.scholars.show', $scholar) }}"
-                               class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded mr-3">
-                                Cancel
-                            </a>
-                            <x-primary-button>
-                                {{ __('Assign Supervisor') }}
-                            </x-primary-button>
-                        </div>
                     </form>
                 </div>
             </div>
@@ -179,66 +147,13 @@
     </div>
 
     <script>
-        function toggleAssignmentType() {
-            const assignmentType = document.querySelector('input[name="assignment_type"]:checked').value;
-            const preferenceSelection = document.getElementById('preferenceSelection');
-            const manualSelection = document.getElementById('manualSelection');
-            const supervisorIdSelect = document.getElementById('supervisor_id');
-
-            if (assignmentType === 'preference') {
-                preferenceSelection.classList.remove('hidden');
-                manualSelection.classList.add('hidden');
-                if (supervisorIdSelect) {
-                    supervisorIdSelect.removeAttribute('required');
-                }
-                // Make preference radio buttons required
-                const preferenceRadios = document.querySelectorAll('input[name="selected_preference_id"]');
-                preferenceRadios.forEach(radio => {
-                    radio.setAttribute('required', 'required');
-                });
-            } else {
-                if (preferenceSelection) {
-                    preferenceSelection.classList.add('hidden');
-                }
-                if (manualSelection) {
-                    manualSelection.classList.remove('hidden');
-                }
-                if (supervisorIdSelect) {
-                    supervisorIdSelect.setAttribute('required', 'required');
-                }
-                // Remove required from preference radio buttons
-                const preferenceRadios = document.querySelectorAll('input[name="selected_preference_id"]');
-                preferenceRadios.forEach(radio => {
-                    radio.removeAttribute('required');
-                });
-            }
-        }
-
-        // Initialize on page load
-        document.addEventListener('DOMContentLoaded', function() {
-            toggleAssignmentType();
-        });
-
         // Form validation
         document.getElementById('supervisorAssignmentForm').addEventListener('submit', function(e) {
-            const assignmentType = document.querySelector('input[name="assignment_type"]:checked')?.value || 'manual';
-
-            if (assignmentType === 'preference') {
-                const selectedPreference = document.querySelector('input[name="selected_preference_id"]:checked');
-                if (!selectedPreference) {
-                    e.preventDefault();
-                    alert('Please select a preference.');
-                    return false;
-                }
-            } else {
-                const supervisorIdSelect = document.getElementById('supervisor_id');
-                const supervisorId = supervisorIdSelect ? supervisorIdSelect.value : '';
-
-                if (!supervisorId || supervisorId === '') {
-                    e.preventDefault();
-                    alert('Please select a supervisor.');
-                    return false;
-                }
+            const selectedPreference = document.querySelector('input[name="selected_preference_id"]:checked');
+            if (!selectedPreference) {
+                e.preventDefault();
+                alert('Please select a preference.');
+                return false;
             }
         });
     </script>

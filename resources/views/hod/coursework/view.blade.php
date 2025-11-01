@@ -57,7 +57,7 @@
                 <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                     <div class="p-6">
                         <h3 class="text-lg font-medium mb-4">All Coursework Results</h3>
-                        
+
                         <div class="space-y-4">
                             @foreach($courseworkResults as $result)
                                 <div class="border border-gray-200 rounded-lg p-4">
@@ -65,7 +65,7 @@
                                         <div class="flex-1">
                                             <div class="flex items-center space-x-3 mb-2">
                                                 <span class="px-3 py-1 rounded-full text-sm font-medium {{ $result->result == 'pass' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' }}">
-                                                    {{ strtoupper($result->result) }}
+                                                    {{ $result->result == "pass" ? "Eligible" : "Not Eligible"  }}
                                                 </span>
                                                 <span class="text-sm text-gray-600">
                                                     Exam Date: {{ $result->exam_date->format('M d, Y') }}
@@ -82,7 +82,7 @@
                                             @endif
                                         </div>
                                         <div>
-                                            <a href="{{ asset('storage/' . $result->marksheet_file) }}" 
+                                            <a href="{{ asset('storage/' . $result->marksheet_file) }}"
                                                target="_blank"
                                                class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
                                                 View Marksheet

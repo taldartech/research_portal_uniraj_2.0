@@ -93,12 +93,12 @@
                                 document.addEventListener('DOMContentLoaded', function() {
                                     // Find all select elements by name pattern (more reliable)
                                     let selects = document.querySelectorAll('select[name^="supervisor_"]');
-                                    
+
                                     // If not found, try with class
                                     if (selects.length === 0) {
                                         selects = document.querySelectorAll('select.supervisor-select');
                                     }
-                                    
+
                                     // Ensure we have selects
                                     if (selects.length === 0) {
                                         console.error('Could not find supervisor select elements');
@@ -154,7 +154,7 @@
                                     selects.forEach(function(select) {
                                         select.addEventListener('change', function(e) {
                                             const selectedValue = this.value;
-                                            
+
                                             if (selectedValue && selectedValue !== '') {
                                                 // Check if this value is already selected in another dropdown
                                                 let isDuplicate = false;
@@ -187,7 +187,7 @@
                                         form.addEventListener('submit', function(e) {
                                             const selectedValues = [];
                                             let hasDuplicate = false;
-                                            
+
                                             selects.forEach(function(select) {
                                                 if (select.value && select.value !== '') {
                                                     if (selectedValues.includes(select.value)) {

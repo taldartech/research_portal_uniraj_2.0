@@ -47,8 +47,8 @@
                                         <x-input-label for="result" :value="__('Result')" :required="true"/>
                                         <select id="result" name="result" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" required>
                                             <option value="">Select Result</option>
-                                            <option value="pass" {{ old('result') == 'pass' ? 'selected' : '' }}>Pass</option>
-                                            <option value="fail" {{ old('result') == 'fail' ? 'selected' : '' }}>Fail</option>
+                                            <option value="pass" {{ old('result') == 'pass' ? 'selected' : '' }}>Eligible</option>
+                                            <option value="fail" {{ old('result') == 'fail' ? 'selected' : '' }}>Not Eligible</option>
                                         </select>
                                         <x-input-error :messages="$errors->get('result')" class="mt-2" />
                                     </div>
@@ -83,7 +83,7 @@
                                         <div class="flex-1">
                                             <div class="flex items-center space-x-3">
                                                 <span class="px-3 py-1 rounded-full text-sm font-medium {{ $result->result == 'pass' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' }}">
-                                                    {{ strtoupper($result->result) }}
+                                                    {{ $result->result == "pass" ? "Eligible" : "Not Eligible" }}
                                                 </span>
                                                 <span class="text-sm text-gray-600">
                                                     Exam Date: {{ $result->exam_date->format('M d, Y') }}

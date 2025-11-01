@@ -55,7 +55,7 @@
                                                         $latestResult = $scholar->courseworkResults->first();
                                                     @endphp
                                                     <div class="text-sm">
-                                                        <span class="font-medium">{{ ucfirst($latestResult->result) }}</span>
+                                                        <span class="font-medium">{{ $latestResult->result == "pass" ? "Eligible" : "Not Eligible" }}</span>
                                                         <span class="text-gray-500"> - {{ $latestResult->exam_date->format('M d, Y') }}</span>
                                                     </div>
                                                 @else

@@ -454,70 +454,47 @@ class HODController extends Controller
         if ($scholar->currentSupervisor) {
             return redirect()->route('hod.scholars.show', $scholar)->with('info', 'Scholar already has an assigned supervisor.');
         }
+        // Validate preference selection
+        $request->validate([
+            'selected_preference_id' => 'required|exists:supervisor_preferences,id',
+            'remarks' => 'nullable|string|max:1000',
+        ]);
 
-        // Determine if selecting from preferences or manual selection
-        $assignmentType = $request->input('assignment_type', 'manual'); // 'preference' or 'manual'
+        $selectedPreference = \App\Models\SupervisorPreference::where('id', $request->selected_preference_id)
+            ->where('scholar_id', $scholar->id)
+            ->where('status', 'pending')
+            ->with('supervisor')
+            ->firstOrFail();
 
-        if ($assignmentType === 'preference') {
-            // Validate preference selection
-            $request->validate([
-                'selected_preference_id' => 'required|exists:supervisor_preferences,id',
-                'remarks' => 'nullable|string|max:1000',
+        $supervisorId = $selectedPreference->supervisor_id;
+        $justification = $selectedPreference->justification;
+
+        // Approve the selected preference
+        $selectedPreference->update([
+            'status' => 'approved',
+            'approved_at' => now(),
+            'approved_by' => auth()->id(),
+            'remarks' => $request->remarks,
+        ]);
+
+        // Reject all other preferences for this scholar
+        \App\Models\SupervisorPreference::where('scholar_id', $scholar->id)
+            ->where('id', '!=', $selectedPreference->id)
+            ->where('status', 'pending')
+            ->update([
+                'status' => 'rejected',
+                'rejected_at' => now(),
+                'rejected_by' => auth()->id(),
             ]);
-
-            $selectedPreference = \App\Models\SupervisorPreference::where('id', $request->selected_preference_id)
-                ->where('scholar_id', $scholar->id)
-                ->where('status', 'pending')
-                ->with('supervisor')
-                ->firstOrFail();
-
-            $supervisorId = $selectedPreference->supervisor_id;
-            $justification = $selectedPreference->justification;
-
-            // Approve the selected preference
-            $selectedPreference->update([
-                'status' => 'approved',
-                'approved_at' => now(),
-                'approved_by' => auth()->id(),
-                'remarks' => $request->remarks,
-            ]);
-
-            // Reject all other preferences for this scholar
-            \App\Models\SupervisorPreference::where('scholar_id', $scholar->id)
-                ->where('id', '!=', $selectedPreference->id)
-                ->where('status', 'pending')
-                ->update([
-                    'status' => 'rejected',
-                    'rejected_at' => now(),
-                    'rejected_by' => auth()->id(),
-                ]);
-        } else {
-            // Manual selection
-            $request->validate([
-                'supervisor_id' => 'required|exists:supervisors,id',
-            ]);
-
-            $supervisorId = $request->supervisor_id;
-            $justification = null;
-
-            // Reject all pending preferences if manually selecting
-            \App\Models\SupervisorPreference::where('scholar_id', $scholar->id)
-                ->where('status', 'pending')
-                ->update([
-                    'status' => 'rejected',
-                    'rejected_at' => now(),
-                    'rejected_by' => auth()->id(),
-                ]);
-        }
 
         $supervisor = \App\Models\Supervisor::where('id', $supervisorId)
-                                        ->whereHas('user', function ($query) use ($hodDepartment) {
-                                            $query->where('department_id', $hodDepartment->id);
-                                        })
-                                        ->with(['assignedScholars' => function ($query) {
-                                            $query->wherePivot('status', 'assigned');
-                                        }])
-                                        ->firstOrFail();
+                ->whereHas('user', function ($query) use ($hodDepartment) {
+                    $query->where('department_id', $hodDepartment->id);
+                })
+                ->with(['assignedScholars' => function ($query) {
+                    $query->wherePivot('status', 'assigned');
+                }])
+                ->firstOrFail();
 
         // Check if supervisor can accept more scholars
         if (!$supervisor->canAcceptMoreScholars()) {
@@ -549,9 +526,7 @@ class HODController extends Controller
         // Update scholar status to reflect supervisor assignment
         $scholar->update(['status' => 'supervisor_assigned']);
 
-        $message = $assignmentType === 'preference'
-            ? 'Supervisor assigned successfully from preferences.'
-            : 'Supervisor assigned successfully.';
+        $message = 'Supervisor assigned successfully from preferences.';
 
         return redirect()->route('hod.scholars.list')->with('success', $message);
     }
