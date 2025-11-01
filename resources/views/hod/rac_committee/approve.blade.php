@@ -50,14 +50,21 @@
                     <!-- RAC Committee Members -->
                     <div class="mb-8">
                         <h3 class="text-lg font-semibold text-gray-900 mb-4">RAC Committee Members</h3>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700">Member 1</label>
-                                <p class="mt-1 text-sm text-gray-900">{{ $racCommitteeSubmission->member1_name }}</p>
+                        <div class="space-y-3">
+                            <div class="border-l-4 border-indigo-500 pl-4 py-2 bg-gray-50 rounded-r">
+                                <p class="text-sm font-semibold text-gray-900">1. Supervisor</p>
+                                <p class="text-sm text-gray-700">{{ $racCommitteeSubmission->supervisor->user->name }}</p>
+                                <p class="text-xs text-gray-500">{{ $racCommitteeSubmission->supervisor->designation ?? 'N/A' }}, {{ $racCommitteeSubmission->supervisor->department->name ?? 'N/A' }}</p>
                             </div>
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700">Member 2</label>
-                                <p class="mt-1 text-sm text-gray-900">{{ $racCommitteeSubmission->member2_name }}</p>
+                            <div class="border-l-4 border-indigo-500 pl-4 py-2 bg-gray-50 rounded-r">
+                                <p class="text-sm font-semibold text-gray-900">2. Member 1</p>
+                                <p class="text-sm text-gray-700">{{ $racCommitteeSubmission->member1_name }}</p>
+                                <p class="text-xs text-gray-500">{{ $racCommitteeSubmission->member1_designation ?? 'N/A' }}, {{ $racCommitteeSubmission->member1_department ?? 'N/A' }}</p>
+                            </div>
+                            <div class="border-l-4 border-indigo-500 pl-4 py-2 bg-gray-50 rounded-r">
+                                <p class="text-sm font-semibold text-gray-900">3. Member 2</p>
+                                <p class="text-sm text-gray-700">{{ $racCommitteeSubmission->member2_name }}</p>
+                                <p class="text-xs text-gray-500">{{ $racCommitteeSubmission->member2_designation ?? 'N/A' }}, {{ $racCommitteeSubmission->member2_department ?? 'N/A' }}</p>
                             </div>
                         </div>
                         <div class="mt-4">

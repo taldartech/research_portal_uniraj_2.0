@@ -29,10 +29,7 @@
                                             Supervisor
                                         </th>
                                         <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            Member 1
-                                        </th>
-                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            Member 2
+                                            RAC Committee Members
                                         </th>
                                         <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                             Submitted At
@@ -53,11 +50,21 @@
                                                 <div class="text-sm text-gray-900">{{ $submission->supervisor->user->name }}</div>
                                                 <div class="text-sm text-gray-500">{{ $submission->supervisor->user->email }}</div>
                                             </td>
-                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                                {{ $submission->member1_name }}
-                                            </td>
-                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                                {{ $submission->member2_name }}
+                                            <td class="px-6 py-4 text-sm text-gray-900">
+                                                <div class="space-y-1">
+                                                    <div>
+                                                        <span class="font-semibold">1. Supervisor:</span> {{ $submission->supervisor->user->name }}<br>
+                                                        <span class="text-xs text-gray-500">{{ $submission->supervisor->designation ?? 'N/A' }}, {{ $submission->supervisor->department->name ?? 'N/A' }}</span>
+                                                    </div>
+                                                    <div>
+                                                        <span class="font-semibold">2. Member 1:</span> {{ $submission->member1_name }}<br>
+                                                        <span class="text-xs text-gray-500">{{ $submission->member1_designation ?? 'N/A' }}, {{ $submission->member1_department ?? 'N/A' }}</span>
+                                                    </div>
+                                                    <div>
+                                                        <span class="font-semibold">3. Member 2:</span> {{ $submission->member2_name }}<br>
+                                                        <span class="text-xs text-gray-500">{{ $submission->member2_designation ?? 'N/A' }}, {{ $submission->member2_department ?? 'N/A' }}</span>
+                                                    </div>
+                                                </div>
                                             </td>
                                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                                 {{ $submission->created_at->format('M d, Y H:i') }}

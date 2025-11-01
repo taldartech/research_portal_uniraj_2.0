@@ -42,7 +42,10 @@
                                     <strong>Current Status:</strong> Approved on {{ $existingSubmission->approved_at->format('M d, Y') }}
                                 </p>
                                 <p class="text-sm text-gray-700 mt-1">
-                                    <strong>Current Members:</strong> {{ $existingSubmission->member1_name }} & {{ $existingSubmission->member2_name }}
+                                    <strong>Current Members:</strong><br>
+                                    1. Supervisor: {{ $existingSubmission->supervisor->user->name }} ({{ $existingSubmission->supervisor->designation ?? 'N/A' }}, {{ $existingSubmission->supervisor->department->name ?? 'N/A' }})<br>
+                                    2. Member 1: {{ $existingSubmission->member1_name }} ({{ $existingSubmission->member1_designation ?? 'N/A' }}, {{ $existingSubmission->member1_department ?? 'N/A' }})<br>
+                                    3. Member 2: {{ $existingSubmission->member2_name }} ({{ $existingSubmission->member2_designation ?? 'N/A' }}, {{ $existingSubmission->member2_department ?? 'N/A' }})
                                 </p>
                                 <p class="text-sm text-gray-700 mt-1">
                                     <strong>DRC Date:</strong> {{ $existingSubmission->drc_date ? $existingSubmission->drc_date->format('M d, Y') : 'N/A' }}
@@ -52,7 +55,10 @@
                                     <strong>Current Status:</strong> Pending HOD Approval
                                 </p>
                                 <p class="text-sm text-gray-700 mt-1">
-                                    <strong>Current Members:</strong> {{ $existingSubmission->member1_name }} & {{ $existingSubmission->member2_name }}
+                                    <strong>Current Members:</strong><br>
+                                    1. Supervisor: {{ $existingSubmission->supervisor->user->name }} ({{ $existingSubmission->supervisor->designation ?? 'N/A' }}, {{ $existingSubmission->supervisor->department->name ?? 'N/A' }})<br>
+                                    2. Member 1: {{ $existingSubmission->member1_name }} ({{ $existingSubmission->member1_designation ?? 'N/A' }}, {{ $existingSubmission->member1_department ?? 'N/A' }})<br>
+                                    3. Member 2: {{ $existingSubmission->member2_name }} ({{ $existingSubmission->member2_designation ?? 'N/A' }}, {{ $existingSubmission->member2_department ?? 'N/A' }})
                                 </p>
                             @elseif($existingSubmission->status === 'rejected')
                                 <p class="text-sm text-red-800 mt-2">
@@ -71,26 +77,78 @@
                     <form action="{{ route('staff.rac_committee.store', $scholar) }}" method="POST" class="space-y-6">
                         @csrf
 
-                        <div>
-                            <label for="member1_name" class="block text-sm font-medium text-gray-700">
-                                RAC Committee Member 1 <span class="text-red-500">*</span>
-                            </label>
-                            <input type="text" id="member1_name" name="member1_name"
-                                   value="{{ old('member1_name', $existingSubmission->member1_name ?? '') }}"
-                                   class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
-                                   placeholder="Enter full name" required>
-                            <x-input-error :messages="$errors->get('member1_name')" class="mt-2" />
+                        <div class="space-y-4">
+                            <h4 class="text-md font-semibold text-gray-900 mt-6 mb-4">RAC Committee Member 1</h4>
+                            
+                            <div>
+                                <label for="member1_name" class="block text-sm font-medium text-gray-700">
+                                    Name <span class="text-red-500">*</span>
+                                </label>
+                                <input type="text" id="member1_name" name="member1_name"
+                                       value="{{ old('member1_name', $existingSubmission->member1_name ?? '') }}"
+                                       class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
+                                       placeholder="Enter full name" required>
+                                <x-input-error :messages="$errors->get('member1_name')" class="mt-2" />
+                            </div>
+
+                            <div>
+                                <label for="member1_designation" class="block text-sm font-medium text-gray-700">
+                                    Designation <span class="text-red-500">*</span>
+                                </label>
+                                <input type="text" id="member1_designation" name="member1_designation"
+                                       value="{{ old('member1_designation', $existingSubmission->member1_designation ?? '') }}"
+                                       class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
+                                       placeholder="Enter designation" required>
+                                <x-input-error :messages="$errors->get('member1_designation')" class="mt-2" />
+                            </div>
+
+                            <div>
+                                <label for="member1_department" class="block text-sm font-medium text-gray-700">
+                                    Department <span class="text-red-500">*</span>
+                                </label>
+                                <input type="text" id="member1_department" name="member1_department"
+                                       value="{{ old('member1_department', $existingSubmission->member1_department ?? '') }}"
+                                       class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
+                                       placeholder="Enter department" required>
+                                <x-input-error :messages="$errors->get('member1_department')" class="mt-2" />
+                            </div>
                         </div>
 
-                        <div>
-                            <label for="member2_name" class="block text-sm font-medium text-gray-700">
-                                RAC Committee Member 2 <span class="text-red-500">*</span>
-                            </label>
-                            <input type="text" id="member2_name" name="member2_name"
-                                   value="{{ old('member2_name', $existingSubmission->member2_name ?? '') }}"
-                                   class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
-                                   placeholder="Enter full name" required>
-                            <x-input-error :messages="$errors->get('member2_name')" class="mt-2" />
+                        <div class="space-y-4 mt-6">
+                            <h4 class="text-md font-semibold text-gray-900 mt-6 mb-4">RAC Committee Member 2</h4>
+                            
+                            <div>
+                                <label for="member2_name" class="block text-sm font-medium text-gray-700">
+                                    Name <span class="text-red-500">*</span>
+                                </label>
+                                <input type="text" id="member2_name" name="member2_name"
+                                       value="{{ old('member2_name', $existingSubmission->member2_name ?? '') }}"
+                                       class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
+                                       placeholder="Enter full name" required>
+                                <x-input-error :messages="$errors->get('member2_name')" class="mt-2" />
+                            </div>
+
+                            <div>
+                                <label for="member2_designation" class="block text-sm font-medium text-gray-700">
+                                    Designation <span class="text-red-500">*</span>
+                                </label>
+                                <input type="text" id="member2_designation" name="member2_designation"
+                                       value="{{ old('member2_designation', $existingSubmission->member2_designation ?? '') }}"
+                                       class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
+                                       placeholder="Enter designation" required>
+                                <x-input-error :messages="$errors->get('member2_designation')" class="mt-2" />
+                            </div>
+
+                            <div>
+                                <label for="member2_department" class="block text-sm font-medium text-gray-700">
+                                    Department <span class="text-red-500">*</span>
+                                </label>
+                                <input type="text" id="member2_department" name="member2_department"
+                                       value="{{ old('member2_department', $existingSubmission->member2_department ?? '') }}"
+                                       class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
+                                       placeholder="Enter department" required>
+                                <x-input-error :messages="$errors->get('member2_department')" class="mt-2" />
+                            </div>
                         </div>
 
                         <div class="flex items-center justify-between pt-6 border-t border-gray-200">
