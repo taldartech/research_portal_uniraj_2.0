@@ -451,7 +451,7 @@
                                         </div>
                                         @if($scholar->transaction_amount || $scholar->transaction_date || $scholar->transaction_number || $scholar->pay_mode)
                                             <div class="mt-3 p-3 bg-white rounded border border-gray-200">
-                                                <p class="text-xs font-semibold text-gray-700 mb-2">Transaction Details:</p>
+                                                <p class="text-xs font-semibold text-gray-700 mb-2">Transaction/Receipt Details:</p>
                                                 <div class="grid grid-cols-2 gap-2 text-xs text-gray-600">
                                                     @if($scholar->transaction_amount)
                                                         <span><strong>Amount:</strong> ₹{{ number_format($scholar->transaction_amount, 2) }}</span>
@@ -460,7 +460,7 @@
                                                         <span><strong>Date:</strong> {{ $scholar->transaction_date->format('M d, Y') }}</span>
                                                     @endif
                                                     @if($scholar->transaction_number)
-                                                        <span><strong>Transaction No:</strong> {{ $scholar->transaction_number }}</span>
+                                                        <span><strong>Transaction/Receipt No:</strong> {{ $scholar->transaction_number }}</span>
                                                     @endif
                                                     @if($scholar->pay_mode)
                                                         <span><strong>Payment Mode:</strong> {{ $scholar->pay_mode }}</span>

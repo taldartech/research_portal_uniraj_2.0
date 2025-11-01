@@ -84,25 +84,25 @@
                                 <x-input-error :messages="$errors->get('report_file')" class="mt-2" />
                             </div>
 
-                            <!-- Transaction Details Section -->
+                            <!-- Transaction/Receipt Details Section -->
                             <div class="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
-                                <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">Transaction Details</h3>
+                                <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">Transaction/Receipt Details</h3>
 
                                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div>
-                                        <x-input-label for="transaction_amount" :value="__('Transaction Amount')" />
+                                        <x-input-label for="transaction_amount" :value="__('Transaction/Receipt Amount')" />
                                         <input id="transaction_amount" name="transaction_amount" type="number" step="0.01" min="0" class="block mt-1 w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 dark:focus:border-indigo-600 focus:ring-indigo-500 dark:focus:ring-indigo-600 rounded-md shadow-sm" value="{{ old('transaction_amount') }}" required />
                                         <x-input-error :messages="$errors->get('transaction_amount')" class="mt-2" />
                                     </div>
 
                                     <div>
-                                        <x-input-label for="transaction_date" :value="__('Transaction Date')" />
+                                        <x-input-label for="transaction_date" :value="__('Transaction/Receipt Date')" />
                                         <input id="transaction_date" name="transaction_date" type="date" class="block mt-1 w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 dark:focus:border-indigo-600 focus:ring-indigo-500 dark:focus:ring-indigo-600 rounded-md shadow-sm" value="{{ old('transaction_date') }}" required />
                                         <x-input-error :messages="$errors->get('transaction_date')" class="mt-2" />
                                     </div>
 
                                     <div>
-                                        <x-input-label for="transaction_no" :value="__('Transaction Number')" />
+                                        <x-input-label for="transaction_no" :value="__('Transaction/Receipt Number')" />
                                         <input id="transaction_no" name="transaction_no" type="text" class="block mt-1 w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 dark:focus:border-indigo-600 focus:ring-indigo-500 dark:focus:ring-indigo-600 rounded-md shadow-sm" value="{{ old('transaction_no') }}" required />
                                         <x-input-error :messages="$errors->get('transaction_no')" class="mt-2" />
                                     </div>
@@ -111,13 +111,8 @@
                                         <x-input-label for="pay_mode" :value="__('Payment Mode')" />
                                         <select id="pay_mode" name="pay_mode" class="block mt-1 w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 dark:focus:border-indigo-600 focus:ring-indigo-500 dark:focus:ring-indigo-600 rounded-md shadow-sm" required>
                                             <option value="">Select Payment Mode</option>
-                                            <option value="IMPS" {{ old('pay_mode') == 'IMPS' ? 'selected' : '' }}>IMPS</option>
-                                            <option value="NEFT" {{ old('pay_mode') == 'NEFT' ? 'selected' : '' }}>NEFT</option>
-                                            <option value="RTGS" {{ old('pay_mode') == 'RTGS' ? 'selected' : '' }}>RTGS</option>
-                                            <option value="UPI" {{ old('pay_mode') == 'UPI' ? 'selected' : '' }}>UPI</option>
-                                            <option value="Credit Card" {{ old('pay_mode') == 'Credit Card' ? 'selected' : '' }}>Credit Card</option>
-                                            <option value="Debit Card" {{ old('pay_mode') == 'Debit Card' ? 'selected' : '' }}>Debit Card</option>
-                                            <option value="Cash Deposit" {{ old('pay_mode') == 'Cash Deposit' ? 'selected' : '' }}>Cash Deposit</option>
+                                            <option value="Online" {{ old('pay_mode') == 'Online' ? 'selected' : '' }}>Online</option>
+                                            <option value="Offline" {{ old('pay_mode') == 'Offline' ? 'selected' : '' }}>Offline</option>
                                         </select>
                                         <x-input-error :messages="$errors->get('pay_mode')" class="mt-2" />
                                     </div>
