@@ -13,6 +13,7 @@ use Illuminate\Support\Str;
 use App\Models\Scholar;
 use App\Models\Synopsis;
 use App\Models\RACCommitteeSubmission;
+use App\Models\CourseworkResult;
 use Illuminate\Support\Facades\Auth;
 use Maatwebsite\Excel\Facades\Excel;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
@@ -64,7 +65,7 @@ class HODController extends Controller
             $meritListData = $data[0]; // Get the first sheet
 
             // Validate that required columns exist
-            $requiredColumns = ['name', 'email', 'form_number', 'mobile_number'];
+            $requiredColumns = ['name', 'email', 'form_number', 'mobile_number', ];
             $firstRow = reset($meritListData);
             $missingColumns = array_diff($requiredColumns, array_keys($firstRow));
 
@@ -1403,5 +1404,111 @@ class HODController extends Controller
         }
 
         return redirect()->route('hod.rac_committee.pending')->with('success', $message);
+    }
+
+    /**
+     * List scholars for coursework result management
+     */
+    public function listScholarsForCoursework()
+    {
+        $hodDepartment = auth()->user()->departmentManaging;
+
+        if (!$hodDepartment) {
+            abort(403, 'You are not assigned as HOD to any department.');
+        }
+
+        $scholars = Scholar::whereHas('admission.department', function ($query) use ($hodDepartment) {
+            $query->where('id', $hodDepartment->id);
+        })
+        ->with(['user', 'admission.department', 'courseworkResults' => function($query) {
+            $query->latest('exam_date');
+        }])
+        ->get();
+
+        return view('hod.coursework.list', compact('scholars'));
+    }
+
+    /**
+     * Show form to upload coursework result for a scholar
+     */
+    public function showUploadCourseworkResultForm(Scholar $scholar)
+    {
+        $hodDepartment = auth()->user()->departmentManaging;
+
+        if (!$hodDepartment || $scholar->admission->department_id !== $hodDepartment->id) {
+            abort(403, 'Unauthorized action.');
+        }
+
+        $courseworkResults = $scholar->courseworkResults()->with('uploadedBy')->latest('exam_date')->get();
+
+        return view('hod.coursework.upload', compact('scholar', 'courseworkResults'));
+    }
+
+    /**
+     * Store coursework result
+     */
+    public function storeCourseworkResult(Request $request, Scholar $scholar)
+    {
+        $hodDepartment = auth()->user()->departmentManaging;
+
+        if (!$hodDepartment || $scholar->admission->department_id !== $hodDepartment->id) {
+            abort(403, 'Unauthorized action.');
+        }
+
+        $request->validate([
+            'marksheet_file' => 'required|file|mimes:pdf,doc,docx,jpg,jpeg,png|max:5120',
+            'exam_date' => 'required|date',
+            'result' => 'required|in:pass,fail',
+            'remarks' => 'nullable|string|max:1000',
+        ]);
+
+        // Handle file upload
+        $file = $request->file('marksheet_file');
+        $filename = 'coursework_' . $scholar->id . '_' . time() . '_' . $file->getClientOriginalName();
+        $filePath = $file->storeAs('coursework_results/' . $scholar->id, $filename, 'public');
+
+        // Create coursework result
+        $courseworkResult = \App\Models\CourseworkResult::create([
+            'scholar_id' => $scholar->id,
+            'uploaded_by' => auth()->id(),
+            'marksheet_file' => $filePath,
+            'exam_date' => $request->exam_date,
+            'result' => $request->result,
+            'remarks' => $request->remarks,
+        ]);
+
+        // Update scholar's coursework_completed status if result is pass
+        if ($request->result === 'pass') {
+            $scholar->update([
+                'coursework_completed' => true,
+            ]);
+        } else {
+            // If fail, set to false (they need to retake)
+            $scholar->update([
+                'coursework_completed' => false,
+            ]);
+        }
+
+        return redirect()->route('hod.coursework.upload', $scholar)
+            ->with('success', 'Coursework result uploaded successfully.');
+    }
+
+    /**
+     * View all coursework results for a scholar
+     */
+    public function viewScholarCourseworkResults(Scholar $scholar)
+    {
+        $hodDepartment = auth()->user()->departmentManaging;
+
+        if (!$hodDepartment || $scholar->admission->department_id !== $hodDepartment->id) {
+            abort(403, 'Unauthorized action.');
+        }
+
+        $courseworkResults = $scholar->courseworkResults()
+            ->with('uploadedBy')
+            ->orderBy('exam_date', 'desc')
+            ->get();
+
+        return view('hod.coursework.view', compact('scholar', 'courseworkResults'));
     }
 }

@@ -63,6 +63,9 @@
             <x-nav-link :href="route('hod.supervisor_assignments.pending')" :active="request()->routeIs('hod.supervisor_assignments.*')">
                 {{ __('Supervisor Assignments') }}
             </x-nav-link>
+            <x-nav-link :href="route('hod.coursework.list')" :active="request()->routeIs('hod.coursework.*')">
+                {{ __('Coursework Results') }}
+            </x-nav-link>
             <x-nav-link :href="route('hod.synopsis.pending')" :active="request()->routeIs('hod.synopsis.*')">
                 {{ __('Pending Synopses') }}
             </x-nav-link>

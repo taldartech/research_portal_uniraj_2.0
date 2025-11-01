@@ -252,6 +252,12 @@ Route::prefix('hod')->name('hod.')->middleware(['auth', UserTypeMiddleware::clas
     Route::get('/late-submission/pending', [App\Http\Controllers\LateSubmissionController::class, 'listPendingForHOD'])->name('late_submission.pending');
     Route::post('/late-submission/{lateSubmissionRequest}/approve', [App\Http\Controllers\LateSubmissionController::class, 'processHODApproval'])->name('late_submission.process');
 
+    // Coursework Results Routes
+    Route::get('/coursework/list', [HODController::class, 'listScholarsForCoursework'])->name('coursework.list');
+    Route::get('/coursework/{scholar}/upload', [HODController::class, 'showUploadCourseworkResultForm'])->name('coursework.upload');
+    Route::post('/coursework/{scholar}/store', [HODController::class, 'storeCourseworkResult'])->name('coursework.store');
+    Route::get('/coursework/{scholar}/view', [HODController::class, 'viewScholarCourseworkResults'])->name('coursework.view');
+
     // DRC Minutes CRUD Routes
     Route::resource('drc-minutes', App\Http\Controllers\HODDRCMinutesController::class)->names('drc_minutes');
     Route::get('/drc-minutes/{drc_minute}/download', [App\Http\Controllers\HODDRCMinutesController::class, 'download'])->name('drc_minutes.download');
@@ -516,10 +522,15 @@ Route::middleware('guest')->group(function () {
     // Scholar Login Routes
     Route::get('/scholar/login', [App\Http\Controllers\Auth\ScholarLoginController::class, 'showLoginForm'])->name('scholar.login');
     Route::post('/scholar/login', [App\Http\Controllers\Auth\ScholarLoginController::class, 'login']);
+    Route::post('/scholar/send-otp', [App\Http\Controllers\Auth\ScholarLoginController::class, 'sendOtp'])->name('scholar.send-otp');
 
     // Staff Login Routes
     Route::get('/staff/login', [App\Http\Controllers\Auth\StaffLoginController::class, 'showLoginForm'])->name('staff.login');
     Route::post('/staff/login', [App\Http\Controllers\Auth\StaffLoginController::class, 'login']);
+    Route::post('/staff/send-otp', [App\Http\Controllers\Auth\StaffLoginController::class, 'sendOtp'])->name('staff.send-otp');
+
+    // General Login Routes (for AuthenticatedSessionController)
+    Route::post('/send-otp', [App\Http\Controllers\Auth\AuthenticatedSessionController::class, 'sendOtp'])->name('send-otp');
 });
 
 // Logout Routes (accessible to authenticated users)

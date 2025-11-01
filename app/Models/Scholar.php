@@ -90,6 +90,13 @@ class Scholar extends Model
         'synopsis_file',
         'synopsis_submitted_at',
         'synopsis_status',
+        // Transaction/Payment fields
+        'transaction_amount',
+        'transaction_date',
+        'transaction_number',
+        'pay_mode',
+        'fee_receipt_file',
+        'fee_receipt_submitted_at',
     ];
 
     protected $casts = [
@@ -115,6 +122,8 @@ class Scholar extends Model
         'registration_letter_signed_at' => 'datetime',
         'coursework_completed' => 'boolean',
         'synopsis_submitted_at' => 'datetime',
+        'transaction_date' => 'date',
+        'fee_receipt_submitted_at' => 'datetime',
     ];
 
     public function user()
@@ -223,6 +232,41 @@ class Scholar extends Model
     public function courseworkExemptions()
     {
         return $this->hasMany(CourseworkExemption::class);
+    }
+
+    public function courseworkResults()
+    {
+        return $this->hasMany(CourseworkResult::class)->orderBy('exam_date', 'desc');
+    }
+
+    /**
+     * Get the latest coursework result
+     */
+    public function latestCourseworkResult()
+    {
+        return $this->hasOne(CourseworkResult::class)->latestOfMany('exam_date');
+    }
+
+    /**
+     * Check if scholar has passed coursework
+     */
+    public function hasPassedCoursework(): bool
+    {
+        // Check if they have an approved exemption
+        if ($this->hasApprovedCourseworkExemption()) {
+            return true;
+        }
+
+        // Check if they have any pass result
+        return $this->courseworkResults()->where('result', 'pass')->exists();
+    }
+
+    /**
+     * Get the latest pass result
+     */
+    public function getLatestPassResult()
+    {
+        return $this->courseworkResults()->where('result', 'pass')->latest('exam_date')->first();
     }
 
     public function thesisSubmissions()

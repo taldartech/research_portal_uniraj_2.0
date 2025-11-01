@@ -28,7 +28,7 @@ class LoginRequest extends FormRequest
     {
         return [
             'email' => ['required', 'string', 'email'],
-            'password' => ['required', 'string'],
+            'otp' => ['required', 'string', 'size:6'],
         ];
     }
 
@@ -43,25 +43,32 @@ class LoginRequest extends FormRequest
 
         $allowedStaffTypes = ['staff', 'supervisor', 'hod', 'dean'];
 
-        if (! Auth::attempt($this->only('email', 'password'), $this->boolean('remember'))) {
+        $user = \App\Models\User::where('email', $this->string('email'))->first();
+
+        if (!$user) {
             RateLimiter::hit($this->throttleKey());
             throw ValidationException::withMessages([
                 'email' => trans('auth.failed'),
             ]);
         }
 
-        $user = Auth::user();
+        $otpService = app(\App\Services\OtpService::class);
+        
+        if (! $otpService->verifyOtp($user, $this->string('otp'))) {
+            RateLimiter::hit($this->throttleKey());
+            throw ValidationException::withMessages([
+                'otp' => 'Invalid or expired OTP.',
+            ]);
+        }
 
         if (! in_array($user->user_type, $allowedStaffTypes)) {
-            Auth::logout();
-            $this->session()->invalidate();
-            $this->session()->regenerateToken();
             RateLimiter::hit($this->throttleKey());
             throw ValidationException::withMessages([
                 'email' => 'You do not have staff access.',
             ]);
         }
 
+        Auth::login($user, $this->boolean('remember'));
         RateLimiter::clear($this->throttleKey());
     }
 

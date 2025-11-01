@@ -610,6 +610,93 @@
                             </div>
                         </div>
 
+                        <!-- Fees Detail Section -->
+                        <div class="border-b border-gray-200 dark:border-gray-700 pb-8">
+                            <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-6">Fees Detail</h3>
+
+                            <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mb-6">
+                                <div class="flex">
+                                    <div class="flex-shrink-0">
+                                        <svg class="h-5 w-5 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path>
+                                        </svg>
+                                    </div>
+                                    <div class="ml-3">
+                                        <h4 class="text-sm font-medium text-blue-800 dark:text-blue-200">Fees Detail</h4>
+                                        <p class="mt-1 text-sm text-blue-700 dark:text-blue-300">
+                                            Provide the fees details for the registration process.
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="space-y-6">
+                                <div>
+                                    <x-input-label for="transaction_amount" :value="__('Transaction Amount')" :required=true/>
+                                    <x-text-input id="transaction_amount" name="transaction_amount" type="text" class="mt-1 block w-full"
+                                        :value="old('transaction_amount', $scholar->transaction_amount)" placeholder="Enter the transaction amount" required/>
+                                    <x-input-error :messages="$errors->get('transaction_amount')" class="mt-2" />
+                                    <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                                        Provide the transaction amount for the registration process.
+                                    </p>
+                                </div>
+
+                                <div>
+                                    <x-input-label for="transaction_date" :value="__('Transaction Date')" :required=true/>
+                                    <x-text-input id="transaction_date" name="transaction_date" type="date" class="mt-1 block w-full"
+                                        :value="old('transaction_date', $scholar->transaction_date ? $scholar->transaction_date->format('Y-m-d') : '')" required/>
+                                    <x-input-error :messages="$errors->get('transaction_date')" class="mt-2" />
+                                    <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                                        Provide the transaction date for the registration process.
+                                    </p>
+                                </div>
+
+                                <div>
+                                    <x-input-label for="transaction_number" :value="__('Transaction Number')" :required=true/>
+                                    <x-text-input id="transaction_number" name="transaction_number" type="text" class="mt-1 block w-full"
+                                        :value="old('transaction_number', $scholar->transaction_number)" placeholder="Enter the transaction number" required/>
+                                    <x-input-error :messages="$errors->get('transaction_number')" class="mt-2" />
+                                    <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                                        Provide the transaction number for the registration process.
+                                    </p>
+                                </div>
+
+                                <div>
+                                    <x-input-label for="pay_mode" :value="__('Payment Mode')" :required=true/>
+                                    <x-text-input id="pay_mode" name="pay_mode" type="text" class="mt-1 block w-full"
+                                        :value="old('pay_mode', $scholar->pay_mode)" placeholder="Enter the payment mode" required/>
+                                    <x-input-error :messages="$errors->get('pay_mode')" class="mt-2" />
+                                    <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                                        Provide the payment mode for the registration process.
+                                    </p>
+                                </div>
+                                <div>
+                                    @if($scholar->fee_receipt_file)
+                                        <div class="mt-2 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
+                                            <div class="flex items-center">
+                                                <svg class="h-5 w-5 text-green-400 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                                                </svg>
+                                                <span class="text-sm font-medium text-green-800 dark:text-green-200">Fee Receipt already uploaded</span>
+                                            </div>
+                                            <p class="mt-1 text-sm text-green-700 dark:text-green-300">
+                                                Submitted on: {{ $scholar->fee_receipt_submitted_at ? $scholar->fee_receipt_submitted_at->format('M d, Y') : 'N/A' }}
+                                            </p>
+                                        </div>
+                                    @else
+                                        <x-input-label for="fee_receipt_file" :value="__('Fee Receipt Document (PDF, DOC, DOCX)')" :required="true"/>
+                                        <input id="fee_receipt_file" name="fee_receipt_file" type="file"
+                                            class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
+                                            accept=".pdf,.doc,.docx" required>
+                                        <x-input-error :messages="$errors->get('fee_receipt_file')" class="mt-2" />
+                                        <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                                            Upload your fee receipt document (max 2MB).
+                                        </p>
+                                    @endif
+                                </div>
+                            </div>
+                        </div>
+
                         <!-- Form Actions -->
                         <div class="flex items-center justify-between pt-6 border-t border-gray-200 dark:border-gray-700">
                             <div class="flex space-x-3">

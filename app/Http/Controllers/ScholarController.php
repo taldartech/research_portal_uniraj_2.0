@@ -23,11 +23,6 @@ class ScholarController extends Controller
     {
         $scholar = Auth::user()->scholar;
 
-        // Check if scholar can edit profile
-        if (!$scholar->canEditProfile()) {
-            return redirect()->route('scholar.dashboard')->with('error', 'You cannot edit your profile after supervisor approval. Please contact your supervisor for any changes.');
-        }
-
         return view('scholar.profile.edit', compact('scholar'));
     }
 
@@ -75,12 +70,25 @@ class ScholarController extends Controller
     public function showPhdRegistrationForm()
     {
         $scholar = Auth::user()->scholar;
+
+        // Check if coursework is completed
+        if (!$scholar->hasPassedCoursework()) {
+            return redirect()->route('scholar.dashboard')
+                ->with('error', 'You must pass coursework before you can access the registration form. Please contact your HOD for coursework results.');
+        }
+
         return view('scholar.registration.phd_form', compact('scholar'));
     }
 
     public function storePhdRegistrationForm(Request $request)
     {
         $scholar = Auth::user()->scholar;
+
+        // Check if coursework is completed
+        if (!$scholar->hasPassedCoursework()) {
+            return redirect()->route('scholar.dashboard')
+                ->with('error', 'You must pass coursework before you can submit the registration form. Please contact your HOD for coursework results.');
+        }
 
         $request->validate([
             // Basic Profile Information
@@ -132,6 +140,13 @@ class ScholarController extends Controller
             // Synopsis
             'synopsis_topic' => 'nullable|string|max:255',
             'synopsis_file' => 'nullable|file|mimes:pdf,doc,docx|max:2048',
+
+            // Transaction/Payment fields
+            'transaction_amount' => 'required|numeric|min:0',
+            'transaction_date' => 'required|date',
+            'transaction_number' => 'required|string|max:255',
+            'pay_mode' => 'required|string|max:255',
+            'fee_receipt_file' => $scholar->fee_receipt_file ? 'nullable|file|mimes:pdf,doc,docx|max:2048' : 'required|file|mimes:pdf,doc,docx|max:2048',
         ]);
 
         // Custom validation: if document_types array has non-empty values, ensure corresponding files exist
@@ -182,8 +197,17 @@ class ScholarController extends Controller
             $synopsisFilePath = $synopsisFile->storeAs('synopses/' . $scholar->id, $filename, 'public');
         }
 
+        // Handle fee receipt file upload
+        $feeReceiptFilePath = null;
+        if ($request->hasFile('fee_receipt_file')) {
+            $feeReceiptFile = $request->file('fee_receipt_file');
+            $filename = 'fee_receipt_' . time() . '_' . $feeReceiptFile->getClientOriginalName();
+            $feeReceiptFilePath = $feeReceiptFile->storeAs('fee_receipts/' . $scholar->id, $filename, 'public');
+            $formData['fee_receipt_submitted_at'] = now();
+        }
+
         // Update scholar with form data
-        $formData = $request->except(['registration_documents', 'synopsis_file', 'action', 'post_graduate_degrees', 'post_graduate_universities', 'post_graduate_years', 'post_graduate_percentages', 'document_types']);
+        $formData = $request->except(['registration_documents', 'synopsis_file', 'fee_receipt_file', 'action', 'post_graduate_degrees', 'post_graduate_universities', 'post_graduate_years', 'post_graduate_percentages', 'document_types']);
 
         // Handle academic qualifications arrays - store all qualifications
         if ($request->has('post_graduate_degrees') && !empty($request->post_graduate_degrees)) {
@@ -237,6 +261,14 @@ class ScholarController extends Controller
                 'submission_date' => now(),
                 'status' => 'pending_supervisor_approval',
             ]);
+        }
+
+        // Handle fee receipt file
+        if ($feeReceiptFilePath) {
+            $formData['fee_receipt_file'] = $feeReceiptFilePath;
+            if (!isset($formData['fee_receipt_submitted_at'])) {
+                $formData['fee_receipt_submitted_at'] = now();
+            }
         }
 
         // Update registration form status

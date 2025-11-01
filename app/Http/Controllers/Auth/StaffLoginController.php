@@ -3,45 +3,99 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Models\User;
+use App\Services\OtpService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\ValidationException;
 
 class StaffLoginController extends Controller
 {
-    public function showLoginForm()
+    protected $otpService;
+
+    public function __construct(OtpService $otpService)
     {
-        return view('auth.staff-login');
+        $this->otpService = $otpService;
     }
 
-    public function login(Request $request)
+    public function showLoginForm(Request $request)
     {
-        $credentials = $request->validate([
+        return view('auth.staff-login', [
+            'email' => old('email'),
+            'otp_sent' => session('otp_sent', false)
+        ]);
+    }
+
+    public function sendOtp(Request $request)
+    {
+        $request->validate([
             'email' => ['required', 'string', 'email'],
             'password' => ['required', 'string'],
         ]);
 
-        $attempt = Auth::attempt($credentials, $request->boolean('remember'));
-
-        $allowedStaffTypes = ['staff', 'supervisor', 'hod', 'dean', 'da', 'so', 'ar', 'dr', 'hvc'];
-
-        if (! $attempt) {
+        // First verify email and password
+        $credentials = $request->only('email', 'password');
+        
+        if (!Auth::attempt($credentials)) {
             throw ValidationException::withMessages([
                 'email' => trans('auth.failed'),
             ]);
         }
 
         $user = Auth::user();
-
-        if (! in_array($user->user_type, $allowedStaffTypes)) {
+        
+        // Check user type restrictions
+        $allowedStaffTypes = ['staff', 'supervisor', 'hod', 'dean', 'da', 'so', 'ar', 'dr', 'hvc'];
+        if (!in_array($user->user_type, $allowedStaffTypes)) {
             Auth::logout();
-            $request->session()->invalidate();
-            $request->session()->regenerateToken();
             throw ValidationException::withMessages([
                 'email' => 'You do not have staff access.',
             ]);
         }
 
+        // If password is correct, send OTP
+        $this->otpService->sendOtp($user);
+        
+        // Logout the user (we'll login again after OTP verification)
+        Auth::logout();
+
+        return back()->with([
+            'status' => 'OTP has been sent to your email address.',
+            'otp_sent' => true,
+            'email' => $request->email
+        ])->withInput($request->only('email'));
+    }
+
+    public function login(Request $request)
+    {
+        $request->validate([
+            'email' => ['required', 'string', 'email'],
+            'otp' => ['required', 'string', 'size:6'],
+        ]);
+
+        $user = User::where('email', $request->email)->first();
+
+        if (!$user) {
+            throw ValidationException::withMessages([
+                'email' => trans('auth.failed'),
+            ]);
+        }
+
+        if (! $this->otpService->verifyOtp($user, $request->otp)) {
+            throw ValidationException::withMessages([
+                'otp' => 'Invalid or expired OTP.',
+            ]);
+        }
+
+        $allowedStaffTypes = ['staff', 'supervisor', 'hod', 'dean', 'da', 'so', 'ar', 'dr', 'hvc'];
+
+        if (! in_array($user->user_type, $allowedStaffTypes)) {
+            throw ValidationException::withMessages([
+                'email' => 'You do not have staff access.',
+            ]);
+        }
+
+        Auth::login($user, $request->boolean('remember'));
         $request->session()->regenerate();
 
         return redirect()->intended(route('staff.dashboard', absolute: false));
