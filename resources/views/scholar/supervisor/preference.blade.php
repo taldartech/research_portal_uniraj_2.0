@@ -31,65 +31,187 @@
 
                         <p class="mt-4">You have already submitted a supervisor preference. You cannot submit another one until this one is processed.</p>
                     @else
-                        <form method="POST" action="{{ route('scholar.supervisor.preference.store') }}">
-                            @csrf
+                        @if ($supervisors->count() > 0)
+                            <div class="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                                <p class="text-sm text-blue-700">
+                                    <strong>Note:</strong> You must rank all {{ $supervisors->count() }} supervisors in your department by preference (1st to {{ $supervisors->count() }}th).
+                                </p>
+                            </div>
 
-                            <!-- Supervisor Preference 1 -->
-                            <div class="mb-6 p-4 border rounded-lg">
-                                <h4 class="text-lg font-medium text-gray-900 mb-4">1st Preference</h4>
+                            <form method="POST" action="{{ route('scholar.supervisor.preference.store') }}" id="supervisorPreferenceForm">
+                                @csrf
+
+                                @php
+                                    // Helper function to format ordinal numbers
+                                    function ordinal($number) {
+                                        $ends = array('th','st','nd','rd','th','th','th','th','th','th');
+                                        if ((($number % 100) >= 11) && (($number % 100) <= 13))
+                                            return $number. 'th';
+                                        return $number. $ends[$number % 10];
+                                    }
+                                @endphp
+
+                                @foreach(range(1, $supervisors->count()) as $preferenceOrder)
+                                    <div class="mb-6 p-4 border rounded-lg">
+                                        <h4 class="text-lg font-medium text-gray-900 mb-4">{{ ordinal($preferenceOrder) }} Preference</h4>
+                                        <div class="mb-4">
+                                            <x-input-label for="supervisor_{{ $preferenceOrder }}_id" :value="__('Supervisor')" />
+                                            <x-select-input id="supervisor_{{ $preferenceOrder }}_id" name="supervisor_{{ $preferenceOrder }}_id" class="block mt-1 w-full supervisor-select" required data-preference="{{ $preferenceOrder }}">
+                                                <option value="">Select a Supervisor</option>
+                                                @foreach($supervisors as $supervisor)
+                                                    <option value="{{ $supervisor->id }}" {{ old("supervisor_{$preferenceOrder}_id") == $supervisor->id ? 'selected' : '' }}>
+                                                        {{ $supervisor->user->name }} - {{ $supervisor->research_specialization }}
+                                                    </option>
+                                                @endforeach
+                                            </x-select-input>
+                                            <x-input-error :messages="$errors->get("supervisor_{$preferenceOrder}_id")" class="mt-2" />
+                                        </div>
+                                    </div>
+                                @endforeach
+
+                                @if ($errors->has('supervisor_selection'))
+                                    <div class="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+                                        <x-input-error :messages="$errors->get('supervisor_selection')" class="mt-2" />
+                                    </div>
+                                @endif
+
                                 <div class="mb-4">
-                                    <x-input-label for="supervisor_1_id" :value="__('Supervisor')" />
-                                    <x-select-input id="supervisor_1_id" name="supervisor_1_id" class="block mt-1 w-full" required>
-                                        <option value="">Select a Supervisor</option>
-                                        @foreach($supervisors as $supervisor)
-                                            <option value="{{ $supervisor->id }}">{{ $supervisor->user->name }} - {{ $supervisor->research_specialization }}</option>
-                                        @endforeach
-                                    </x-select-input>
-                                    <x-input-error :messages="$errors->get('supervisor_1_id')" class="mt-2" />
+                                    <x-input-label for="remarks" :value="__('Remark')" />
+                                    <x-textarea-input id="remarks" name="remarks" class="block mt-1 w-full" rows="3">{{ old('remarks') }}</x-textarea-input>
+                                    <x-input-error :messages="$errors->get('remarks')" class="mt-2" />
                                 </div>
-                            </div>
 
-                            <!-- Supervisor Preference 2 -->
-                            <div class="mb-6 p-4 border rounded-lg">
-                                <h4 class="text-lg font-medium text-gray-900 mb-4">2nd Preference</h4>
-                                <div class="mb-4">
-                                    <x-input-label for="supervisor_2_id" :value="__('Supervisor')" />
-                                    <x-select-input id="supervisor_2_id" name="supervisor_2_id" class="block mt-1 w-full">
-                                        <option value="">Select a Supervisor</option>
-                                        @foreach($supervisors as $supervisor)
-                                            <option value="{{ $supervisor->id }}">{{ $supervisor->user->name }} - {{ $supervisor->research_specialization }}</option>
-                                        @endforeach
-                                    </x-select-input>
-                                    <x-input-error :messages="$errors->get('supervisor_2_id')" class="mt-2" />
+                                <div class="flex items-center justify-end mt-4">
+                                    <x-primary-button>
+                                        {{ __('Submit Preferences') }}
+                                    </x-primary-button>
                                 </div>
-                            </div>
+                            </form>
 
-                            <!-- Supervisor Preference 3 -->
-                            <div class="mb-6 p-4 border rounded-lg">
-                                <h4 class="text-lg font-medium text-gray-900 mb-4">3rd Preference</h4>
-                                <div class="mb-4">
-                                    <x-input-label for="supervisor_3_id" :value="__('Supervisor')" />
-                                    <x-select-input id="supervisor_3_id" name="supervisor_3_id" class="block mt-1 w-full">
-                                        <option value="">Select a Supervisor</option>
-                                        @foreach($supervisors as $supervisor)
-                                            <option value="{{ $supervisor->id }}">{{ $supervisor->user->name }} - {{ $supervisor->research_specialization }}</option>
-                                        @endforeach
-                                    </x-select-input>
-                                    <x-input-error :messages="$errors->get('supervisor_3_id')" class="mt-2" />
-                                </div>
-                            </div>
-                            <div class="mb-4">
-                                <x-input-label for="remarks" :value="__('Remark')" />
-                                <x-textarea-input id="remarks" name="remarks" class="block mt-1 w-full" rows="3">{{ old('remarks') }}</x-textarea-input>
-                                <x-input-error :messages="$errors->get('remarks')" class="mt-2" />
-                            </div>
+                            <script>
+                                // Prevent selecting the same supervisor in multiple dropdowns
+                                document.addEventListener('DOMContentLoaded', function() {
+                                    // Find all select elements by name pattern (more reliable)
+                                    let selects = document.querySelectorAll('select[name^="supervisor_"]');
+                                    
+                                    // If not found, try with class
+                                    if (selects.length === 0) {
+                                        selects = document.querySelectorAll('select.supervisor-select');
+                                    }
+                                    
+                                    // Ensure we have selects
+                                    if (selects.length === 0) {
+                                        console.error('Could not find supervisor select elements');
+                                        return;
+                                    }
 
-                            <div class="flex items-center justify-end mt-4">
-                                <x-primary-button>
-                                    {{ __('Submit Preferences') }}
-                                </x-primary-button>
+                                    function updateDropdowns() {
+                                        // Get all currently selected supervisor IDs (excluding empty selections)
+                                        const selectedIds = [];
+                                        selects.forEach(function(select) {
+                                            if (select.value && select.value !== '') {
+                                                selectedIds.push(select.value);
+                                            }
+                                        });
+
+                                        // Update each dropdown
+                                        selects.forEach(function(select) {
+                                            const currentValue = select.value;
+                                            const options = select.options;
+
+                                            // Update each option
+                                            for (let i = 0; i < options.length; i++) {
+                                                const option = options[i];
+                                                const optionValue = option.value;
+
+                                                // Always show the "Select a Supervisor" option
+                                                if (optionValue === '') {
+                                                    option.style.display = '';
+                                                    option.disabled = false;
+                                                    continue;
+                                                }
+
+                                                // If this is the currently selected option in this dropdown, always show it
+                                                if (optionValue === currentValue) {
+                                                    option.style.display = '';
+                                                    option.disabled = false;
+                                                    continue;
+                                                }
+
+                                                // Hide and disable the option if it's selected in another dropdown
+                                                if (selectedIds.includes(optionValue)) {
+                                                    option.style.display = 'none';
+                                                    option.disabled = true;
+                                                } else {
+                                                    option.style.display = '';
+                                                    option.disabled = false;
+                                                }
+                                            }
+                                        });
+                                    }
+
+                                    // Add change event listener to each select with duplicate prevention
+                                    selects.forEach(function(select) {
+                                        select.addEventListener('change', function(e) {
+                                            const selectedValue = this.value;
+                                            
+                                            if (selectedValue && selectedValue !== '') {
+                                                // Check if this value is already selected in another dropdown
+                                                let isDuplicate = false;
+                                                selects.forEach(function(otherSelect) {
+                                                    if (otherSelect !== select && otherSelect.value === selectedValue) {
+                                                        isDuplicate = true;
+                                                    }
+                                                });
+
+                                                if (isDuplicate) {
+                                                    // Reset to empty if duplicate
+                                                    alert('This supervisor has already been selected in another preference. Please choose a different supervisor.');
+                                                    this.value = '';
+                                                    updateDropdowns();
+                                                } else {
+                                                    updateDropdowns();
+                                                }
+                                            } else {
+                                                updateDropdowns();
+                                            }
+                                        });
+                                    });
+
+                                    // Initialize on page load (handles old input values from validation errors)
+                                    updateDropdowns();
+
+                                    // Prevent form submission if duplicates exist
+                                    const form = document.getElementById('supervisorPreferenceForm');
+                                    if (form) {
+                                        form.addEventListener('submit', function(e) {
+                                            const selectedValues = [];
+                                            let hasDuplicate = false;
+                                            
+                                            selects.forEach(function(select) {
+                                                if (select.value && select.value !== '') {
+                                                    if (selectedValues.includes(select.value)) {
+                                                        hasDuplicate = true;
+                                                    } else {
+                                                        selectedValues.push(select.value);
+                                                    }
+                                                }
+                                            });
+
+                                            if (hasDuplicate) {
+                                                e.preventDefault();
+                                                alert('Please ensure all supervisors are different. Duplicate selections are not allowed.');
+                                                return false;
+                                            }
+                                        });
+                                    }
+                                });
+                            </script>
+                        @else
+                            <div class="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                                <p class="text-yellow-700">No supervisors are available in your department at this time. Please contact your department administrator.</p>
                             </div>
-                        </form>
+                        @endif
                     @endif
                 </div>
             </div>
