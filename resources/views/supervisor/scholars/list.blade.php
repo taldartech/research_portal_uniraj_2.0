@@ -22,16 +22,51 @@
                                 </tr>
                             </thead>
                             <tbody class="bg-white divide-y divide-gray-200">
-                                @foreach ($scholars as $scholar)
-                                    <tr>
-                                        <td class="px-6 py-4 whitespace-nowrap">{{ $scholar->user->name }}</td>
-                                        <td class="px-6 py-4 whitespace-nowrap">{{ $scholar->user->email }}</td>
-                                        <td class="px-6 py-4 whitespace-nowrap">{{ ucfirst(str_replace('_', ' ', $scholar->status)) }}</td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                            <a href="{{ route('staff.scholars.show', $scholar) }}" class="text-indigo-600 hover:text-indigo-900">View Details</a>
-                                        </td>
-                                    </tr>
-                                @endforeach
+                                @if(isset($scholarsWithSubmissionInfo))
+                                    @foreach ($scholarsWithSubmissionInfo as $info)
+                                        @php
+                                            $scholar = $info['scholar'];
+                                            $canSubmit = $info['can_submit'] ?? false;
+                                            $reportPeriod = $info['report_period'] ?? null;
+                                        @endphp
+                                        <tr>
+                                            <td class="px-6 py-4 whitespace-nowrap">{{ $scholar->user->name }}</td>
+                                            <td class="px-6 py-4 whitespace-nowrap">{{ $scholar->user->email }}</td>
+                                            <td class="px-6 py-4 whitespace-nowrap">
+                                                {{ ucfirst(str_replace('_', ' ', $scholar->status)) }}
+                                                @if($canSubmit)
+                                                    <span class="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-yellow-100 text-yellow-800">
+                                                        Report Due
+                                                    </span>
+                                                @endif
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                                <div class="flex items-center justify-end space-x-2">
+                                                    <a href="{{ route('staff.scholars.show', $scholar) }}" class="text-indigo-600 hover:text-indigo-900">View Details</a>
+                                                    @if($canSubmit)
+                                                        <span class="text-gray-300">|</span>
+                                                        <a href="{{ route('staff.progress_report.submit.for_scholar', $scholar) }}" 
+                                                           class="text-green-600 hover:text-green-900"
+                                                           title="Submit Progress Report for {{ $reportPeriod }}">
+                                                            Submit Progress Report
+                                                        </a>
+                                                    @endif
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    @endforeach
+                                @else
+                                    @foreach ($scholars as $scholar)
+                                        <tr>
+                                            <td class="px-6 py-4 whitespace-nowrap">{{ $scholar->user->name }}</td>
+                                            <td class="px-6 py-4 whitespace-nowrap">{{ $scholar->user->email }}</td>
+                                            <td class="px-6 py-4 whitespace-nowrap">{{ ucfirst(str_replace('_', ' ', $scholar->status)) }}</td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                                <a href="{{ route('staff.scholars.show', $scholar) }}" class="text-indigo-600 hover:text-indigo-900">View Details</a>
+                                            </td>
+                                        </tr>
+                                    @endforeach
+                                @endif
                             </tbody>
                         </table>
                     @endif
