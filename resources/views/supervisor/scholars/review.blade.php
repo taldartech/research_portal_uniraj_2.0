@@ -427,6 +427,63 @@
                         @csrf
                         @method('PATCH')
 
+                        <!-- Fee Receipt Section (for synopsis approval) -->
+                        @if($synopsis && $synopsis->status === 'pending_supervisor_approval' && $scholar->fee_receipt_file)
+                            <div class="mb-6 p-4 border border-gray-200 rounded-lg bg-blue-50">
+                                <h4 class="text-md font-medium text-gray-900 mb-4">Fee Receipt</h4>
+                                <div class="space-y-4">
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">Uploaded Fee Receipt</label>
+                                        <div class="flex items-center space-x-4">
+                                            <a href="{{ Storage::url($scholar->fee_receipt_file) }}" target="_blank"
+                                               class="inline-flex items-center px-4 py-2 bg-indigo-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-700 focus:bg-indigo-700 active:bg-indigo-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition ease-in-out duration-150">
+                                                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                                                </svg>
+                                                View Fee Receipt
+                                            </a>
+                                            @if($scholar->fee_receipt_submitted_at)
+                                                <span class="text-xs text-gray-500">
+                                                    Submitted on: {{ $scholar->fee_receipt_submitted_at->format('M d, Y H:i') }}
+                                                </span>
+                                            @endif
+                                        </div>
+                                        @if($scholar->transaction_amount || $scholar->transaction_date || $scholar->transaction_number || $scholar->pay_mode)
+                                            <div class="mt-3 p-3 bg-white rounded border border-gray-200">
+                                                <p class="text-xs font-semibold text-gray-700 mb-2">Transaction Details:</p>
+                                                <div class="grid grid-cols-2 gap-2 text-xs text-gray-600">
+                                                    @if($scholar->transaction_amount)
+                                                        <span><strong>Amount:</strong> ₹{{ number_format($scholar->transaction_amount, 2) }}</span>
+                                                    @endif
+                                                    @if($scholar->transaction_date)
+                                                        <span><strong>Date:</strong> {{ $scholar->transaction_date->format('M d, Y') }}</span>
+                                                    @endif
+                                                    @if($scholar->transaction_number)
+                                                        <span><strong>Transaction No:</strong> {{ $scholar->transaction_number }}</span>
+                                                    @endif
+                                                    @if($scholar->pay_mode)
+                                                        <span><strong>Payment Mode:</strong> {{ $scholar->pay_mode }}</span>
+                                                    @endif
+                                                </div>
+                                            </div>
+                                        @endif
+                                    </div>
+                                    <div class="flex items-center">
+                                        <input type="checkbox" id="fee_receipt_verified" name="fee_receipt_verified" value="1"
+                                               class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+                                               required>
+                                        <label for="fee_receipt_verified" class="ml-2 block text-sm text-gray-900">
+                                            <span class="font-medium">I confirm that I have verified the fee receipt</span>
+                                            <span class="text-red-500">*</span>
+                                        </label>
+                                    </div>
+                                    <p class="text-xs text-gray-500">You must verify the fee receipt before approving or rejecting the synopsis.</p>
+                                    <x-input-error :messages="$errors->get('fee_receipt_verified')" class="mt-2" />
+                                </div>
+                            </div>
+                        @endif
+
                         <!-- Research Topic (for synopsis approval) -->
                         @if($synopsis && $synopsis->status === 'pending_supervisor_approval')
                             <div class="mb-6 p-4 border border-gray-200 rounded-lg">
@@ -555,9 +612,18 @@
             // Add form validation before submit
             if (form) {
                 form.addEventListener('submit', function(e) {
-                    const selectedAction = document.querySelector('input[name="action"]:checked');
+                    const selectedAction = document.querySelector('select[name="action"]');
+                    const feeReceiptVerified = document.getElementById('fee_receipt_verified');
 
                     if (selectedAction && (selectedAction.value === 'approve_synopsis' || selectedAction.value === 'reject_synopsis')) {
+                        // Validate fee receipt verification if fee receipt exists
+                        if (feeReceiptVerified && !feeReceiptVerified.checked) {
+                            e.preventDefault();
+                            alert('Please confirm that you have verified the fee receipt before submitting.');
+                            feeReceiptVerified.focus();
+                            return false;
+                        }
+
                         // Validate RAC minutes file
                         if (racMinutesFile && racMinutesFile.files.length === 0) {
                             e.preventDefault();

@@ -100,6 +100,7 @@ class SupervisorController extends Controller
             'remarks' => 'nullable|string|max:500',
             'rac_minutes_file' => 'required|file|mimes:pdf,doc,docx|max:5120',
             'rac_meeting_date' => 'required|date',
+            'fee_receipt_verified' => $scholar->fee_receipt_file ? 'required|accepted' : 'nullable',
         ]);
 
         if ($request->action === 'verify_data') {
