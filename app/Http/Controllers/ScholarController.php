@@ -400,7 +400,12 @@ class ScholarController extends Controller
             ->orderBy('preference_order')
             ->get();
 
-        $supervisors = Supervisor::with('user')->get();
+        // Get supervisors only from the scholar's department
+        $departmentId = $scholar->admission->department_id;
+        $supervisors = Supervisor::where('department_id', $departmentId)
+            ->with('user')
+            ->get();
+
         return view('scholar.supervisor.preference', compact('supervisors', 'submittedPreferences'));
     }
 
@@ -412,14 +417,10 @@ class ScholarController extends Controller
             return redirect()->route('scholar.dashboard')->with('error', 'You already have an assigned supervisor.');
         }
 
-        $request->validate([
-            'supervisor_1_id' => 'required|exists:supervisors,id',
-            'justification_1' => 'nullable|string',
-            'supervisor_2_id' => 'nullable|exists:supervisors,id',
-            'justification_2' => 'nullable|string',
-            'supervisor_3_id' => 'nullable|exists:supervisors,id',
-            'justification_3' => 'nullable|string',
-        ]);
+        // Get supervisors from scholar's department
+        $departmentId = $scholar->admission->department_id;
+        $supervisors = Supervisor::where('department_id', $departmentId)->pluck('id')->toArray();
+        $supervisorCount = count($supervisors);
 
         // Check if scholar already has pending preferences
         $existingPreferences = $scholar->supervisorPreferences()
@@ -431,57 +432,59 @@ class ScholarController extends Controller
                 ->with('error', 'You already have pending supervisor preferences. Please wait for HOD approval.');
         }
 
-        // Validate that all selected supervisors are different
-        $selectedSupervisors = array_filter([
-            $request->supervisor_1_id,
-            $request->supervisor_2_id,
-            $request->supervisor_3_id
-        ]);
+        // Build dynamic validation rules - all preferences are required
+        $rules = [
+            'remarks' => 'nullable|string',
+        ];
 
+        // Add validation for all preference fields - all are required
+        for ($i = 1; $i <= $supervisorCount; $i++) {
+            $rules["supervisor_{$i}_id"] = 'required|exists:supervisors,id';
+        }
+
+        $request->validate($rules);
+
+        // Collect all selected supervisors
+        $selectedSupervisors = [];
+        for ($i = 1; $i <= $supervisorCount; $i++) {
+            $supervisorId = $request->input("supervisor_{$i}_id");
+            if ($supervisorId) {
+                $selectedSupervisors[] = $supervisorId;
+            }
+        }
+
+        // Validate that all selected supervisors are different
         if (count($selectedSupervisors) !== count(array_unique($selectedSupervisors))) {
             return redirect()->back()->withErrors([
                 'supervisor_selection' => 'You cannot select the same supervisor for multiple preferences.'
-            ]);
+            ])->withInput();
+        }
+
+        // Ensure all supervisors are selected (should be handled by required validation, but double-check)
+        if (count($selectedSupervisors) !== $supervisorCount) {
+            return redirect()->back()->withErrors([
+                'supervisor_selection' => 'You must select preferences for all ' . $supervisorCount . ' supervisors in your department.'
+            ])->withInput();
         }
 
         // Create supervisor preferences
         $preferences = [];
+        $preferenceOrder = 1;
 
-        // First preference (required)
-        $preferences[] = [
-            'scholar_id' => $scholar->id,
-            'supervisor_id' => $request->supervisor_1_id,
-            'preference_order' => 1,
-            'remarks' => $request->remarks,
-            'status' => 'pending',
-            'created_at' => now(),
-            'updated_at' => now(),
-        ];
-
-        // Second preference (optional)
-        if ($request->supervisor_2_id) {
-            $preferences[] = [
-                'scholar_id' => $scholar->id,
-                'supervisor_id' => $request->supervisor_2_id,
-                'preference_order' => 2,
-                'justification' => $request->justification_2,
-                'status' => 'pending',
-                'created_at' => now(),
-                'updated_at' => now(),
-            ];
-        }
-
-        // Third preference (optional)
-        if ($request->supervisor_3_id) {
-            $preferences[] = [
-                'scholar_id' => $scholar->id,
-                'supervisor_id' => $request->supervisor_3_id,
-                'preference_order' => 3,
-                'justification' => $request->justification_3,
-                'status' => 'pending',
-                'created_at' => now(),
-                'updated_at' => now(),
-            ];
+        for ($i = 1; $i <= $supervisorCount; $i++) {
+            $supervisorId = $request->input("supervisor_{$i}_id");
+            if ($supervisorId) {
+                $preferences[] = [
+                    'scholar_id' => $scholar->id,
+                    'supervisor_id' => $supervisorId,
+                    'preference_order' => $preferenceOrder,
+                    'remarks' => ($i === 1) ? $request->remarks : null,
+                    'status' => 'pending',
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ];
+                $preferenceOrder++;
+            }
         }
 
         // Insert all preferences
