@@ -175,13 +175,11 @@
                                     <x-input-label for="phd_faculty" :value="__('Ph.D. Faculty')" />
                                     <select id="phd_faculty" name="phd_faculty" class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 dark:focus:border-indigo-600 focus:ring-indigo-500 dark:focus:ring-indigo-600 rounded-md shadow-sm" required>
                                         <option value="">Select Faculty</option>
-                                        <option value="Science" {{ old('phd_faculty', $scholar->phd_faculty) == 'Science' ? 'selected' : '' }}>Science</option>
-                                        <option value="Arts" {{ old('phd_faculty', $scholar->phd_faculty) == 'Arts' ? 'selected' : '' }}>Arts</option>
-                                        <option value="Commerce" {{ old('phd_faculty', $scholar->phd_faculty) == 'Commerce' ? 'selected' : '' }}>Commerce</option>
-                                        <option value="Engineering" {{ old('phd_faculty', $scholar->phd_faculty) == 'Engineering' ? 'selected' : '' }}>Engineering</option>
-                                        <option value="Medicine" {{ old('phd_faculty', $scholar->phd_faculty) == 'Medicine' ? 'selected' : '' }}>Medicine</option>
-                                        <option value="Law" {{ old('phd_faculty', $scholar->phd_faculty) == 'Law' ? 'selected' : '' }}>Law</option>
-                                        <option value="Management" {{ old('phd_faculty', $scholar->phd_faculty) == 'Management' ? 'selected' : '' }}>Management</option>
+                                        @foreach($faculties as $faculty)
+                                            <option value="{{ $faculty->name }}" {{ old('phd_faculty', $scholar->phd_faculty) == $faculty->name ? 'selected' : '' }}>
+                                                {{ $faculty->name }}
+                                            </option>
+                                        @endforeach
                                     </select>
                                     <x-input-error :messages="$errors->get('phd_faculty')" class="mt-2" />
                                 </div>

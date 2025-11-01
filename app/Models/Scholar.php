@@ -97,6 +97,14 @@ class Scholar extends Model
         'pay_mode',
         'fee_receipt_file',
         'fee_receipt_submitted_at',
+        // Scholar Details fields
+        'enrollment_type',
+        'cash_receipt_number',
+        'cash_receipt_date',
+        'photo',
+        'sign',
+        'letter_number',
+        'supervisor_recognition_date',
     ];
 
     protected $casts = [
@@ -124,6 +132,8 @@ class Scholar extends Model
         'synopsis_submitted_at' => 'datetime',
         'transaction_date' => 'date',
         'fee_receipt_submitted_at' => 'datetime',
+        'cash_receipt_date' => 'date',
+        'supervisor_recognition_date' => 'date',
     ];
 
     public function user()

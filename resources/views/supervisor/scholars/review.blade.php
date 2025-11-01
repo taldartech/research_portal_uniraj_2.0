@@ -24,10 +24,6 @@
                                 <p class="mt-1 text-sm text-gray-900">{{ $scholar->user->email }}</p>
                             </div>
                             <div>
-                                <label class="block text-sm font-medium text-gray-700">Enrollment Number</label>
-                                <p class="mt-1 text-sm text-gray-900">{{ $scholar->enrollment_number ?? 'Not assigned' }}</p>
-                            </div>
-                            <div>
                                 <label class="block text-sm font-medium text-gray-700">Status</label>
                                 <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
                                     @if($scholar->status === 'supervisor_assigned') bg-green-100 text-green-800
@@ -106,16 +102,6 @@
                                 <label class="block text-sm font-medium text-gray-700">Occupation</label>
                                 <p class="mt-1 text-sm text-gray-900">{{ $scholar->occupation ?? 'Not provided' }}</p>
                             </div>
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700">Working as Teacher</label>
-                                <p class="mt-1 text-sm text-gray-900">{{ $scholar->is_teacher ? 'Yes' : 'No' }}</p>
-                            </div>
-                            @if($scholar->is_teacher && $scholar->teacher_employer)
-                                <div class="md:col-span-2">
-                                    <label class="block text-sm font-medium text-gray-700">Teacher Employer Details</label>
-                                    <p class="mt-1 text-sm text-gray-900">{{ $scholar->teacher_employer }}</p>
-                                </div>
-                            @endif
                         </div>
                     </div>
 
@@ -170,18 +156,64 @@
                         @endif
                     </div>
 
-                    <!-- PhD Information -->
+                    <!-- Scholar Details -->
                     <div class="mb-8 p-4 bg-blue-50 rounded-lg">
-                        <h3 class="text-lg font-medium text-gray-900 mb-4">PhD Information</h3>
+                        <h3 class="text-lg font-medium text-gray-900 mb-4">Scholar Details</h3>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div>
-                                <label class="block text-sm font-medium text-gray-700">PhD Faculty</label>
+                                <label class="block text-sm font-medium text-gray-700">Subject</label>
+                                <p class="mt-1 text-sm text-gray-900">{{ $scholar->phd_subject ?? 'Not provided' }}</p>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Faculty Name</label>
                                 <p class="mt-1 text-sm text-gray-900">{{ $scholar->phd_faculty ?? 'Not provided' }}</p>
                             </div>
                             <div>
-                                <label class="block text-sm font-medium text-gray-700">PhD Subject</label>
-                                <p class="mt-1 text-sm text-gray-900">{{ $scholar->phd_subject ?? 'Not provided' }}</p>
+                                <label class="block text-sm font-medium text-gray-700">Enrollment Number</label>
+                                <p class="mt-1 text-sm text-gray-900">{{ $scholar->enrollment_number ?? 'Not assigned' }}</p>
                             </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Enrollment Type</label>
+                                <p class="mt-1 text-sm text-gray-900">{{ $scholar->enrollment_type ? ucfirst(str_replace('_', ' ', $scholar->enrollment_type)) : 'Not provided' }}</p>
+                            </div>
+                            @if($scholar->enrollment_type === 'new_enroll')
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700">Cash Receipt Number</label>
+                                    <p class="mt-1 text-sm text-gray-900">{{ $scholar->cash_receipt_number ?? 'Not provided' }}</p>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700">Cash Receipt Date</label>
+                                    <p class="mt-1 text-sm text-gray-900">{{ $scholar->cash_receipt_date ? $scholar->cash_receipt_date->format('M d, Y') : 'Not provided' }}</p>
+                                </div>
+                            @endif
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Letter Number</label>
+                                <p class="mt-1 text-sm text-gray-900">{{ $scholar->letter_number ?? 'Not provided' }}</p>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Date of Recognition of Supervisor</label>
+                                <p class="mt-1 text-sm text-gray-900">{{ $scholar->supervisor_recognition_date ? $scholar->supervisor_recognition_date->format('M d, Y') : 'Not provided' }}</p>
+                            </div>
+                            @if($scholar->photo)
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700">Photo</label>
+                                    <p class="mt-1 text-sm text-gray-900">
+                                        <a href="{{ Storage::url($scholar->photo) }}" target="_blank" class="text-blue-600 hover:text-blue-800">
+                                            View Photo
+                                        </a>
+                                    </p>
+                                </div>
+                            @endif
+                            @if($scholar->sign)
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700">Signature</label>
+                                    <p class="mt-1 text-sm text-gray-900">
+                                        <a href="{{ Storage::url($scholar->sign) }}" target="_blank" class="text-blue-600 hover:text-blue-800">
+                                            View Signature
+                                        </a>
+                                    </p>
+                                </div>
+                            @endif
                             <div>
                                 <label class="block text-sm font-medium text-gray-700">Research Area</label>
                                 <p class="mt-1 text-sm text-gray-900">{{ $scholar->research_area ?? 'Not provided' }}</p>
@@ -223,10 +255,6 @@
                             <div>
                                 <label class="block text-sm font-medium text-gray-700">Form Number</label>
                                 <p class="mt-1 text-sm text-gray-900">{{ $scholar->form_number ?? 'Not provided' }}</p>
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700">Enrollment Number</label>
-                                <p class="mt-1 text-sm text-gray-900">{{ $scholar->enrollment_number ?? 'Not assigned' }}</p>
                             </div>
                             <div>
                                 <label class="block text-sm font-medium text-gray-700">Date of Confirmation</label>
@@ -484,6 +512,23 @@
                             </div>
                         @endif
 
+                        <!-- Relationship Declaration -->
+                        @if($synopsis && $synopsis->status === 'pending_supervisor_approval')
+                            <div class="mb-6 p-4 border border-gray-200 rounded-lg bg-blue-50">
+                                <div class="flex items-center">
+                                    <input type="checkbox" id="not_relative" name="not_relative" value="1"
+                                           class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+                                           required>
+                                    <label for="not_relative" class="ml-2 block text-sm text-gray-900">
+                                        <span class="font-medium">I confirm that the scholar is not my relative</span>
+                                        <span class="text-red-500">*</span>
+                                    </label>
+                                </div>
+                                <p class="text-xs text-gray-500 mt-2">This confirmation is required before proceeding with synopsis approval or rejection.</p>
+                                <x-input-error :messages="$errors->get('not_relative')" class="mt-2" />
+                            </div>
+                        @endif
+
                         <!-- Research Topic (for synopsis approval) -->
                         @if($synopsis && $synopsis->status === 'pending_supervisor_approval')
                             <div class="mb-6 p-4 border border-gray-200 rounded-lg">
@@ -621,6 +666,15 @@
                             e.preventDefault();
                             alert('Please confirm that you have verified the fee receipt before submitting.');
                             feeReceiptVerified.focus();
+                            return false;
+                        }
+
+                        // Validate not relative confirmation
+                        const notRelative = document.getElementById('not_relative');
+                        if (notRelative && !notRelative.checked) {
+                            e.preventDefault();
+                            alert('Please confirm that the scholar is not your relative before submitting.');
+                            notRelative.focus();
                             return false;
                         }
 

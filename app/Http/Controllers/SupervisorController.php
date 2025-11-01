@@ -28,7 +28,7 @@ class SupervisorController extends Controller
             ->wherePivot('status', 'assigned')
             ->with('user')
             ->get();
-        
+
         // Check which scholars can have progress reports submitted by supervisor
         $scholarsWithSubmissionInfo = $scholars->map(function($scholar) {
             $canSubmitInfo = $this->canSubmitProgressReportForScholar($scholar);
@@ -38,7 +38,7 @@ class SupervisorController extends Controller
                 'report_period' => $canSubmitInfo['report_period'],
             ];
         });
-        
+
         return view('supervisor.scholars.list', compact('scholars', 'scholarsWithSubmissionInfo'));
     }
 
@@ -101,6 +101,7 @@ class SupervisorController extends Controller
             'rac_minutes_file' => 'required|file|mimes:pdf,doc,docx|max:5120',
             'rac_meeting_date' => 'required|date',
             'fee_receipt_verified' => $scholar->fee_receipt_file ? 'required|accepted' : 'nullable',
+            'not_relative' => 'required|accepted',
         ]);
 
         if ($request->action === 'verify_data') {
@@ -949,48 +950,48 @@ class SupervisorController extends Controller
         $currentMonth = (int) date('n');
         $currentMonthName = date('F');
         $allowedMonths = \App\Helpers\ProgressReportHelper::getAllowedMonths();
-        
+
         $nextMonth = $currentMonth + 1;
         if ($nextMonth > 12) {
             $nextMonth = 1;
         }
-        
+
         $monthNames = [
             1 => 'January', 2 => 'February', 3 => 'March', 4 => 'April',
             5 => 'May', 6 => 'June', 7 => 'July', 8 => 'August',
             9 => 'September', 10 => 'October', 11 => 'November', 12 => 'December'
         ];
         $nextMonthName = $monthNames[$nextMonth];
-        
+
         $canSubmit = false;
         $reportPeriod = null;
-        
+
         // Check current month
         if (in_array($currentMonth, $allowedMonths)) {
             $existingReport = \App\Models\ProgressReport::where('scholar_id', $scholar->id)
                 ->where('report_period', $currentMonthName)
                 ->where('status', '!=', 'rejected')
                 ->first();
-            
+
             if (!$existingReport) {
                 $canSubmit = true;
                 $reportPeriod = $currentMonthName;
             }
         }
-        
+
         // Check next month if current month not allowed or already submitted
         if (!$canSubmit && in_array($nextMonth, $allowedMonths)) {
             $existingReport = \App\Models\ProgressReport::where('scholar_id', $scholar->id)
                 ->where('report_period', $nextMonthName)
                 ->where('status', '!=', 'rejected')
                 ->first();
-            
+
             if (!$existingReport) {
                 $canSubmit = true;
                 $reportPeriod = $nextMonthName;
             }
         }
-        
+
         return [
             'can_submit' => $canSubmit,
             'report_period' => $reportPeriod,
@@ -1009,7 +1010,7 @@ class SupervisorController extends Controller
         }
 
         $canSubmitInfo = $this->canSubmitProgressReportForScholar($scholar);
-        
+
         if (!$canSubmitInfo['can_submit']) {
             return redirect()->route('staff.scholars.show', $scholar)
                 ->with('error', 'You can only submit progress reports for the current month or next month, and only if the scholar has not already submitted.');
@@ -1031,7 +1032,7 @@ class SupervisorController extends Controller
         }
 
         $canSubmitInfo = $this->canSubmitProgressReportForScholar($scholar);
-        
+
         if (!$canSubmitInfo['can_submit']) {
             return redirect()->route('staff.scholars.show', $scholar)
                 ->with('error', 'You can only submit progress reports for the current month or next month, and only if the scholar has not already submitted.');
