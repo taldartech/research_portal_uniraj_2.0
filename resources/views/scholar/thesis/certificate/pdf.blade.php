@@ -68,7 +68,7 @@
 
             <div class="content">
                 <p>This is to certify that</p>
-                <div class="scholar-name">{{ $certificate->scholar->first_name }} {{ $certificate->scholar->last_name }}</div>
+                <div class="scholar-name">{{ $certificate->scholar->name }}</div>
                 <p>Research Scholar, Department of {{ $certificate->scholar->admission->department->name ?? 'N/A' }}</p>
                 <p>University of Rajasthan, Jaipur</p>
                 <p>has presented his/her Pre-Ph.D. seminar on</p>
@@ -99,7 +99,7 @@
 
             <div class="content">
                 <p>This is to certify that</p>
-                <div class="scholar-name">{{ $certificate->scholar->first_name }} {{ $certificate->scholar->last_name }}</div>
+                <div class="scholar-name">{{ $certificate->scholar->name }} {{ $certificate->scholar->last_name }}</div>
                 <p>Research Scholar, Department of {{ $certificate->scholar->admission->department->name ?? 'N/A' }}</p>
                 <p>University of Rajasthan, Jaipur</p>
                 <p>has presented research papers in</p>
@@ -130,7 +130,7 @@
 
             <div class="content">
                 <p>This is to certify that</p>
-                <div class="scholar-name">{{ $certificate->scholar->first_name }} {{ $certificate->scholar->last_name }}</div>
+                <div class="scholar-name">{{ $certificate->scholar->name }} {{ $certificate->scholar->last_name }}</div>
                 <p>Research Scholar, Department of {{ $certificate->scholar->admission->department->name ?? 'N/A' }}</p>
                 <p>University of Rajasthan, Jaipur</p>
                 <p>has published research papers in peer reviewed journal</p>

@@ -55,7 +55,7 @@
                         <div class="flex items-center justify-between">
                             <div>
                                 <h4 class="font-medium text-gray-900 dark:text-white">
-                                    {{ $synopsis->scholar->user->first_name }} {{ $synopsis->scholar->user->last_name }}
+                                    {{ $synopsis->scholar->user->name }}
                                 </h4>
                                 <p class="text-sm text-gray-600 dark:text-gray-400">
                                     Synopsis submitted on {{ $synopsis->submission_date->format('M d, Y') }}
@@ -95,7 +95,7 @@
                         <div class="flex items-center justify-between">
                             <div>
                                 <h4 class="font-medium text-gray-900 dark:text-white">
-                                    {{ $synopsis->scholar->user->first_name }} {{ $synopsis->scholar->user->last_name }}
+                                    {{ $synopsis->scholar->user->name }}
                                 </h4>
                                 <p class="text-sm text-gray-600 dark:text-gray-400">
                                     Synopsis approved on {{ $synopsis->hvc_approved_at->format('M d, Y') }}

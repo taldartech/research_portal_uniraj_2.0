@@ -40,13 +40,13 @@
                                     @foreach($eligibleTheses as $thesis)
                                         <tr>
                                             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">
-                                                {{ $thesis->scholar->first_name }} {{ $thesis->scholar->last_name }}
+                                                {{ $thesis->scholar->name }}
                                             </td>
                                             <td class="px-6 py-4 text-sm text-gray-500 dark:text-gray-400 max-w-xs truncate">
                                                 {{ $thesis->thesis_title }}
                                             </td>
                                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                                                {{ $thesis->supervisor->first_name }} {{ $thesis->supervisor->last_name }}
+                                                {{ $thesis->supervisor->name }}
                                             </td>
                                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                                                 {{ $thesis->vivaExamination?->examination_date?->format('Y-m-d') ?? 'N/A' }}

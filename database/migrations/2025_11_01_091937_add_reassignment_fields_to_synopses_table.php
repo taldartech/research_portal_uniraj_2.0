@@ -1,0 +1,29 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    /**
+     * Run the migrations.
+     */
+    public function up(): void
+    {
+        Schema::table('synopses', function (Blueprint $table) {
+            $table->string('reassigned_to_role')->nullable()->after('rejection_count');
+            $table->text('reassignment_reason')->nullable()->after('reassigned_to_role');
+        });
+    }
+
+    /**
+     * Reverse the migrations.
+     */
+    public function down(): void
+    {
+        Schema::table('synopses', function (Blueprint $table) {
+            $table->dropColumn(['reassigned_to_role', 'reassignment_reason']);
+        });
+    }
+};

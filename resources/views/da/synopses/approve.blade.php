@@ -173,109 +173,8 @@
                         </div>
                     @endif
 
-                    <!-- Previous Comments Section -->
-                    <div class="mb-6 p-4 bg-gray-50 rounded-lg">
-                        <h3 class="text-lg font-medium text-gray-900 mb-4">Previous Comments & Approvals</h3>
-                        <div class="space-y-4">
-                            @if($synopsis->supervisor_remarks)
-                                <div class="p-3 bg-blue-50 border-l-4 border-blue-400">
-                                    <div class="flex justify-between items-start">
-                                        <div>
-                                            <h4 class="font-medium text-blue-800">Supervisor Comments</h4>
-                                            <p class="text-sm text-blue-700 mt-1">{{ $synopsis->supervisor_remarks }}</p>
-                                        </div>
-                                        <div class="text-xs text-blue-600">
-                                            {{ $synopsis->supervisor_approved_at ? $synopsis->supervisor_approved_at->format('M d, Y H:i') : 'N/A' }}
-                                        </div>
-                                    </div>
-                                </div>
-                            @endif
-
-                            @if($synopsis->hod_remarks)
-                                <div class="p-3 bg-green-50 border-l-4 border-green-400">
-                                    <div class="flex justify-between items-start">
-                                        <div>
-                                            <h4 class="font-medium text-green-800">HOD Comments</h4>
-                                            <p class="text-sm text-green-700 mt-1">{{ $synopsis->hod_remarks }}</p>
-                                        </div>
-                                        <div class="text-xs text-green-600">
-                                            {{ $synopsis->hod_approved_at ? $synopsis->hod_approved_at->format('M d, Y H:i') : 'N/A' }}
-                                        </div>
-                                    </div>
-                                </div>
-                            @endif
-
-                            @if($synopsis->da_remarks)
-                                <div class="p-3 bg-yellow-50 border-l-4 border-yellow-400">
-                                    <div class="flex justify-between items-start">
-                                        <div>
-                                            <h4 class="font-medium text-yellow-800">DA Comments</h4>
-                                            <p class="text-sm text-yellow-700 mt-1">{{ $synopsis->da_remarks }}</p>
-                                        </div>
-                                        <div class="text-xs text-yellow-600">
-                                            {{ $synopsis->da_approved_at ? $synopsis->da_approved_at->format('M d, Y H:i') : 'N/A' }}
-                                        </div>
-                                    </div>
-                                </div>
-                            @endif
-
-                            @if($synopsis->so_remarks)
-                                <div class="p-3 bg-purple-50 border-l-4 border-purple-400">
-                                    <div class="flex justify-between items-start">
-                                        <div>
-                                            <h4 class="font-medium text-purple-800">SO Comments</h4>
-                                            <p class="text-sm text-purple-700 mt-1">{{ $synopsis->so_remarks }}</p>
-                                        </div>
-                                        <div class="text-xs text-purple-600">
-                                            {{ $synopsis->so_approved_at ? $synopsis->so_approved_at->format('M d, Y H:i') : 'N/A' }}
-                                        </div>
-                                    </div>
-                                </div>
-                            @endif
-
-                            @if($synopsis->ar_remarks)
-                                <div class="p-3 bg-pink-50 border-l-4 border-pink-400">
-                                    <div class="flex justify-between items-start">
-                                        <div>
-                                            <h4 class="font-medium text-pink-800">AR Comments</h4>
-                                            <p class="text-sm text-pink-700 mt-1">{{ $synopsis->ar_remarks }}</p>
-                                        </div>
-                                        <div class="text-xs text-pink-600">
-                                            {{ $synopsis->ar_approved_at ? $synopsis->ar_approved_at->format('M d, Y H:i') : 'N/A' }}
-                                        </div>
-                                    </div>
-                                </div>
-                            @endif
-
-                            @if($synopsis->dr_remarks)
-                                <div class="p-3 bg-red-50 border-l-4 border-red-400">
-                                    <div class="flex justify-between items-start">
-                                        <div>
-                                            <h4 class="font-medium text-red-800">DR Comments</h4>
-                                            <p class="text-sm text-red-700 mt-1">{{ $synopsis->dr_remarks }}</p>
-                                        </div>
-                                        <div class="text-xs text-red-600">
-                                            {{ $synopsis->dr_approved_at ? $synopsis->dr_approved_at->format('M d, Y H:i') : 'N/A' }}
-                                        </div>
-                                    </div>
-                                </div>
-                            @endif
-
-                            @if($synopsis->hvc_remarks)
-                                <div class="p-3 bg-orange-50 border-l-4 border-orange-400">
-                                    <div class="flex justify-between items-start">
-                                        <div>
-                                            <h4 class="font-medium text-orange-800">HVC Comments</h4>
-                                            <p class="text-sm text-orange-700 mt-1">{{ $synopsis->hvc_remarks }}</p>
-                                        </div>
-                                        <div class="text-xs text-orange-600">
-                                            {{ $synopsis->hvc_approved_at ? $synopsis->hvc_approved_at->format('M d, Y H:i') : 'N/A' }}
-                                        </div>
-                                    </div>
-                                </div>
-                            @endif
-                        </div>
-                    </div>
+                    <!-- Previous Comments & Approvals Section -->
+                    <x-synopsis-approval-history :synopsis="$synopsis" />
 
                     <!-- RAC Minutes -->
                     @if($synopsis->rac_minutes_file)
@@ -323,9 +222,10 @@
                                     <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                                 @enderror
                             </div>
-                            <div class="mb-4">
-                                <label for="drc_minutes_file" class="block text-sm font-medium text-gray-700 mb-2">DRC file link  <span class="text-red-500">*</span></label>
-                                <input type="url" name="drc_minutes_file" id="drc_minutes_file" class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500" placeholder="Enter the DRC file link..." required>
+                            <!-- DRC Minutes File (Required only for Approval) -->
+                            <div id="drc_file_field" class="mb-4">
+                                <label for="drc_minutes_file" class="block text-sm font-medium text-gray-700 mb-2">DRC file link  <span id="drc_required_asterisk" class="text-red-500">*</span></label>
+                                <input type="url" name="drc_minutes_file" id="drc_minutes_file" class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500" placeholder="Enter the DRC file link...">
                                 @error('drc_minutes_file')
                                     <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                                 @enderror
@@ -339,6 +239,9 @@
                                     <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                                 @enderror
                             </div>
+
+                            <!-- Reassignment Fields (shown when reject is selected) -->
+                            <x-reassignment-fields :availableRoles="$availableRoles ?? []" />
 
                             <!-- Action Buttons -->
                             <div class="flex items-center justify-end space-x-4">
@@ -360,4 +263,57 @@
             </div>
         </div>
     </div>
+
+    <script>
+        // Show/hide DRC file requirement and reassignment fields based on action selection
+        document.addEventListener('DOMContentLoaded', function() {
+            const actionSelect = document.getElementById('action');
+            const drcFileField = document.getElementById('drc_minutes_file');
+            const drcRequiredAsterisk = document.getElementById('drc_required_asterisk');
+            const drcFileFieldDiv = document.getElementById('drc_file_field');
+            const reassignmentFields = document.getElementById('reassignment_fields');
+
+            function toggleFields() {
+                if (actionSelect.value === 'reject') {
+                    // When reject is selected:
+                    // - DRC file is NOT required
+                    drcFileField.removeAttribute('required');
+                    if (drcRequiredAsterisk) {
+                        drcRequiredAsterisk.style.display = 'none';
+                    }
+                    // - Show reassignment fields
+                    if (reassignmentFields) {
+                        reassignmentFields.classList.remove('hidden');
+                    }
+                } else if (actionSelect.value === 'approve') {
+                    // When approve is selected:
+                    // - DRC file IS required
+                    drcFileField.setAttribute('required', 'required');
+                    if (drcRequiredAsterisk) {
+                        drcRequiredAsterisk.style.display = 'inline';
+                    }
+                    // - Hide reassignment fields
+                    if (reassignmentFields) {
+                        reassignmentFields.classList.add('hidden');
+                    }
+                } else {
+                    // When nothing is selected:
+                    drcFileField.removeAttribute('required');
+                    if (drcRequiredAsterisk) {
+                        drcRequiredAsterisk.style.display = 'none';
+                    }
+                    if (reassignmentFields) {
+                        reassignmentFields.classList.add('hidden');
+                    }
+                }
+            }
+
+            if (actionSelect) {
+                actionSelect.addEventListener('change', toggleFields);
+
+                // Trigger on page load if old value exists
+                toggleFields();
+            }
+        });
+    </script>
 </x-app-layout>

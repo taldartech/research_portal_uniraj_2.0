@@ -35,7 +35,7 @@
                                     <div>
                                         <x-input-label for="candidate_name" :value="__('Candidate Name (Ms./Mr.)')" />
                                         <x-text-input id="candidate_name" name="candidate_name" type="text" class="mt-1 block w-full"
-                                            :value="old('candidate_name', $scholar->first_name . ' ' . $scholar->last_name)" readonly />
+                                            :value="old('candidate_name', $scholar->name)" readonly />
                                     </div>
 
                                     <div>
@@ -73,7 +73,7 @@
                                         <label class="inline-flex items-center">
                                             <input type="checkbox" name="relationship_confirmation" value="1" class="form-checkbox" required>
                                             <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">
-                                                I confirm that {{ $scholar->first_name }} {{ $scholar->last_name }} is not my relative.
+                                                I confirm that {{ $scholar->name }} {{ $scholar->last_name }} is not my relative.
                                             </span>
                                         </label>
                                     </div>

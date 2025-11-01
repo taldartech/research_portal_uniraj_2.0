@@ -316,7 +316,7 @@ class ExpertEvaluationController extends Controller
         $letter .= "Subject: Thesis Evaluation Request\n\n";
         $letter .= "Dear Expert,\n\n";
         $letter .= "You have been assigned to evaluate the following thesis:\n\n";
-        $letter .= "Scholar: " . $thesis->scholar->first_name . " " . $thesis->scholar->last_name . "\n";
+        $letter .= "Scholar: " . $thesis->scholar->name. "\n";
         $letter .= "Title: " . $thesis->title . "\n";
         $letter .= "Supervisor: " . $thesis->supervisor->user->name . "\n";
         $letter .= "Department: " . $thesis->scholar->admission->department->name . "\n\n";

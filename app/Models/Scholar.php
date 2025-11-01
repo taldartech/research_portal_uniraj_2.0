@@ -15,8 +15,8 @@ class Scholar extends Model
         'enrollment_number',
         'form_number',
         'date_of_confirmation',
-        'first_name',
-        'last_name',
+        'name',
+        'hindi_name',
         'date_of_birth',
         'gender',
         'contact_number',
@@ -201,7 +201,7 @@ class Scholar extends Model
             $supervisor = $this->supervisor;
             if ($supervisor) {
                 $updateData = [
-                    'supervisor_name' => $supervisor->first_name . ' ' . $supervisor->last_name,
+                    'supervisor_name' => $supervisor->name,
                     'supervisor_designation' => $supervisor->designation ?? 'Supervisor',
                     'supervisor_department' => $supervisor->department ?? 'Not specified',
                     'supervisor_college' => $supervisor->college ?? 'Not specified',

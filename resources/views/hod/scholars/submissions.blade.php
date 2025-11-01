@@ -81,13 +81,13 @@
                                             <div class="flex-shrink-0 h-10 w-10">
                                                 <div class="h-10 w-10 rounded-full bg-gray-300 dark:bg-gray-600 flex items-center justify-center">
                                                     <span class="text-sm font-medium text-gray-700 dark:text-gray-300">
-                                                        {{ substr($scholar->user->first_name, 0, 1) }}{{ substr($scholar->user->last_name, 0, 1) }}
+                                                        {{ substr($scholar->user->name, 0, 1) }}
                                                     </span>
                                                 </div>
                                             </div>
                                             <div class="ml-4">
                                                 <div class="text-sm font-medium text-gray-900 dark:text-white">
-                                                    {{ $scholar->user->first_name }} {{ $scholar->user->last_name }}
+                                                    {{ $scholar->user->name }}
                                                 </div>
                                                 <div class="text-sm text-gray-500 dark:text-gray-400">
                                                     {{ $scholar->user->email }}
@@ -101,7 +101,7 @@
                                     <td class="px-6 py-4 whitespace-nowrap">
                                         @if($scholar->currentSupervisor)
                                             <div class="text-sm text-gray-900 dark:text-white">
-                                                {{ $scholar->currentSupervisor->supervisor->user->first_name }} {{ $scholar->currentSupervisor->supervisor->user->last_name }}
+                                                {{ $scholar->currentSupervisor->supervisor->user->name }} {{ $scholar->currentSupervisor->supervisor->user->last_name }}
                                             </div>
                                             <div class="text-xs text-gray-500 dark:text-gray-400">
                                                 {{ $scholar->currentSupervisor->supervisor->user->email }}

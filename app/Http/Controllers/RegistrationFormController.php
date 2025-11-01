@@ -260,7 +260,8 @@ class RegistrationFormController extends Controller
         $content .= "Dispatch Number: " . $registrationForm->dispatch_number . "\n";
         $content .= "Generated Date: " . $registrationForm->generated_at->format('Y-m-d H:i:s') . "\n\n";
         $content .= "SCHOLAR INFORMATION\n";
-        $content .= "Name: " . $scholar->first_name . " " . $scholar->last_name . "\n";
+
+        $content .= "Name: " . $scholar->name;
         $content .= "Enrollment Number: " . $scholar->enrollment_number . "\n";
         $content .= "Department: " . $scholar->admission->department->name . "\n";
         $content .= "Research Area: " . $scholar->research_area . "\n\n";

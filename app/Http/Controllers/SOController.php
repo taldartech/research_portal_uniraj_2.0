@@ -104,7 +104,10 @@ class SOController extends Controller
             'daApprover'
         ]);
 
-        return view('so.synopses.approve', compact('synopsis'));
+        // Get available roles for reassignment
+        $availableRoles = \App\Helpers\WorkflowHelper::getAvailableReassignmentRoles($synopsis->status, $synopsis);
+
+        return view('so.synopses.approve', compact('synopsis', 'availableRoles'));
     }
 
     /**
@@ -119,6 +122,8 @@ class SOController extends Controller
         $request->validate([
             'action' => 'required|in:approve,reject',
             'remarks' => 'required|string|max:500',
+            'reassigned_to_role' => 'nullable|string|in:supervisor,hod,da,so',
+            'reassignment_reason' => 'nullable|string|max:1000',
         ]);
 
         // Use WorkflowSyncService for syncing
@@ -135,11 +140,23 @@ class SOController extends Controller
         } else {
             $synopsis->update([
                 'so_remarks' => $request->remarks,
+                'reassignment_reason' => $request->reassignment_reason,
             ]);
 
-            // Sync workflow
-            $workflowSyncService->syncSynopsisWorkflow($synopsis, 'so_reject', Auth::user());
-            $message = 'Synopsis rejected.';
+            // Sync workflow with reassignment
+            $reassignedRole = $request->reassigned_to_role;
+            $workflowSyncService->syncSynopsisWorkflow($synopsis, 'so_reject', Auth::user(), $reassignedRole);
+
+            if ($reassignedRole) {
+                $roleLabels = [
+                    'supervisor' => 'Supervisor',
+                    'hod' => 'HOD',
+                    'da' => 'DA',
+                ];
+                $message = 'Synopsis rejected and reassigned to ' . ($roleLabels[$reassignedRole] ?? $reassignedRole) . ' for corrections.';
+            } else {
+                $message = 'Synopsis rejected.';
+            }
         }
 
         return redirect()->route('so.synopses.pending')->with('success', $message);

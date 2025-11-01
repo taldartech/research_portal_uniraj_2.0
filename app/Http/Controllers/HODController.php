@@ -135,11 +135,6 @@ class HODController extends Controller
                             continue;
                         }
 
-                        // Split name into first and last name
-                        $nameParts = explode(' ', trim($row['name']), 2);
-                        $firstName = $nameParts[0];
-                        $lastName = isset($nameParts[1]) ? $nameParts[1] : '';
-
                         // Create user account
                         $user = User::create([
                             'name' => trim($row['name']),
@@ -154,8 +149,7 @@ class HODController extends Controller
                             'user_id' => $user->id,
                             'admission_id' => $admission->id,
                             'form_number' => trim($row['form_number']),
-                            'first_name' => $firstName,
-                            'last_name' => $lastName,
+                            'name' => $row['name'],
                             'contact_number' => $mobileNumber,
                             'status' => 'pending_profile_completion',
                         ]);
@@ -290,8 +284,7 @@ class HODController extends Controller
         if ($request->has('search') && !empty($request->search)) {
             $searchTerm = $request->search;
             $query->whereHas('user', function ($q) use ($searchTerm) {
-                $q->where('first_name', 'like', "%{$searchTerm}%")
-                  ->orWhere('last_name', 'like', "%{$searchTerm}%")
+                $q->where('name', 'like', "%{$searchTerm}%")
                   ->orWhere('email', 'like', "%{$searchTerm}%");
             });
         }
@@ -346,8 +339,7 @@ class HODController extends Controller
         if ($request->has('search') && !empty($request->search)) {
             $searchTerm = $request->search;
             $query->whereHas('user', function ($q) use ($searchTerm) {
-                $q->where('first_name', 'like', "%{$searchTerm}%")
-                  ->orWhere('last_name', 'like', "%{$searchTerm}%")
+                $q->where('name', 'like', "%{$searchTerm}%")
                   ->orWhere('email', 'like', "%{$searchTerm}%");
             });
         }
@@ -590,7 +582,10 @@ class HODController extends Controller
             'rac.supervisor.user'
         ]);
 
-        return view('hod.synopsis.approve', compact('synopsis'));
+        // Get available roles for reassignment
+        $availableRoles = \App\Helpers\WorkflowHelper::getAvailableReassignmentRoles($synopsis->status, $synopsis);
+
+        return view('hod.synopsis.approve', compact('synopsis', 'availableRoles'));
     }
 
     public function approveSynopsis(Request $request, Synopsis $synopsis)
@@ -609,6 +604,8 @@ class HODController extends Controller
             'action' => 'required|in:approve,reject',
             'remarks' => 'required|string|max:500',
             'drc_date' => 'required',
+            'reassigned_to_role' => 'nullable|string|in:supervisor,hod',
+            'reassignment_reason' => 'nullable|string|max:1000',
         ]);
 
         // Use WorkflowSyncService for syncing
@@ -628,12 +625,21 @@ class HODController extends Controller
             $synopsis->update([
                 'hod_remarks' => $request->remarks,
                 'drc_date' => $request->drc_date,
+                'reassignment_reason' => $request->reassignment_reason,
             ]);
 
-            // Sync workflow
-            $workflowSyncService->syncSynopsisWorkflow($synopsis, 'hod_reject', Auth::user());
+            // Sync workflow with reassignment
+            $reassignedRole = $request->reassigned_to_role;
+            $workflowSyncService->syncSynopsisWorkflow($synopsis, 'hod_reject', Auth::user(), $reassignedRole);
 
-            $message = 'Synopsis rejected by HOD.';
+            if ($reassignedRole) {
+                $roleLabels = [
+                    'supervisor' => 'Supervisor',
+                ];
+                $message = 'Synopsis rejected and reassigned to ' . ($roleLabels[$reassignedRole] ?? $reassignedRole) . ' for corrections.';
+            } else {
+                $message = 'Synopsis rejected by HOD.';
+            }
         }
 
         return redirect()->route('hod.synopsis.pending')->with('success', $message);

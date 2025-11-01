@@ -53,7 +53,7 @@
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div>
                                 <label class="block text-sm font-medium text-gray-700">First Name</label>
-                                <p class="mt-1 text-sm text-gray-900">{{ $scholar->first_name ?? 'Not provided' }}</p>
+                                <p class="mt-1 text-sm text-gray-900">{{ $scholar->name ?? 'Not provided' }}</p>
                             </div>
                             <div>
                                 <label class="block text-sm font-medium text-gray-700">Last Name</label>
@@ -275,7 +275,7 @@
                             </div>
                         @endif
 
-                        <!-- PhD admission Information Information -->
+                        <!-- PhD admission Information  -->
                         @if($scholar->mpat_year || $scholar->mpat_roll_number || $scholar->mpat_merit_number || $scholar->mpat_subject)
                             <div class="mb-6">
                                 <h4 class="text-md font-medium text-gray-900 mb-3">PhD admission Information</h4>

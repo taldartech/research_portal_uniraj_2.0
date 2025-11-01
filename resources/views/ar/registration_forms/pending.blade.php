@@ -37,7 +37,7 @@
                                     @foreach($registrationForms as $form)
                                         <tr>
                                             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">
-                                                {{ $form->scholar->first_name }} {{ $form->scholar->last_name }}
+                                                {{ $form->scholar->name }}
                                             </td>
                                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                                                 {{ $form->dispatch_number }}

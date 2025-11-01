@@ -11,7 +11,7 @@
                         Workflow Dashboard
                     </h1>
                     <p class="mt-2 text-gray-600 dark:text-gray-400">
-                        Welcome back, {{ Auth::user()->first_name }} {{ Auth::user()->last_name }}
+                        Welcome back, {{ Auth::user()->name }}
                     </p>
                 </div>
 
@@ -73,9 +73,9 @@
         var notification = document.createElement('div');
         notification.className = 'fixed top-4 right-4 bg-blue-500 text-white px-6 py-3 rounded-lg shadow-lg z-50';
         notification.textContent = message;
-        
+
         document.body.appendChild(notification);
-        
+
         // Remove notification after 5 seconds
         setTimeout(function() {
             notification.remove();

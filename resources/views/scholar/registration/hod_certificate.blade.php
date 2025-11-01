@@ -27,7 +27,7 @@
                             <div class="space-y-6">
                                 <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
                                     <p class="text-sm text-gray-700 dark:text-gray-300 mb-4">
-                                        This is to certify that {{ $scholar->first_name }} {{ $scholar->last_name }} has been recommended for registration in Ph.D. through a DRC held on the date mentioned below. The candidate has been considered eligible on the basis of the following:
+                                        This is to certify that {{ $scholar->name }} has been recommended for registration in Ph.D. through a DRC held on the date mentioned below. The candidate has been considered eligible on the basis of the following:
                                     </p>
                                 </div>
 
@@ -35,7 +35,7 @@
                                     <div>
                                         <x-input-label for="candidate_name" :value="__('Candidate Name')" />
                                         <x-text-input id="candidate_name" name="candidate_name" type="text" class="mt-1 block w-full"
-                                            :value="old('candidate_name', $scholar->first_name . ' ' . $scholar->last_name)" readonly />
+                                            :value="old('candidate_name', $scholar->name)" readonly />
                                     </div>
 
                                     <div>

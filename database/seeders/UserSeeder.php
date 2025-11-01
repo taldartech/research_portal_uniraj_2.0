@@ -47,8 +47,8 @@ class UserSeeder extends Seeder
         Scholar::create([
             'user_id' => $scholarUser->id,
             'admission_id' => $scholarAdmission->id,
-            'first_name' => 'Scholar',
-            'last_name' => 'User',
+            'name' => 'Scholar',
+            'hindi_name' => 'विद्वान',
             'status' => 'pending_profile_completion',
         ]);
 

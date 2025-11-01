@@ -45,11 +45,11 @@ class WorkflowStatusUpdate extends Notification
     {
         $workflowName = $this->workflowType === 'synopsis' ? 'Synopsis' : 'Registration Form';
         $actionText = $this->getActionText();
-        
+
         return (new MailMessage)
                     ->subject("{$workflowName} Status Update")
-                    ->greeting("Hello {$notifiable->first_name},")
-                    ->line("Your {$workflowName} has been {$actionText} by {$this->actor->first_name} {$this->actor->last_name}.")
+                    ->greeting("Hello {$notifiable->name},")
+                    ->line("Your {$workflowName} has been {$actionText} by {$this->actor->name}.")
                     ->line("Current Status: {$this->getStatusText()}")
                     ->action('View Details', url('/dashboard'))
                     ->line('Thank you for using our system!');
@@ -67,7 +67,7 @@ class WorkflowStatusUpdate extends Notification
             'action' => $this->action,
             'status' => $this->status,
             'actor_id' => $this->actor->id,
-            'actor_name' => $this->actor->first_name . ' ' . $this->actor->last_name,
+            'actor_name' => $this->actor->name,
             'actor_type' => $this->actor->user_type,
             'message' => $this->getMessage(),
             'timestamp' => now(),
@@ -140,7 +140,7 @@ class WorkflowStatusUpdate extends Notification
     {
         $workflowName = $this->workflowType === 'synopsis' ? 'Synopsis' : 'Registration Form';
         $actionText = $this->getActionText();
-        
+
         return "Your {$workflowName} has been {$actionText}. Current Status: {$this->getStatusText()}";
     }
 }

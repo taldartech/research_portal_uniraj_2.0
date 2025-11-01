@@ -52,6 +52,8 @@ class Synopsis extends Model
         'rejected_at',
         'rejection_reason',
         'rejection_count',
+        'reassigned_to_role',
+        'reassignment_reason',
         'original_synopsis_id',
         'drc_date'
     ];

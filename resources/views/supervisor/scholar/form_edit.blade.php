@@ -45,7 +45,7 @@
                     <div class="flex items-center justify-between">
                         <div>
                             <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100">
-                                Scholar: {{ $scholar->first_name }} {{ $scholar->last_name }}
+                                Scholar: {{ $scholar->name }}
                             </h3>
                             <p class="text-sm text-gray-600 dark:text-gray-400">
                                 Enrollment: {{ $scholar->enrollment_number ?? 'Not assigned' }}

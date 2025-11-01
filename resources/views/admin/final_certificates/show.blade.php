@@ -30,7 +30,7 @@
                             <div class="space-y-2">
                                 <div>
                                     <span class="font-medium text-gray-700 dark:text-gray-300">Name:</span>
-                                    <span class="text-gray-900 dark:text-gray-100">{{ $certificate->thesisSubmission->scholar->first_name }} {{ $certificate->thesisSubmission->scholar->last_name }}</span>
+                                    <span class="text-gray-900 dark:text-gray-100">{{ $certificate->thesisSubmission->scholar->name }}</span>
                                 </div>
                                 <div>
                                     <span class="font-medium text-gray-700 dark:text-gray-300">Registration Number:</span>

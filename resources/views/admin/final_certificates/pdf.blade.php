@@ -106,7 +106,7 @@
         <div class="certificate-body">
             <p>This is to certify that</p>
 
-            <div class="scholar-name">{{ $scholar->first_name }} {{ $scholar->last_name }}</div>
+            <div class="scholar-name">{{ $scholar->name }}</div>
 
             <p>Registration Number: <strong>{{ $scholar->registration_number }}</strong></p>
 

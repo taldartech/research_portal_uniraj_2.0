@@ -48,7 +48,7 @@
                                                 {{ $certificate->certificate_number }}
                                             </td>
                                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                                                {{ $certificate->thesisSubmission->scholar->first_name }} {{ $certificate->thesisSubmission->scholar->last_name }}
+                                                {{ $certificate->thesisSubmission->scholar->name }}
                                             </td>
                                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                                                 {{ $certificate->degree_title }}

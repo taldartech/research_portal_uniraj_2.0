@@ -60,14 +60,14 @@
                 </svg>
                 Pending Synopsis Approvals
             </h3>
-            
+
             <div class="space-y-4">
                 @foreach($pending_approvals as $synopsis)
                     <div class="border border-gray-200 dark:border-gray-600 rounded-lg p-4">
                         <div class="flex items-center justify-between">
                             <div>
                                 <h4 class="font-medium text-gray-900 dark:text-white">
-                                    {{ $synopsis->scholar->user->first_name }} {{ $synopsis->scholar->user->last_name }}
+                                    {{ $synopsis->scholar->user->name }}
                                 </h4>
                                 <p class="text-sm text-gray-600 dark:text-gray-400">
                                     Synopsis submitted on {{ $synopsis->submission_date->format('M d, Y') }}
@@ -79,7 +79,7 @@
                                 @endif
                             </div>
                             <div class="flex space-x-2">
-                                <a href="{{ route('supervisor.synopsis.approve', $synopsis) }}" 
+                                <a href="{{ route('supervisor.synopsis.approve', $synopsis) }}"
                                    class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
                                     Review
                                 </a>
@@ -99,7 +99,7 @@
             </svg>
             Your Scholars
         </h3>
-        
+
         <div class="overflow-x-auto">
             <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-600">
                 <thead class="bg-gray-50 dark:bg-gray-600">
@@ -165,12 +165,12 @@
                                 </span>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                <a href="{{ route('supervisor.scholars.show', $status['scholar_id']) }}" 
+                                <a href="{{ route('supervisor.scholars.show', $status['scholar_id']) }}"
                                    class="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300 mr-3">
                                     View Details
                                 </a>
                                 @if($status['synopsis']['status'] === 'pending_supervisor_approval')
-                                    <a href="{{ route('supervisor.synopsis.approve', $status['scholar_id']) }}" 
+                                    <a href="{{ route('supervisor.synopsis.approve', $status['scholar_id']) }}"
                                        class="text-green-600 hover:text-green-900 dark:text-green-400 dark:hover:text-green-300">
                                         Approve Synopsis
                                     </a>
@@ -191,7 +191,7 @@
             </svg>
             Quick Actions
         </h3>
-        
+
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             <a href="{{ route('supervisor.scholars.index') }}" class="flex items-center p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800 hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors">
                 <svg class="w-8 h-8 text-blue-500 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">

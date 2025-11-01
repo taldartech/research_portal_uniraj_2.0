@@ -412,7 +412,10 @@ class HVCController extends Controller
             'drApprover'
         ]);
 
-        return view('hvc.synopses.approve', compact('synopsis'));
+        // Get available roles for reassignment
+        $availableRoles = \App\Helpers\WorkflowHelper::getAvailableReassignmentRoles($synopsis->status, $synopsis);
+
+        return view('hvc.synopses.approve', compact('synopsis', 'availableRoles'));
     }
 
     /**
@@ -427,6 +430,8 @@ class HVCController extends Controller
         $request->validate([
             'action' => 'required|in:approve,reject',
             'remarks' => 'required|string|max:500',
+            'reassigned_to_role' => 'nullable|string|in:supervisor,hod,da,so,ar,dr,hvc',
+            'reassignment_reason' => 'nullable|string|max:1000',
         ]);
 
         // Use WorkflowSyncService for syncing
@@ -443,11 +448,26 @@ class HVCController extends Controller
         } else {
             $synopsis->update([
                 'hvc_remarks' => $request->remarks,
+                'reassignment_reason' => $request->reassignment_reason,
             ]);
 
-            // Sync workflow
-            $workflowSyncService->syncSynopsisWorkflow($synopsis, 'hvc_reject', Auth::user());
-            $message = 'Synopsis rejected by HVC.';
+            // Sync workflow with reassignment
+            $reassignedRole = $request->reassigned_to_role;
+            $workflowSyncService->syncSynopsisWorkflow($synopsis, 'hvc_reject', Auth::user(), $reassignedRole);
+
+            if ($reassignedRole) {
+                $roleLabels = [
+                    'supervisor' => 'Supervisor',
+                    'hod' => 'HOD',
+                    'da' => 'DA',
+                    'so' => 'Section Officer',
+                    'ar' => 'Assistant Registrar',
+                    'dr' => 'Deputy Registrar',
+                ];
+                $message = 'Synopsis rejected and reassigned to ' . ($roleLabels[$reassignedRole] ?? $reassignedRole) . ' for corrections.';
+            } else {
+                $message = 'Synopsis rejected by HVC.';
+            }
         }
 
         return redirect()->route('hvc.synopses.pending')->with('success', $message);

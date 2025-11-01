@@ -126,7 +126,10 @@ class DAController extends Controller
             'hodApprover'
         ]);
 
-        return view('da.synopses.approve', compact('synopsis'));
+        // Get available roles for reassignment
+        $availableRoles = \App\Helpers\WorkflowHelper::getAvailableReassignmentRoles($synopsis->status, $synopsis);
+
+        return view('da.synopses.approve', compact('synopsis', 'availableRoles'));
     }
 
     /**
@@ -139,9 +142,11 @@ class DAController extends Controller
         }
 
         $request->validate([
-            'drc_minutes_file' => 'required|url',
+            'drc_minutes_file' => $request->action === 'approve' ? 'required|url' : 'nullable|url',
             'action' => 'required|in:approve,reject',
             'remarks' => 'required|string|max:500',
+            'reassigned_to_role' => 'nullable|string|in:supervisor,hod,da',
+            'reassignment_reason' => 'nullable|string|max:1000',
         ]);
 
         // Use WorkflowSyncService for syncing
@@ -157,14 +162,31 @@ class DAController extends Controller
             $workflowSyncService->syncSynopsisWorkflow($synopsis, 'da_approve', Auth::user());
             $message = 'Synopsis approved and forwarded to Section Officer.';
         } else {
-            $synopsis->update([
+            $updateData = [
                 'da_remarks' => $request->remarks,
-                'drc_minutes_file' => $request->drc_minutes_file,
-            ]);
+                'reassignment_reason' => $request->reassignment_reason,
+            ];
 
-            // Sync workflow
-            $workflowSyncService->syncSynopsisWorkflow($synopsis, 'da_reject', Auth::user());
-            $message = 'Synopsis rejected.';
+            // Only update drc_minutes_file if provided (optional for reject)
+            if ($request->filled('drc_minutes_file')) {
+                $updateData['drc_minutes_file'] = $request->drc_minutes_file;
+            }
+
+            $synopsis->update($updateData);
+
+            // Sync workflow with reassignment
+            $reassignedRole = $request->reassigned_to_role;
+            $workflowSyncService->syncSynopsisWorkflow($synopsis, 'da_reject', Auth::user(), $reassignedRole);
+
+            if ($reassignedRole) {
+                $roleLabels = [
+                    'supervisor' => 'Supervisor',
+                    'hod' => 'HOD',
+                ];
+                $message = 'Synopsis rejected and reassigned to ' . ($roleLabels[$reassignedRole] ?? $reassignedRole) . ' for corrections.';
+            } else {
+                $message = 'Synopsis rejected.';
+            }
         }
 
         return redirect()->route('da.synopses.pending')->with('success', $message);
@@ -503,7 +525,7 @@ class DAController extends Controller
             'scholar_id' => $scholar->id,
             'file_number' => $request->file_number,
             'dated' => $request->dated,
-            'candidate_name' => $scholar->first_name . ' ' . $scholar->last_name,
+            'candidate_name' => $scholar->name,
             'research_subject' => $scholar->research_topic_title,
             'supervisor_name' => $scholar->supervisor_name,
             'supervisor_designation' => $scholar->supervisor_designation,

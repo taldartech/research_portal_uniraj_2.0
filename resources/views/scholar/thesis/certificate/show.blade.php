@@ -26,7 +26,7 @@
                             <div class="text-center">
                                 <h2 class="text-xl font-bold mb-6">CERTIFICATE</h2>
                                 <p class="text-lg mb-4">This is to certify that</p>
-                                <h3 class="text-xl font-bold mb-6">{{ $certificate->scholar->first_name }} {{ $certificate->scholar->last_name }}</h3>
+                                <h3 class="text-xl font-bold mb-6">{{ $certificate->scholar->name }}</h3>
                                 <p class="text-lg mb-4">Research Scholar, Department of {{ $certificate->scholar->admission->department->name ?? 'N/A' }}</p>
                                 <p class="text-lg mb-4">University of Rajasthan, Jaipur</p>
                                 <p class="text-lg mb-4">has presented his/her Pre-Ph.D. seminar on</p>
@@ -54,7 +54,7 @@
                             <div class="text-center">
                                 <h2 class="text-xl font-bold mb-6">CERTIFICATE</h2>
                                 <p class="text-lg mb-4">This is to certify that</p>
-                                <h3 class="text-xl font-bold mb-6">{{ $certificate->scholar->first_name }} {{ $certificate->scholar->last_name }}</h3>
+                                <h3 class="text-xl font-bold mb-6">{{ $certificate->scholar->name }} {{ $certificate->scholar->last_name }}</h3>
                                 <p class="text-lg mb-4">Research Scholar, Department of {{ $certificate->scholar->admission->department->name ?? 'N/A' }}</p>
                                 <p class="text-lg mb-4">University of Rajasthan, Jaipur</p>
                                 <p class="text-lg mb-4">has presented research papers in</p>
@@ -82,7 +82,7 @@
                             <div class="text-center">
                                 <h2 class="text-xl font-bold mb-6">CERTIFICATE</h2>
                                 <p class="text-lg mb-4">This is to certify that</p>
-                                <h3 class="text-xl font-bold mb-6">{{ $certificate->scholar->first_name }} {{ $certificate->scholar->last_name }}</h3>
+                                <h3 class="text-xl font-bold mb-6">{{ $certificate->scholar->name }} {{ $certificate->scholar->last_name }}</h3>
                                 <p class="text-lg mb-4">Research Scholar, Department of {{ $certificate->scholar->admission->department->name ?? 'N/A' }}</p>
                                 <p class="text-lg mb-4">University of Rajasthan, Jaipur</p>
                                 <p class="text-lg mb-4">has published research papers in peer reviewed journal</p>

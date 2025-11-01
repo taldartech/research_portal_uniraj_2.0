@@ -17,8 +17,8 @@ return new class extends Migration
             $table->unsignedBigInteger('admission_id')->nullable();
             $table->string('enrollment_number')->unique()->nullable();
             $table->date('date_of_confirmation')->nullable();
-            $table->string('first_name');
-            $table->string('last_name');
+            $table->string('name');
+            $table->string('hindi_name');
             $table->date('date_of_birth')->nullable();
             $table->string('gender')->nullable();
             $table->string('contact_number')->nullable();

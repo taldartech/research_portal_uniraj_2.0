@@ -9,7 +9,7 @@
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
             <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
                 <div class="p-6 text-gray-900 dark:text-gray-100">
-                    <h3 class="text-lg font-semibold mb-4">Generate Final Certificate for {{ $thesis->scholar->first_name }} {{ $thesis->scholar->last_name }}</h3>
+                    <h3 class="text-lg font-semibold mb-4">Generate Final Certificate for {{ $thesis->scholar->name }}</h3>
 
                     <form action="{{ route('da.final_certificates.generate.store', $thesis) }}" method="POST" class="space-y-6">
                         @csrf

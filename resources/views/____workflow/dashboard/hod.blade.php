@@ -48,14 +48,14 @@
                 </svg>
                 Pending Synopsis Approvals
             </h3>
-            
+
             <div class="space-y-4">
                 @foreach($pending_synopses as $synopsis)
                     <div class="border border-gray-200 dark:border-gray-600 rounded-lg p-4">
                         <div class="flex items-center justify-between">
                             <div>
                                 <h4 class="font-medium text-gray-900 dark:text-white">
-                                    {{ $synopsis->scholar->user->first_name }} {{ $synopsis->scholar->user->last_name }}
+                                    {{ $synopsis->scholar->user->name }}
                                 </h4>
                                 <p class="text-sm text-gray-600 dark:text-gray-400">
                                     Synopsis submitted on {{ $synopsis->submission_date->format('M d, Y') }}
@@ -67,7 +67,7 @@
                                 @endif
                             </div>
                             <div class="flex space-x-2">
-                                <a href="{{ route('hod.synopsis.approve', $synopsis) }}" 
+                                <a href="{{ route('hod.synopsis.approve', $synopsis) }}"
                                    class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
                                     Review
                                 </a>
@@ -87,12 +87,12 @@
             </svg>
             Department Scholars ({{ $department->name }})
         </h3>
-        
+
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             @foreach($scholars as $scholar)
                 <div class="border border-gray-200 dark:border-gray-600 rounded-lg p-4">
                     <h4 class="font-medium text-gray-900 dark:text-white">
-                        {{ $scholar->user->first_name }} {{ $scholar->user->last_name }}
+                        {{ $scholar->user->name }}
                     </h4>
                     <p class="text-sm text-gray-600 dark:text-gray-400 mb-2">
                         {{ $scholar->enrollment_number ?? 'Not enrolled' }}

@@ -36,8 +36,7 @@ class ScholarController extends Controller
         }
 
         $request->validate([
-            'first_name' => 'required|string|max:255',
-            'last_name' => 'required|string|max:255',
+            'name' => 'required|string|max:255',
             'date_of_birth' => 'nullable|date',
             'gender' => 'nullable|string|max:255',
             'contact_number' => 'nullable|string|max:255',
@@ -92,8 +91,7 @@ class ScholarController extends Controller
 
         $request->validate([
             // Basic Profile Information
-            'first_name' => 'required|string|max:255',
-            'last_name' => 'required|string|max:255',
+            'name' => 'required|string|max:255',
             'contact_number' => 'required|string|max:255',
             'date_of_birth' => 'required|date',
             'gender' => 'required|in:Male,Female,Other',

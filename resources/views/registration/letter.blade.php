@@ -91,7 +91,7 @@
         <div class="body-text">
             <p>Dear Sir/Madam,</p>
 
-            <p>With reference to your endorsement on the application of Mr./Mrs./Ms. <strong>{{ $scholar->first_name }} {{ $scholar->last_name }}</strong> registration as a Research Scholar to supplicate for the Ph.D. Degree of the University, I am pleased to inform you that he/she has been permitted by the Vice-Chancellor on behalf of the Syndicate to pursue research on the subject <strong>{{ $synopsis->proposed_topic ?? $scholar->research_area }}</strong>.</p>
+            <p>With reference to your endorsement on the application of Mr./Mrs./Ms. <strong>{{ $scholar->name }} {{ $scholar->last_name }}</strong> registration as a Research Scholar to supplicate for the Ph.D. Degree of the University, I am pleased to inform you that he/she has been permitted by the Vice-Chancellor on behalf of the Syndicate to pursue research on the subject <strong>{{ $synopsis->proposed_topic ?? $scholar->research_area }}</strong>.</p>
         </div>
 
         <div class="research-topic">

@@ -182,13 +182,8 @@
                         </div>
                     @endif
 
-                    <!-- Supervisor Remarks -->
-                    @if($synopsis->supervisor_remarks)
-                        <div class="mb-6 p-4 bg-orange-50 rounded-lg">
-                            <h3 class="text-lg font-medium text-orange-900 mb-2">Supervisor Remarks</h3>
-                            <div class="text-sm text-gray-700 whitespace-pre-wrap">{{ $synopsis->supervisor_remarks }}</div>
-                        </div>
-                    @endif
+                    <!-- Previous Comments & Approvals Section -->
+                    <x-synopsis-approval-history :synopsis="$synopsis" />
 
                     <!-- RAC Minutes -->
                     @if($synopsis->rac_minutes_file)
@@ -276,6 +271,9 @@
                                     <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                                 @enderror
                             </div>
+
+                            <!-- Reassignment Fields (shown when reject is selected) -->
+                            <x-reassignment-fields :availableRoles="$availableRoles ?? []" />
 
                             <div class="mb-4">
                                 <label for="remarks" class="block text-sm font-medium text-gray-700 mb-2">DRC Date <span class="text-red-500">*</span></label>

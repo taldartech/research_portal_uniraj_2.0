@@ -160,7 +160,7 @@
         <div class="body-text">
             <p><strong>Dear Sir/Madam,</strong></p>
 
-            <p>With reference to your endorsement on the application of Mr./Mrs./Ms. <span class="dotted-line">{{ $scholar->first_name }} {{ $scholar->last_name }}</span> registration as a Research Scholar to supplicate for the Ph.D. Degree of the University, I am pleased to inform you that he/she has been permitted by the Vice-Chancellor on behalf of the Syndicate to pursue research on the subject</p>
+            <p>With reference to your endorsement on the application of Mr./Mrs./Ms. <span class="dotted-line">{{ $scholar->name }}</span> registration as a Research Scholar to supplicate for the Ph.D. Degree of the University, I am pleased to inform you that he/she has been permitted by the Vice-Chancellor on behalf of the Syndicate to pursue research on the subject</p>
         </div>
 
         <div class="research-topic">
@@ -190,7 +190,7 @@
             <p><strong>Copy forwarded to:</strong></p>
             <ol>
                 <li>(Supervisor)<span class="dotted-line">{{ $scholar->currentSupervisor ? $scholar->currentSupervisor->supervisor->user->name : 'Supervisor Name' }}</span></li>
-                <li>(Scholar)<span class="dotted-line">{{ $scholar->first_name }} {{ $scholar->last_name }}</span></li>
+                <li>(Scholar)<span class="dotted-line">{{ $scholar->name }} {{ $scholar->last_name }}</span></li>
                 <li>(HOD)<span class="dotted-line">{{ $scholar->admission->department->hod->name }}</span></li>
             </ol>
         </div>

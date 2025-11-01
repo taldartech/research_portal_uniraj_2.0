@@ -16,12 +16,12 @@ class WorkflowSyncService
     /**
      * Sync synopsis workflow across all roles
      */
-    public function syncSynopsisWorkflow(Synopsis $synopsis, string $action, User $actor)
+    public function syncSynopsisWorkflow(Synopsis $synopsis, string $action, User $actor, ?string $reassignedToRole = null)
     {
         $scholar = $synopsis->scholar;
 
         // Update synopsis status based on action
-        $statusUpdate = $this->getSynopsisStatusUpdate($action, $actor);
+        $statusUpdate = $this->getSynopsisStatusUpdate($action, $actor, $reassignedToRole);
 
         if ($statusUpdate) {
             $synopsis->update($statusUpdate);
@@ -83,7 +83,7 @@ class WorkflowSyncService
     /**
      * Get synopsis status update based on action and actor
      */
-    private function getSynopsisStatusUpdate(string $action, User $actor): ?array
+    private function getSynopsisStatusUpdate(string $action, User $actor, ?string $reassignedToRole = null): ?array
     {
         $now = now();
 
@@ -105,74 +105,139 @@ class WorkflowSyncService
                 'hod_approver_id' => $actor->id,
                 'hod_approved_at' => $now,
             ],
-            'hod_reject' => [
-                'status' => 'rejected_by_hod',
-                'hod_approver_id' => $actor->id,
-                'hod_approved_at' => $now,
-                'rejected_by' => $actor->id,
-                'rejected_at' => $now,
-            ],
+            'hod_reject' => $this->handleRejection('hod', $actor, $now, $reassignedToRole),
             'da_approve' => [
                 'status' => 'pending_so_approval',
                 'da_approver_id' => $actor->id,
                 'da_approved_at' => $now,
             ],
-            'da_reject' => [
-                'status' => 'rejected_by_da',
-                'da_approver_id' => $actor->id,
-                'da_approved_at' => $now,
-                'rejected_by' => $actor->id,
-                'rejected_at' => $now,
-            ],
+            'da_reject' => $this->handleRejection('da', $actor, $now, $reassignedToRole),
             'so_approve' => [
                 'status' => 'pending_ar_approval',
                 'so_approver_id' => $actor->id,
                 'so_approved_at' => $now,
             ],
-            'so_reject' => [
-                'status' => 'rejected_by_so',
-                'so_approver_id' => $actor->id,
-                'so_approved_at' => $now,
-                'rejected_by' => $actor->id,
-                'rejected_at' => $now,
-            ],
+            'so_reject' => $this->handleRejection('so', $actor, $now, $reassignedToRole),
             'ar_approve' => [
                 'status' => 'pending_dr_approval',
                 'ar_approver_id' => $actor->id,
                 'ar_approved_at' => $now,
             ],
-            'ar_reject' => [
-                'status' => 'rejected_by_ar',
-                'ar_approver_id' => $actor->id,
-                'ar_approved_at' => $now,
-                'rejected_by' => $actor->id,
-                'rejected_at' => $now,
-            ],
+            'ar_reject' => $this->handleRejection('ar', $actor, $now, $reassignedToRole),
             'dr_approve' => [
                 'status' => 'pending_hvc_approval',
                 'dr_approver_id' => $actor->id,
                 'dr_approved_at' => $now,
             ],
-            'dr_reject' => [
-                'status' => 'rejected_by_dr',
-                'dr_approver_id' => $actor->id,
-                'dr_approved_at' => $now,
-                'rejected_by' => $actor->id,
-                'rejected_at' => $now,
-            ],
+            'dr_reject' => $this->handleRejection('dr', $actor, $now, $reassignedToRole),
             'hvc_approve' => [
                 'status' => 'approved',
                 'hvc_approver_id' => $actor->id,
                 'hvc_approved_at' => $now,
             ],
-            'hvc_reject' => [
-                'status' => 'rejected_by_hvc',
-                'hvc_approver_id' => $actor->id,
-                'hvc_approved_at' => $now,
-                'rejected_by' => $actor->id,
-                'rejected_at' => $now,
-            ],
+            'hvc_reject' => $this->handleRejection('hvc', $actor, $now, $reassignedToRole),
             default => null
+        };
+    }
+
+    /**
+     * Handle rejection with optional reassignment
+     */
+    private function handleRejection(string $role, User $actor, $now, ?string $reassignedToRole = null): array
+    {
+        // If reassignment is specified, assign back to that role instead of rejecting
+        if ($reassignedToRole) {
+            $statusMap = [
+                'supervisor' => 'pending_supervisor_approval',
+                'hod' => 'pending_hod_approval',
+                'da' => 'pending_da_approval',
+                'so' => 'pending_so_approval',
+                'ar' => 'pending_ar_approval',
+                'dr' => 'pending_dr_approval',
+                'hvc' => 'pending_hvc_approval',
+            ];
+
+            $approverFieldMap = [
+                'supervisor' => 'supervisor_approver_id',
+                'hod' => 'hod_approver_id',
+                'da' => 'da_approver_id',
+                'so' => 'so_approver_id',
+                'ar' => 'ar_approver_id',
+                'dr' => 'dr_approver_id',
+                'hvc' => 'hvc_approver_id',
+            ];
+
+            $approvalFieldMap = [
+                'supervisor' => 'supervisor_approved_at',
+                'hod' => 'hod_approved_at',
+                'da' => 'da_approved_at',
+                'so' => 'so_approved_at',
+                'ar' => 'ar_approved_at',
+                'dr' => 'dr_approved_at',
+                'hvc' => 'hvc_approved_at',
+            ];
+
+            // Get the current role's approver field
+            $currentApproverField = $approverFieldMap[$role] ?? null;
+            $currentApprovalField = $approvalFieldMap[$role] ?? null;
+
+            $update = [
+                'status' => $statusMap[$reassignedToRole] ?? 'rejected_by_' . $role,
+                'reassigned_to_role' => $reassignedToRole,
+            ];
+
+            // Set current role's approver and approval time
+            if ($currentApproverField) {
+                $update[$currentApproverField] = $actor->id;
+            }
+            if ($currentApprovalField) {
+                $update[$currentApprovalField] = $now;
+            }
+
+            return $update;
+        }
+
+        // Standard rejection
+        return [
+            'status' => 'rejected_by_' . $role,
+            $this->getApproverField($role) => $actor->id,
+            $this->getApprovalField($role) => $now,
+            'rejected_by' => $actor->id,
+            'rejected_at' => $now,
+        ];
+    }
+
+    /**
+     * Get approver field name for a role
+     */
+    private function getApproverField(string $role): string
+    {
+        return match($role) {
+            'supervisor' => 'supervisor_approver_id',
+            'hod' => 'hod_approver_id',
+            'da' => 'da_approver_id',
+            'so' => 'so_approver_id',
+            'ar' => 'ar_approver_id',
+            'dr' => 'dr_approver_id',
+            'hvc' => 'hvc_approver_id',
+            default => 'rejected_by',
+        };
+    }
+
+    /**
+     * Get approval field name for a role
+     */
+    private function getApprovalField(string $role): string
+    {
+        return match($role) {
+            'supervisor' => 'supervisor_approved_at',
+            'hod' => 'hod_approved_at',
+            'da' => 'da_approved_at',
+            'so' => 'so_approved_at',
+            'ar' => 'ar_approved_at',
+            'dr' => 'dr_approved_at',
+            'hvc' => 'hvc_approved_at',
+            default => 'rejected_at',
         };
     }
 
@@ -349,7 +414,7 @@ class WorkflowSyncService
 
         return [
             'scholar_id' => $scholar->id,
-            'scholar_name' => $scholar->first_name . ' ' . $scholar->last_name,
+            'scholar_name' => $scholar->name . ' ' . $scholar->last_name,
             'synopsis' => [
                 'status' => $latestSynopsis ? $latestSynopsis->status : 'not_submitted',
                 'submission_date' => $latestSynopsis ? $latestSynopsis->submission_date : null,
@@ -562,7 +627,7 @@ class WorkflowSyncService
         $content .= "Dispatch Number: " . $registrationForm->dispatch_number . "\n";
         $content .= "Generated Date: " . $registrationForm->generated_at->format('Y-m-d H:i:s') . "\n\n";
         $content .= "SCHOLAR INFORMATION\n";
-        $content .= "Name: " . $scholar->first_name . " " . $scholar->last_name . "\n";
+        $content .= "Name: " . $scholar->name . " " . $scholar->last_name . "\n";
         $content .= "Enrollment Number: " . $scholar->enrollment_number . "\n";
         $content .= "Department: " . $scholar->admission->department->name . "\n";
         $content .= "Research Area: " . $scholar->research_area . "\n\n";
