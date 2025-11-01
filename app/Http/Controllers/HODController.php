@@ -865,7 +865,7 @@ class HODController extends Controller
         $racCommitteeSubmissions = \App\Models\RACCommitteeSubmission::whereHas('scholar.admission', function ($query) use ($hodDepartment) {
             $query->where('department_id', $hodDepartment->id);
         })
-        ->with(['scholar.user', 'scholar.admission.department', 'supervisor.user', 'hod'])
+        ->with(['scholar.user', 'scholar.admission.department', 'supervisor.user', 'supervisor.department', 'hod'])
         ->latest()
         ->get();
 
@@ -1336,7 +1336,7 @@ class HODController extends Controller
             abort(403, 'This RAC committee submission is not pending approval.');
         }
 
-        $racCommitteeSubmission->load(['scholar.user', 'supervisor.user', 'scholar.admission.department']);
+        $racCommitteeSubmission->load(['scholar.user', 'supervisor.user', 'supervisor.department', 'scholar.admission.department']);
 
         return view('hod.rac_committee.approve', compact('racCommitteeSubmission'));
     }

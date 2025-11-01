@@ -100,6 +100,7 @@ class SupervisorController extends Controller
             'remarks' => 'nullable|string|max:500',
             'rac_minutes_file' => 'required|file|mimes:pdf,doc,docx|max:5120',
             'rac_meeting_date' => 'required|date',
+            'fee_receipt_verified' => $scholar->fee_receipt_file ? 'required|accepted' : 'nullable',
         ]);
 
         if ($request->action === 'verify_data') {
@@ -876,6 +877,7 @@ class SupervisorController extends Controller
         // Get existing submission if any
         $existingSubmission = RACCommitteeSubmission::where('scholar_id', $scholar->id)
             ->where('supervisor_id', Auth::user()->supervisor->id)
+            ->with('supervisor.user', 'supervisor.department')
             ->latest()
             ->first();
 
@@ -893,7 +895,11 @@ class SupervisorController extends Controller
 
         $request->validate([
             'member1_name' => 'required|string|max:255',
+            'member1_designation' => 'required|string|max:255',
+            'member1_department' => 'required|string|max:255',
             'member2_name' => 'required|string|max:255',
+            'member2_designation' => 'required|string|max:255',
+            'member2_department' => 'required|string|max:255',
         ]);
 
         // Check if there's a pending submission
@@ -906,7 +912,11 @@ class SupervisorController extends Controller
             // Update existing pending submission
             $existingSubmission->update([
                 'member1_name' => $request->member1_name,
+                'member1_designation' => $request->member1_designation,
+                'member1_department' => $request->member1_department,
                 'member2_name' => $request->member2_name,
+                'member2_designation' => $request->member2_designation,
+                'member2_department' => $request->member2_department,
             ]);
 
             return redirect()->route('staff.scholars.show', $scholar)
@@ -918,7 +928,11 @@ class SupervisorController extends Controller
             'scholar_id' => $scholar->id,
             'supervisor_id' => Auth::user()->supervisor->id,
             'member1_name' => $request->member1_name,
+            'member1_designation' => $request->member1_designation,
+            'member1_department' => $request->member1_department,
             'member2_name' => $request->member2_name,
+            'member2_designation' => $request->member2_designation,
+            'member2_department' => $request->member2_department,
             'status' => 'pending_hod_approval',
         ]);
 

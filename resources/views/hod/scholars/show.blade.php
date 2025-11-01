@@ -60,7 +60,7 @@
                         <h3 class="text-lg font-medium text-gray-900 mb-4">RAC Committee Members - Complete History</h3>
                         @php
                             $racSubmissions = \App\Models\RACCommitteeSubmission::where('scholar_id', $scholar->id)
-                                ->with('supervisor.user', 'hod')
+                                ->with('supervisor.user', 'supervisor.department', 'hod')
                                 ->latest()
                                 ->get();
                         @endphp
@@ -83,15 +83,25 @@
                                             </span>
                                         </div>
 
+                                        <div class="space-y-3 mb-4">
+                                            <div class="border-l-4 border-indigo-500 pl-4 py-2 bg-gray-50 rounded-r">
+                                                <p class="text-sm font-semibold text-gray-900">1. Supervisor</p>
+                                                <p class="text-sm text-gray-700">{{ $racSubmission->supervisor->user->name }}</p>
+                                                <p class="text-xs text-gray-500">{{ $racSubmission->supervisor->designation ?? 'N/A' }}, {{ $racSubmission->supervisor->department->name ?? 'N/A' }}</p>
+                                            </div>
+                                            <div class="border-l-4 border-indigo-500 pl-4 py-2 bg-gray-50 rounded-r">
+                                                <p class="text-sm font-semibold text-gray-900">2. Member 1</p>
+                                                <p class="text-sm text-gray-700">{{ $racSubmission->member1_name }}</p>
+                                                <p class="text-xs text-gray-500">{{ $racSubmission->member1_designation ?? 'N/A' }}, {{ $racSubmission->member1_department ?? 'N/A' }}</p>
+                                            </div>
+                                            <div class="border-l-4 border-indigo-500 pl-4 py-2 bg-gray-50 rounded-r">
+                                                <p class="text-sm font-semibold text-gray-900">3. Member 2</p>
+                                                <p class="text-sm text-gray-700">{{ $racSubmission->member2_name }}</p>
+                                                <p class="text-xs text-gray-500">{{ $racSubmission->member2_designation ?? 'N/A' }}, {{ $racSubmission->member2_department ?? 'N/A' }}</p>
+                                            </div>
+                                        </div>
+
                                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                                            <div>
-                                                <label class="block text-sm font-medium text-gray-700">Member 1</label>
-                                                <p class="mt-1 text-sm text-gray-900">{{ $racSubmission->member1_name }}</p>
-                                            </div>
-                                            <div>
-                                                <label class="block text-sm font-medium text-gray-700">Member 2</label>
-                                                <p class="mt-1 text-sm text-gray-900">{{ $racSubmission->member2_name }}</p>
-                                            </div>
                                             <div>
                                                 <label class="block text-sm font-medium text-gray-700">Submitted By</label>
                                                 <p class="mt-1 text-sm text-gray-900">{{ $racSubmission->supervisor->user->name }}</p>

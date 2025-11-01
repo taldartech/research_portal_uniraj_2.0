@@ -143,7 +143,7 @@ class ScholarController extends Controller
             'transaction_amount' => 'required|numeric|min:0',
             'transaction_date' => 'required|date',
             'transaction_number' => 'required|string|max:255',
-            'pay_mode' => 'required|string|max:255',
+            'pay_mode' => 'required|string|in:Online,Offline',
             'fee_receipt_file' => $scholar->fee_receipt_file ? 'nullable|file|mimes:pdf,doc,docx|max:2048' : 'required|file|mimes:pdf,doc,docx|max:2048',
         ]);
 
@@ -571,7 +571,7 @@ class ScholarController extends Controller
             'transaction_amount' => 'required|numeric|min:0',
             'transaction_date' => 'required|date',
             'transaction_no' => 'required|string|max:255',
-            'pay_mode' => 'required|string|max:255',
+            'pay_mode' => 'required|string|in:Online,Offline',
             'receipt_file' => 'required|file|mimes:pdf,jpg,jpeg,png|max:2048',
             'special_remark' => 'boolean',
             'cancellation_request' => 'boolean',

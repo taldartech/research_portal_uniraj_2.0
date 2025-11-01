@@ -632,42 +632,45 @@
 
                             <div class="space-y-6">
                                 <div>
-                                    <x-input-label for="transaction_amount" :value="__('Transaction Amount')" :required=true/>
+                                    <x-input-label for="transaction_amount" :value="__('Transaction/Receipt Amount')" :required=true/>
                                     <x-text-input id="transaction_amount" name="transaction_amount" type="text" class="mt-1 block w-full"
-                                        :value="old('transaction_amount', $scholar->transaction_amount)" placeholder="Enter the transaction amount" required/>
+                                        :value="old('transaction_amount', $scholar->transaction_amount)" placeholder="Enter the transaction/receipt amount" required/>
                                     <x-input-error :messages="$errors->get('transaction_amount')" class="mt-2" />
                                     <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                                        Provide the transaction amount for the registration process.
+                                        Provide the transaction/receipt amount for the registration process.
                                     </p>
                                 </div>
 
                                 <div>
-                                    <x-input-label for="transaction_date" :value="__('Transaction Date')" :required=true/>
+                                    <x-input-label for="transaction_date" :value="__('Transaction/Receipt Date')" :required=true/>
                                     <x-text-input id="transaction_date" name="transaction_date" type="date" class="mt-1 block w-full"
                                         :value="old('transaction_date', $scholar->transaction_date ? $scholar->transaction_date->format('Y-m-d') : '')" required/>
                                     <x-input-error :messages="$errors->get('transaction_date')" class="mt-2" />
                                     <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                                        Provide the transaction date for the registration process.
+                                        Provide the transaction/receipt date for the registration process.
                                     </p>
                                 </div>
 
                                 <div>
-                                    <x-input-label for="transaction_number" :value="__('Transaction Number')" :required=true/>
+                                    <x-input-label for="transaction_number" :value="__('Transaction/Receipt Number')" :required=true/>
                                     <x-text-input id="transaction_number" name="transaction_number" type="text" class="mt-1 block w-full"
-                                        :value="old('transaction_number', $scholar->transaction_number)" placeholder="Enter the transaction number" required/>
+                                        :value="old('transaction_number', $scholar->transaction_number)" placeholder="Enter the transaction/receipt number" required/>
                                     <x-input-error :messages="$errors->get('transaction_number')" class="mt-2" />
                                     <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                                        Provide the transaction number for the registration process.
+                                        Provide the transaction/receipt number for the registration process.
                                     </p>
                                 </div>
 
                                 <div>
                                     <x-input-label for="pay_mode" :value="__('Payment Mode')" :required=true/>
-                                    <x-text-input id="pay_mode" name="pay_mode" type="text" class="mt-1 block w-full"
-                                        :value="old('pay_mode', $scholar->pay_mode)" placeholder="Enter the payment mode" required/>
+                                    <select id="pay_mode" name="pay_mode" class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 dark:focus:border-indigo-600 focus:ring-indigo-500 dark:focus:ring-indigo-600 rounded-md shadow-sm" required>
+                                        <option value="">Select Payment Mode</option>
+                                        <option value="Online" {{ old('pay_mode', $scholar->pay_mode) == 'Online' ? 'selected' : '' }}>Online</option>
+                                        <option value="Offline" {{ old('pay_mode', $scholar->pay_mode) == 'Offline' ? 'selected' : '' }}>Offline</option>
+                                    </select>
                                     <x-input-error :messages="$errors->get('pay_mode')" class="mt-2" />
                                     <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                                        Provide the payment mode for the registration process.
+                                        Select the payment mode for the registration process.
                                     </p>
                                 </div>
                                 <div>
