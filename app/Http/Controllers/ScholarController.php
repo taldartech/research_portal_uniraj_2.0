@@ -76,7 +76,9 @@ class ScholarController extends Controller
                 ->with('error', 'You must pass coursework before you can access the registration form. Please contact your HOD for coursework results.');
         }
 
-        return view('scholar.registration.phd_form', compact('scholar'));
+        $faculties = \App\Models\Faculty::where('is_active', true)->orderBy('name')->get();
+
+        return view('scholar.registration.phd_form', compact('scholar', 'faculties'));
     }
 
     public function storePhdRegistrationForm(Request $request)
@@ -103,9 +105,19 @@ class ScholarController extends Controller
             'nationality' => 'required|string|max:255',
             'category' => 'required|in:SC,ST,OBC,MBC,EWS,P.H.,General',
             'occupation' => 'required|string|max:255',
-            'is_teacher' => 'nullable|boolean',
-            'teacher_employer' => 'nullable|string|max:255',
             'appearing_other_exam' => 'nullable|boolean',
+
+            // Scholar Details
+            'subject' => 'required|string|max:255',
+            'faculty_name' => 'required|exists:faculties,name',
+            'enrollment_number' => 'required|string|max:255',
+            'enrollment_type' => 'required|in:preenroll,new_enroll',
+            'cash_receipt_number' => 'required_if:enrollment_type,new_enroll|nullable|string|max:255',
+            'cash_receipt_date' => 'required_if:enrollment_type,new_enroll|nullable|date',
+            'photo' => $scholar->photo ? 'nullable|file|mimes:jpg,jpeg,png|max:2048' : 'required|file|mimes:jpg,jpeg,png|max:2048',
+            'sign' => $scholar->sign ? 'nullable|file|mimes:jpg,jpeg,png|max:2048' : 'required|file|mimes:jpg,jpeg,png|max:2048',
+            'letter_number' => 'required|string|max:255',
+            'supervisor_recognition_date' => 'required|date',
             'other_exam_details' => 'nullable|string',
 
             // Academic Qualifications (arrays)
@@ -203,8 +215,24 @@ class ScholarController extends Controller
             $formData['fee_receipt_submitted_at'] = now();
         }
 
+        // Handle photo file upload
+        $photoPath = null;
+        if ($request->hasFile('photo')) {
+            $photoFile = $request->file('photo');
+            $filename = 'photo_' . time() . '_' . $photoFile->getClientOriginalName();
+            $photoPath = $photoFile->storeAs('photos/' . $scholar->id, $filename, 'public');
+        }
+
+        // Handle sign file upload
+        $signPath = null;
+        if ($request->hasFile('sign')) {
+            $signFile = $request->file('sign');
+            $filename = 'sign_' . time() . '_' . $signFile->getClientOriginalName();
+            $signPath = $signFile->storeAs('signatures/' . $scholar->id, $filename, 'public');
+        }
+
         // Update scholar with form data
-        $formData = $request->except(['registration_documents', 'synopsis_file', 'fee_receipt_file', 'action', 'post_graduate_degrees', 'post_graduate_universities', 'post_graduate_years', 'post_graduate_percentages', 'document_types']);
+        $formData = $request->except(['registration_documents', 'synopsis_file', 'fee_receipt_file', 'photo', 'sign', 'action', 'post_graduate_degrees', 'post_graduate_universities', 'post_graduate_years', 'post_graduate_percentages', 'document_types', 'subject', 'faculty_name']);
 
         // Handle academic qualifications arrays - store all qualifications
         if ($request->has('post_graduate_degrees') && !empty($request->post_graduate_degrees)) {
@@ -233,8 +261,19 @@ class ScholarController extends Controller
             $formData['post_graduate_percentage'] = $percentages[0] ?? '';
         }
 
+        // Map new fields to existing database fields
+        $formData['phd_subject'] = $request->subject;
+        $formData['phd_faculty'] = $request->faculty_name;
+
+        // Handle photo and sign uploads
+        if ($photoPath) {
+            $formData['photo'] = $photoPath;
+        }
+        if ($signPath) {
+            $formData['sign'] = $signPath;
+        }
+
         // Handle checkbox fields properly
-        $formData['is_teacher'] = $request->has('is_teacher') ? (bool) $request->input('is_teacher') : false;
         $formData['appearing_other_exam'] = $request->has('appearing_other_exam') ? (bool) $request->input('appearing_other_exam') : false;
         $formData['has_co_supervisor'] = $request->has('has_co_supervisor') ? (bool) $request->input('has_co_supervisor') : false;
 
@@ -299,7 +338,9 @@ class ScholarController extends Controller
             abort(403, 'You are not authorized to edit this scholar\'s form.');
         }
 
-        return view('supervisor.scholar.form_edit', compact('scholar'));
+        $faculties = \App\Models\Faculty::where('is_active', true)->orderBy('name')->get();
+
+        return view('supervisor.scholar.form_edit', compact('scholar', 'faculties'));
     }
 
     public function supervisorUpdateScholarForm(Request $request, $scholarId)
@@ -318,9 +359,7 @@ class ScholarController extends Controller
             'nationality' => 'required|string|max:255',
             'category' => 'required|in:SC,ST,OBC,MBC,EWS,P.H.,General',
             'occupation' => 'required|string|max:255',
-            'is_teacher' => 'nullable|boolean',
-            'teacher_employer' => 'nullable|string|max:255',
-            'phd_faculty' => 'required|string|max:255',
+            'phd_faculty' => 'required|exists:faculties,name',
             'phd_subject' => 'required|string|max:255',
             'post_graduate_degree' => 'nullable|string|max:255',
             'post_graduate_university' => 'nullable|string|max:255',
@@ -330,7 +369,6 @@ class ScholarController extends Controller
 
         // Handle checkbox fields properly
         $formData = $request->except(['action']);
-        $formData['is_teacher'] = $request->has('is_teacher') ? (bool) $request->input('is_teacher') : false;
 
         // Update form status based on action
         if ($request->action === 'approve') {

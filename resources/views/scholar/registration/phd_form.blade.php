@@ -134,6 +134,27 @@
                         {{-- </div> --}}
                     </div>
 
+                    <!-- Important Instructions -->
+                    <div class="mb-8 p-4 bg-yellow-50 dark:bg-yellow-900/20 border-l-4 border-yellow-400 dark:border-yellow-600 rounded-lg" role="alert">
+                        <div class="flex">
+                            <div class="flex-shrink-0">
+                                <svg class="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                                </svg>
+                            </div>
+                            <div class="ml-3 flex-1">
+                                <h3 class="text-lg font-medium text-yellow-800 dark:text-yellow-200 mb-3">Important Instructions for PhD Registration</h3>
+                                <ul class="list-disc list-inside space-y-2 text-sm text-yellow-700 dark:text-yellow-300">
+                                    <li>The subject in which you want to obtain the degree of Ph.D. together with the name of faculty should be mentioned.</li>
+                                    <li>Every candidate who is not enrolled in the University must get himself/herself enrolled by filling a separate form (which can be obtained from the University office) for the purpose by paying a fee. Your application will be considered only after you are duly enrolled.</li>
+                                    <li>Candidates should enclose the D.D. in favour of the Registrar, University of Rajasthan, Jaipur.</li>
+                                    <li>Candidates applying for registration must attach the original degree / diploma and the marks-sheets alongwith the attested copies (by the supervisor) of marks-sheets of Post-graduate and MPAT/NET examinations for verification.</li>
+                                    <li>Candidates applying for registration should clearly note that they will be required to work under an approved supervisor at least 100 days each year from the date of commencement of his/her research work.</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
                     <form method="POST" action="{{ route('scholar.registration.phd_form.store') }}" enctype="multipart/form-data" class="space-y-8">
                         @csrf
                         @method('patch')
@@ -255,30 +276,6 @@
                                     <x-input-error :messages="$errors->get('occupation')" class="mt-2" />
                                 </div>
 
-                                <div>
-                                    <x-input-label for="is_teacher" :value="__('Are you working as teacher in University Teaching Deptt./affiliated College?')" />
-                                    <div class="mt-2 space-y-2">
-                                        <label class="inline-flex items-center">
-                                            <input type="radio" name="is_teacher" value="1" class="form-radio"
-                                                {{ old('is_teacher', $scholar->is_teacher) == 1 ? 'checked' : '' }}>
-                                            <span class="ml-2">Yes</span>
-                                        </label>
-                                        <label class="inline-flex items-center">
-                                            <input type="radio" name="is_teacher" value="0" class="form-radio"
-                                                {{ old('is_teacher', $scholar->is_teacher) == 0 ? 'checked' : '' }}>
-                                            <span class="ml-2">No</span>
-                                        </label>
-                                    </div>
-                                    <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">If teacher, Employer certificate should be enclosed.</p>
-                                    <x-input-error :messages="$errors->get('is_teacher')" class="mt-2" />
-                                </div>
-
-                                <div id="teacher_employer_field" class="{{ old('is_teacher', $scholar->is_teacher) ? '' : 'hidden' }}">
-                                    <x-input-label for="teacher_employer" :value="__('Teacher Employer Details')" />
-                                    <x-text-input id="teacher_employer" name="teacher_employer" type="text" class="mt-1 block w-full"
-                                        :value="old('teacher_employer', $scholar->teacher_employer)" />
-                                    <x-input-error :messages="$errors->get('teacher_employer')" class="mt-2" />
-                                </div>
                             </div>
                         </div>
 
@@ -467,6 +464,115 @@
                                             :value="old('coursework_max_marks', $scholar->coursework_max_marks)" />
                                         <x-input-error :messages="$errors->get('coursework_max_marks')" class="mt-2" />
                                     </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Scholar Details Section -->
+                        <div class="border-b border-gray-200 dark:border-gray-700 pb-8">
+                            <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-6">Scholar Details</h3>
+
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <x-input-label for="subject" :value="__('Subject')" :required="true"/>
+                                    <x-text-input id="subject" name="subject" type="text" class="mt-1 block w-full"
+                                        :value="old('subject', $scholar->phd_subject)" required />
+                                    <x-input-error :messages="$errors->get('subject')" class="mt-2" />
+                                </div>
+
+                                <div>
+                                    <x-input-label for="faculty_name" :value="__('Faculty Name')" :required="true"/>
+                                    <select id="faculty_name" name="faculty_name" class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 dark:focus:border-indigo-600 focus:ring-indigo-500 dark:focus:ring-indigo-600 rounded-md shadow-sm" required>
+                                        <option value="">Select Faculty</option>
+                                        @foreach($faculties as $faculty)
+                                            <option value="{{ $faculty->name }}" {{ old('faculty_name', $scholar->phd_faculty) == $faculty->name ? 'selected' : '' }}>
+                                                {{ $faculty->name }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                    <x-input-error :messages="$errors->get('faculty_name')" class="mt-2" />
+                                </div>
+
+                                <div>
+                                    <x-input-label for="enrollment_number" :value="__('Enrollment Number')" :required="true"/>
+                                    <x-text-input id="enrollment_number" name="enrollment_number" type="text" class="mt-1 block w-full"
+                                        :value="old('enrollment_number', $scholar->enrollment_number)" required />
+                                    <x-input-error :messages="$errors->get('enrollment_number')" class="mt-2" />
+                                </div>
+
+                                <div>
+                                    <x-input-label for="enrollment_type" :value="__('Enrollment Type')" :required="true"/>
+                                    <div class="mt-2 space-y-2">
+                                        <label class="inline-flex items-center">
+                                            <input type="radio" name="enrollment_type" value="preenroll" class="form-radio"
+                                                {{ old('enrollment_type', $scholar->enrollment_type ?? '') == 'preenroll' ? 'checked' : '' }}
+                                                onchange="toggleNewEnrollFields()">
+                                            <span class="ml-2">Pre-enroll</span>
+                                        </label>
+                                        <label class="inline-flex items-center">
+                                            <input type="radio" name="enrollment_type" value="new_enroll" class="form-radio"
+                                                {{ old('enrollment_type', $scholar->enrollment_type ?? '') == 'new_enroll' ? 'checked' : '' }}
+                                                onchange="toggleNewEnrollFields()">
+                                            <span class="ml-2">New Enroll</span>
+                                        </label>
+                                    </div>
+                                    <x-input-error :messages="$errors->get('enrollment_type')" class="mt-2" />
+                                </div>
+
+                                <div id="new_enroll_fields" class="md:col-span-2 {{ old('enrollment_type', $scholar->enrollment_type ?? '') == 'new_enroll' ? '' : 'hidden' }}">
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 border-t border-gray-200 dark:border-gray-700 pt-4 mt-4">
+                                        <div>
+                                            <x-input-label for="cash_receipt_number" :value="__('Cash Receipt Number')" />
+                                            <x-text-input id="cash_receipt_number" name="cash_receipt_number" type="text" class="mt-1 block w-full"
+                                                :value="old('cash_receipt_number', $scholar->cash_receipt_number)" />
+                                            <x-input-error :messages="$errors->get('cash_receipt_number')" class="mt-2" />
+                                        </div>
+
+                                        <div>
+                                            <x-input-label for="cash_receipt_date" :value="__('Cash Receipt Date')" />
+                                            <x-text-input id="cash_receipt_date" name="cash_receipt_date" type="date" class="mt-1 block w-full"
+                                                :value="old('cash_receipt_date', $scholar->cash_receipt_date ? $scholar->cash_receipt_date->format('Y-m-d') : '')" />
+                                            <x-input-error :messages="$errors->get('cash_receipt_date')" class="mt-2" />
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <x-input-label for="photo" :value="__('Photo')" :required="true"/>
+                                    <input id="photo" name="photo" type="file" accept=".jpg,.jpeg,.png"
+                                        class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
+                                        {{ $scholar->photo ? '' : 'required' }}>
+                                    @if($scholar->photo)
+                                        <p class="mt-1 text-sm text-green-600 dark:text-green-400">Photo already uploaded</p>
+                                    @endif
+                                    <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Accepted formats: JPG, JPEG, PNG (max 2MB)</p>
+                                    <x-input-error :messages="$errors->get('photo')" class="mt-2" />
+                                </div>
+
+                                <div>
+                                    <x-input-label for="sign" :value="__('Signature')" :required="true"/>
+                                    <input id="sign" name="sign" type="file" accept=".jpg,.jpeg,.png"
+                                        class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
+                                        {{ $scholar->sign ? '' : 'required' }}>
+                                    @if($scholar->sign)
+                                        <p class="mt-1 text-sm text-green-600 dark:text-green-400">Signature already uploaded</p>
+                                    @endif
+                                    <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Accepted formats: JPG, JPEG, PNG (max 2MB)</p>
+                                    <x-input-error :messages="$errors->get('sign')" class="mt-2" />
+                                </div>
+
+                                <div>
+                                    <x-input-label for="letter_number" :value="__('Letter Number')" :required="true"/>
+                                    <x-text-input id="letter_number" name="letter_number" type="text" class="mt-1 block w-full"
+                                        :value="old('letter_number', $scholar->letter_number)" required />
+                                    <x-input-error :messages="$errors->get('letter_number')" class="mt-2" />
+                                </div>
+
+                                <div>
+                                    <x-input-label for="supervisor_recognition_date" :value="__('Date of Recognition of Supervisor')" :required="true"/>
+                                    <x-text-input id="supervisor_recognition_date" name="supervisor_recognition_date" type="date" class="mt-1 block w-full"
+                                        :value="old('supervisor_recognition_date', $scholar->supervisor_recognition_date ? $scholar->supervisor_recognition_date->format('Y-m-d') : '')" required />
+                                    <x-input-error :messages="$errors->get('supervisor_recognition_date')" class="mt-2" />
                                 </div>
                             </div>
                         </div>
@@ -862,19 +968,36 @@
                 }
             });
 
-            // Handle teacher field visibility
-            const teacherRadios = document.querySelectorAll('input[name="is_teacher"]');
-            const teacherEmployerField = document.getElementById('teacher_employer_field');
+            // Handle enrollment type field visibility
+            function toggleNewEnrollFields() {
+                const enrollmentType = document.querySelector('input[name="enrollment_type"]:checked');
+                const newEnrollFields = document.getElementById('new_enroll_fields');
+                const cashReceiptNumber = document.getElementById('cash_receipt_number');
+                const cashReceiptDate = document.getElementById('cash_receipt_date');
 
-            teacherRadios.forEach(radio => {
-                radio.addEventListener('change', function() {
-                    if (this.value === '1') {
-                        teacherEmployerField.classList.remove('hidden');
-                    } else {
-                        teacherEmployerField.classList.add('hidden');
+                if (enrollmentType && enrollmentType.value === 'new_enroll') {
+                    newEnrollFields.classList.remove('hidden');
+                    if (cashReceiptNumber) cashReceiptNumber.setAttribute('required', 'required');
+                    if (cashReceiptDate) cashReceiptDate.setAttribute('required', 'required');
+                } else {
+                    newEnrollFields.classList.add('hidden');
+                    if (cashReceiptNumber) {
+                        cashReceiptNumber.removeAttribute('required');
+                        cashReceiptNumber.value = '';
                     }
-                });
+                    if (cashReceiptDate) {
+                        cashReceiptDate.removeAttribute('required');
+                        cashReceiptDate.value = '';
+                    }
+                }
+            }
+
+            // Initialize enrollment type visibility
+            const enrollmentRadios = document.querySelectorAll('input[name="enrollment_type"]');
+            enrollmentRadios.forEach(radio => {
+                radio.addEventListener('change', toggleNewEnrollFields);
             });
+            toggleNewEnrollFields();
 
             // Handle other exam field visibility
             const examRadios = document.querySelectorAll('input[name="appearing_other_exam"]');
