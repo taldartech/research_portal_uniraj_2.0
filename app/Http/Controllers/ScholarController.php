@@ -570,6 +570,11 @@ class ScholarController extends Controller
         $request->validate([
             'report_file' => 'required|file|mimes:pdf,doc,docx|max:2048',
             'report_period' => 'required|string|in:' . implode(',', $allowedMonthValues),
+            'transaction_amount' => 'required|numeric|min:0',
+            'transaction_date' => 'required|date',
+            'transaction_no' => 'required|string|max:255',
+            'pay_mode' => 'required|string|max:255',
+            'receipt_file' => 'required|file|mimes:pdf,jpg,jpeg,png|max:2048',
             'special_remark' => 'boolean',
             'cancellation_request' => 'boolean',
             'supervisor_change_request' => 'boolean',
@@ -593,7 +598,8 @@ class ScholarController extends Controller
             ->where('status', 'rejected')
             ->first();
 
-        $path = $request->file('report_file')->store('progress_reports', 'public');
+        $reportFilePath = $request->file('report_file')->store('progress_reports', 'public');
+        $receiptFilePath = $request->file('receipt_file')->store('receipts', 'public');
 
         $supervisor = $scholar->currentSupervisor;
         $hod = $scholar->admission->department->hod;
@@ -602,9 +608,14 @@ class ScholarController extends Controller
             'scholar_id' => $scholar->id,
             'supervisor_id' => $supervisor->supervisor_id,
             'hod_id' => $hod->id,
-            'report_file' => $path,
+            'report_file' => $reportFilePath,
             'submission_date' => now(),
             'report_period' => $request->report_period,
+            'transaction_amount' => $request->transaction_amount,
+            'transaction_date' => $request->transaction_date,
+            'transaction_no' => $request->transaction_no,
+            'pay_mode' => $request->pay_mode,
+            'receipt_file' => $receiptFilePath,
             'special_remark' => $request->boolean('special_remark'),
             'cancellation_request' => $request->boolean('cancellation_request'),
             'supervisor_change_request' => $request->boolean('supervisor_change_request'),

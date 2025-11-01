@@ -28,7 +28,18 @@ class SupervisorController extends Controller
             ->wherePivot('status', 'assigned')
             ->with('user')
             ->get();
-        return view('supervisor.scholars.list', compact('scholars'));
+        
+        // Check which scholars can have progress reports submitted by supervisor
+        $scholarsWithSubmissionInfo = $scholars->map(function($scholar) {
+            $canSubmitInfo = $this->canSubmitProgressReportForScholar($scholar);
+            return [
+                'scholar' => $scholar,
+                'can_submit' => $canSubmitInfo['can_submit'],
+                'report_period' => $canSubmitInfo['report_period'],
+            ];
+        });
+        
+        return view('supervisor.scholars.list', compact('scholars', 'scholarsWithSubmissionInfo'));
     }
 
     public function viewScholarDetails(Scholar $scholar)
@@ -57,7 +68,10 @@ class SupervisorController extends Controller
             }
         ]);
 
-        return view('supervisor.scholars.show', compact('scholar'));
+        // Check if supervisor can submit progress report for this scholar
+        $canSubmitInfo = $this->canSubmitProgressReportForScholar($scholar);
+
+        return view('supervisor.scholars.show', compact('scholar', 'canSubmitInfo'));
     }
 
     public function reviewScholarForm(Scholar $scholar)
@@ -910,5 +924,163 @@ class SupervisorController extends Controller
 
         return redirect()->route('staff.scholars.show', $scholar)
             ->with('success', 'RAC committee members submitted successfully. Waiting for HOD approval.');
+    }
+
+    /**
+     * Check if supervisor can submit progress report for scholar
+     * Only allowed for current month and next month, and only if scholar hasn't submitted
+     */
+    public function canSubmitProgressReportForScholar(Scholar $scholar): array
+    {
+        $currentMonth = (int) date('n');
+        $currentMonthName = date('F');
+        $allowedMonths = \App\Helpers\ProgressReportHelper::getAllowedMonths();
+        
+        $nextMonth = $currentMonth + 1;
+        if ($nextMonth > 12) {
+            $nextMonth = 1;
+        }
+        
+        $monthNames = [
+            1 => 'January', 2 => 'February', 3 => 'March', 4 => 'April',
+            5 => 'May', 6 => 'June', 7 => 'July', 8 => 'August',
+            9 => 'September', 10 => 'October', 11 => 'November', 12 => 'December'
+        ];
+        $nextMonthName = $monthNames[$nextMonth];
+        
+        $canSubmit = false;
+        $reportPeriod = null;
+        
+        // Check current month
+        if (in_array($currentMonth, $allowedMonths)) {
+            $existingReport = \App\Models\ProgressReport::where('scholar_id', $scholar->id)
+                ->where('report_period', $currentMonthName)
+                ->where('status', '!=', 'rejected')
+                ->first();
+            
+            if (!$existingReport) {
+                $canSubmit = true;
+                $reportPeriod = $currentMonthName;
+            }
+        }
+        
+        // Check next month if current month not allowed or already submitted
+        if (!$canSubmit && in_array($nextMonth, $allowedMonths)) {
+            $existingReport = \App\Models\ProgressReport::where('scholar_id', $scholar->id)
+                ->where('report_period', $nextMonthName)
+                ->where('status', '!=', 'rejected')
+                ->first();
+            
+            if (!$existingReport) {
+                $canSubmit = true;
+                $reportPeriod = $nextMonthName;
+            }
+        }
+        
+        return [
+            'can_submit' => $canSubmit,
+            'report_period' => $reportPeriod,
+            'current_month_allowed' => in_array($currentMonth, $allowedMonths),
+            'next_month_allowed' => in_array($nextMonth, $allowedMonths),
+        ];
+    }
+
+    /**
+     * Show form to submit progress report for a scholar
+     */
+    public function submitProgressReportForScholarForm(Scholar $scholar)
+    {
+        if (! $this->isAssignedSupervisor($scholar)) {
+            abort(403, 'Unauthorized action.');
+        }
+
+        $canSubmitInfo = $this->canSubmitProgressReportForScholar($scholar);
+        
+        if (!$canSubmitInfo['can_submit']) {
+            return redirect()->route('staff.scholars.show', $scholar)
+                ->with('error', 'You can only submit progress reports for the current month or next month, and only if the scholar has not already submitted.');
+        }
+
+        return view('supervisor.progress_report.submit', [
+            'scholar' => $scholar,
+            'reportPeriod' => $canSubmitInfo['report_period'],
+        ]);
+    }
+
+    /**
+     * Store progress report submitted by supervisor for scholar
+     */
+    public function storeProgressReportForScholar(Request $request, Scholar $scholar)
+    {
+        if (! $this->isAssignedSupervisor($scholar)) {
+            abort(403, 'Unauthorized action.');
+        }
+
+        $canSubmitInfo = $this->canSubmitProgressReportForScholar($scholar);
+        
+        if (!$canSubmitInfo['can_submit']) {
+            return redirect()->route('staff.scholars.show', $scholar)
+                ->with('error', 'You can only submit progress reports for the current month or next month, and only if the scholar has not already submitted.');
+        }
+
+        $allowedMonths = \App\Helpers\ProgressReportHelper::getAllowedMonthNames();
+        $allowedMonthValues = array_values($allowedMonths);
+
+        $request->validate([
+            'action' => 'required|in:approve,reject',
+            'remarks' => 'required|string|max:500',
+            'rac_minutes_file' => 'required|file|mimes:pdf,doc,docx|max:5120',
+            'rac_meeting_date' => 'required|date',
+            'report_period' => 'required|string|in:' . implode(',', $allowedMonthValues),
+        ]);
+
+        // Double-check that scholar hasn't submitted for this period
+        $existingReport = \App\Models\ProgressReport::where('scholar_id', $scholar->id)
+            ->where('report_period', $request->report_period)
+            ->where('status', '!=', 'rejected')
+            ->first();
+
+        if ($existingReport) {
+            return redirect()->back()->withErrors([
+                'report_period' => 'A progress report for ' . $request->report_period . ' has already been submitted by the scholar.'
+            ])->withInput();
+        }
+
+        // Upload RAC minutes file
+        $racMinutesPath = $request->file('rac_minutes_file')->store('rac_minutes', 'public');
+
+        $supervisor = Auth::user()->supervisor;
+        $hod = $scholar->admission->department->hod;
+
+        $progressReportData = [
+            'scholar_id' => $scholar->id,
+            'supervisor_id' => $supervisor->id,
+            'hod_id' => $hod->id,
+            'report_file' => '', // Empty since supervisor doesn't upload report file
+            'submission_date' => now(),
+            'report_period' => $request->report_period,
+            'supervisor_remarks' => $request->remarks,
+            'rac_minutes_file' => $racMinutesPath,
+            'rac_meeting_date' => $request->rac_meeting_date,
+            'supervisor_approver_id' => Auth::id(),
+            'supervisor_approved_at' => now(),
+        ];
+
+        // Handle approve/reject action
+        if ($request->action === 'approve') {
+            $progressReportData['status'] = 'pending_hod_approval';
+            $message = 'Progress report submitted and approved. Forwarded to HOD for approval.';
+        } else {
+            $progressReportData['status'] = 'rejected';
+            $progressReportData['rejected_by'] = Auth::id();
+            $progressReportData['rejected_at'] = now();
+            $progressReportData['rejection_reason'] = $request->remarks;
+            $message = 'Progress report submitted but marked as rejected.';
+        }
+
+        \App\Models\ProgressReport::create($progressReportData);
+
+        return redirect()->route('staff.scholars.show', $scholar)
+            ->with('success', $message);
     }
 }

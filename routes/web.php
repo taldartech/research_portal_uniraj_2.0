@@ -201,6 +201,10 @@ Route::prefix('staff')->name('staff.')->middleware(['auth'])->group(function () 
         // RAC Committee Submission Routes
         Route::get('/scholars/{scholar}/rac-committee/submit', [App\Http\Controllers\SupervisorController::class, 'submitRACCommitteeForm'])->name('rac_committee.submit');
         Route::post('/scholars/{scholar}/rac-committee/submit', [App\Http\Controllers\SupervisorController::class, 'storeRACCommitteeSubmission'])->name('rac_committee.store');
+
+        // Progress Report Submission Routes (for supervisor to submit on behalf of scholar)
+        Route::get('/scholars/{scholar}/progress-report/submit', [App\Http\Controllers\SupervisorController::class, 'submitProgressReportForScholarForm'])->name('progress_report.submit.for_scholar');
+        Route::post('/scholars/{scholar}/progress-report/submit', [App\Http\Controllers\SupervisorController::class, 'storeProgressReportForScholar'])->name('progress_report.store.for_scholar');
     });
 });
 

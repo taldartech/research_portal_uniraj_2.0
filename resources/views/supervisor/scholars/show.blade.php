@@ -683,7 +683,7 @@
                         @endif
 
                         @if(auth()->user()->user_type === 'supervisor' && $scholar->supervisorAssignments()->where('supervisor_id', auth()->user()->supervisor->id)->where('status', 'assigned')->exists())
-                            <div>
+                            <div class="flex flex-wrap gap-2">
                                 <a href="{{ route('staff.rac_committee.submit', $scholar) }}"
                                    class="inline-flex items-center px-4 py-2 bg-indigo-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-700 focus:bg-indigo-700 active:bg-indigo-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition ease-in-out duration-150">
                                     @if($racSubmissions->first() && $racSubmissions->first()->status === 'pending_hod_approval')
@@ -692,6 +692,13 @@
                                         Submit/Update RAC Committee Members
                                     @endif
                                 </a>
+                                
+                                @if(isset($canSubmitInfo) && $canSubmitInfo['can_submit'])
+                                    <a href="{{ route('staff.progress_report.submit.for_scholar', $scholar) }}"
+                                       class="inline-flex items-center px-4 py-2 bg-green-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-green-700 focus:bg-green-700 active:bg-green-900 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition ease-in-out duration-150">
+                                        Submit Progress Report ({{ $canSubmitInfo['report_period'] }})
+                                    </a>
+                                @endif
                             </div>
                         @endif
                     </div>
