@@ -99,7 +99,6 @@ class ScholarController extends Controller
             'research_area' => 'required|string|max:255',
 
             // Family Information
-            'father_name' => 'required|string|max:255',
             'mother_name' => 'required|string|max:255',
             'nationality' => 'required|string|max:255',
             'category' => 'required|in:SC,ST,OBC,MBC,EWS,P.H.,General',

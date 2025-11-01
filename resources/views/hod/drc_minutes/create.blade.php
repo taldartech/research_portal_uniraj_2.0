@@ -32,17 +32,7 @@
                             <input id="minutes_file" class="block mt-1 w-full" type="file" name="minutes_file" accept=".pdf,.doc,.docx" required />
                             <x-input-error :messages="$errors->get('minutes_file')" class="mt-2" />
                         </div>
-
-                        <!-- Status -->
-                        <div class="mb-4">
-                            <x-input-label for="status" :value="__('Status')" />
-                            <select id="status" name="status" class="block mt-1 w-full border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-                                <option value="active" {{ old('status') === 'active' ? 'selected' : '' }}>Active</option>
-                                <option value="pending" {{ old('status') === 'pending' ? 'selected' : '' }}>Pending</option>
-                                <option value="archived" {{ old('status') === 'archived' ? 'selected' : '' }}>Archived</option>
-                            </select>
-                            <x-input-error :messages="$errors->get('status')" class="mt-2" />
-                        </div>
+                        <input type="hidden" name="status" value="active">
 
                         <div class="flex items-center justify-end space-x-4 mt-6">
                             <a href="{{ route('hod.drc_minutes.index') }}"
