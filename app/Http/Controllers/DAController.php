@@ -93,7 +93,7 @@ class DAController extends Controller
                 'da_remarks' => $request->remarks,
             ]);
 
-            $message = 'Request approved and forwarded to Section Officer.';
+            $message = 'Request approved and forwarded to ' . \App\Helpers\WorkflowHelper::getRoleFullForm('so') . '.';
         } else {
             $capacityRequest->update([
                 'status' => 'rejected',
@@ -160,7 +160,7 @@ class DAController extends Controller
 
             // Sync workflow
             $workflowSyncService->syncSynopsisWorkflow($synopsis, 'da_approve', Auth::user());
-            $message = 'Synopsis approved and forwarded to Section Officer.';
+            $message = 'Synopsis approved and forwarded to ' . \App\Helpers\WorkflowHelper::getRoleFullForm('so') . '.';
         } else {
             $updateData = [
                 'da_remarks' => $request->remarks,
@@ -179,11 +179,7 @@ class DAController extends Controller
             $workflowSyncService->syncSynopsisWorkflow($synopsis, 'da_reject', Auth::user(), $reassignedRole);
 
             if ($reassignedRole) {
-                $roleLabels = [
-                    'supervisor' => 'Supervisor',
-                    'hod' => 'HOD',
-                ];
-                $message = 'Synopsis rejected and reassigned to ' . ($roleLabels[$reassignedRole] ?? $reassignedRole) . ' for corrections.';
+                $message = 'Synopsis rejected and reassigned to ' . \App\Helpers\WorkflowHelper::getRoleFullForm($reassignedRole) . ' for corrections.';
             } else {
                 $message = 'Synopsis rejected.';
             }
@@ -241,7 +237,7 @@ class DAController extends Controller
                 'da_remarks' => $request->remarks,
             ]);
 
-            $message = 'Coursework exemption approved and forwarded to Section Officer.';
+            $message = 'Coursework exemption approved and forwarded to ' . \App\Helpers\WorkflowHelper::getRoleFullForm('so') . '.';
         } else {
             $exemption->update([
                 'status' => 'rejected',
@@ -294,13 +290,13 @@ class DAController extends Controller
 
         $request->validate([
             'action' => 'required|in:approve,reject',
-            'remarks' => 'required|string|max:500',
+            'remarks' => 'nullable|string|max:500',
             'da_negative_remarks' => 'nullable|string|max:500',
         ]);
 
         if ($request->action === 'approve') {
-            // Conditional logic: If DA has negative remarks, go to full approval chain
-            if (!empty($request->da_negative_remarks)) {
+            // Check if negative remarks are provided - if yes, forward to SO
+            if (!empty($request->da_negative_remarks) && trim($request->da_negative_remarks) !== '') {
                 $report->update([
                     'status' => 'pending_so_approval',
                     'da_approver_id' => Auth::id(),
@@ -309,9 +305,9 @@ class DAController extends Controller
                     'da_negative_remarks' => $request->da_negative_remarks,
                 ]);
 
-                $message = 'Progress report approved with negative remarks. Forwarded to Section Officer for full approval chain.';
+                $message = 'Progress report forwarded to ' . \App\Helpers\WorkflowHelper::getRoleFullForm('so') . ' for full approval chain.';
             } else {
-                // Direct approval path
+                // Direct approval path (Submit button)
                 $report->update([
                     'status' => 'approved',
                     'da_approver_id' => Auth::id(),
@@ -320,7 +316,7 @@ class DAController extends Controller
                     'da_negative_remarks' => null,
                 ]);
 
-                $message = 'Progress report approved directly. No further approval required.';
+                $message = 'Progress report approved and submitted successfully.';
             }
         } else {
             $report->update([
@@ -394,7 +390,7 @@ class DAController extends Controller
             $certificateService = new \App\Services\CertificateGenerationService();
             $certificateService->generateSubmissionCertificate($thesis);
 
-            $message = 'Thesis approved and forwarded to Section Officer. Submission certificate generated.';
+            $message = 'Thesis approved and forwarded to ' . \App\Helpers\WorkflowHelper::getRoleFullForm('so') . '. Submission certificate generated.';
         } else {
             $thesis->update([
                 'status' => 'rejected_by_da',
@@ -407,7 +403,7 @@ class DAController extends Controller
                 'rejection_count' => $thesis->rejection_count + 1,
             ]);
 
-            $message = 'Thesis rejected by Dean\'s Assistant.';
+            $message = 'Thesis rejected by ' . \App\Helpers\WorkflowHelper::getRoleFullForm('da') . '.';
         }
 
         return redirect()->route('da.thesis.pending')->with('success', $message);
@@ -448,7 +444,7 @@ class DAController extends Controller
                 'da_remarks' => $request->remarks,
             ]);
 
-            $message = 'Late submission request approved and forwarded to Section Officer.';
+            $message = 'Late submission request approved and forwarded to ' . \App\Helpers\WorkflowHelper::getRoleFullForm('so') . '.';
         } else {
             $lateSubmissionRequest->update([
                 'status' => 'rejected_by_da',

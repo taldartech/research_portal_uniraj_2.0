@@ -75,9 +75,9 @@
                         </div>
                     @endif
 
-                    <!-- DA Remark Form -->
+                    <!-- Dealing Assistant Remark Form -->
                     <div class="mt-8 p-6 bg-white border border-gray-200 rounded-lg">
-                        <h3 class="text-lg font-medium text-gray-900 mb-4">DA Remark</h3>
+                        <h3 class="text-lg font-medium text-gray-900 mb-4">Dealing Assistant Remark</h3>
                         <form method="POST" action="{{ route('da.capacity_requests.process', $request) }}">
                             @csrf
                             @method('POST')

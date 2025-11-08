@@ -183,6 +183,11 @@ class Scholar extends Model
         return $this->hasMany(Synopsis::class);
     }
 
+    public function racCommitteeSubmissions()
+    {
+        return $this->hasMany(\App\Models\RACCommitteeSubmission::class);
+    }
+
     public function hasAssignedSupervisor()
     {
         return $this->supervisorAssignments()->where('status', 'assigned')->exists();
@@ -395,21 +400,20 @@ class Scholar extends Model
             ];
         }
 
-        $doc = $this->date_of_confirmation;
+        $doc = $this->date_of_confirmation->copy(); // Use copy() to avoid mutating the original
         $now = now();
         $isCourseworkExempted = $this->hasApprovedCourseworkExemption();
 
         // Calculate eligibility period
         if ($isCourseworkExempted) {
             // Coursework-exempted scholars: 2.5 years from DOC
-            $eligibleDate = $doc->addYears(2)->addMonths(6);
-            $maxDate = $doc->addYears(6);
+            $eligibleDate = $doc->copy()->addYears(2)->addMonths(6);
+            $maxDate = $doc->copy()->addYears(6);
         } else {
             // Regular scholars: 3 years from DOC
-            $eligibleDate = $doc->addYears(3);
-            $maxDate = $doc->addYears(6);
+            $eligibleDate = $doc->copy()->addYears(3);
+            $maxDate = $doc->copy()->addYears(6);
         }
-
         // Check if within 6-year limit
         if ($now->gt($maxDate)) {
             return [
@@ -456,6 +460,18 @@ class Scholar extends Model
         }
     }
 
+    public function prePhdVivaRequests()
+    {
+        return $this->hasMany(PrePhdVivaRequest::class);
+    }
+
+    public function activePrePhdVivaRequest()
+    {
+        return $this->hasOne(PrePhdVivaRequest::class)
+            ->whereIn('status', ['pending_rac_approval', 'approved'])
+            ->latest();
+    }
+
     public function canSubmitThesis()
     {
         $eligibility = $this->getThesisEligibilityStatus();
@@ -465,14 +481,103 @@ class Scholar extends Model
             return [
                 'can_submit' => false,
                 'reason' => 'Already has a thesis submission',
-                'eligibility' => $eligibility
+                'eligibility' => $eligibility,
+                'pre_phd_viva_status' => null
+            ];
+        }
+
+        // Check Pre-PhD Viva requirement
+        $prePhdVivaRequest = $this->activePrePhdVivaRequest;
+
+        if (!$prePhdVivaRequest) {
+            return [
+                'can_submit' => false,
+                'reason' => 'You must submit a Pre-PhD Viva request before submitting your thesis.',
+                'eligibility' => $eligibility,
+                'pre_phd_viva_status' => 'no_request',
+                'requires_pre_phd_viva' => true
+            ];
+        }
+
+        if ($prePhdVivaRequest->isPending()) {
+            return [
+                'can_submit' => false,
+                'reason' => 'Your Pre-PhD Viva request is pending RAC approval. Please wait for approval and viva date assignment.',
+                'eligibility' => $eligibility,
+                'pre_phd_viva_status' => 'pending',
+                'pre_phd_viva_request' => $prePhdVivaRequest
+            ];
+        }
+
+        if ($prePhdVivaRequest->isRejected()) {
+            return [
+                'can_submit' => false,
+                'reason' => 'Your Pre-PhD Viva request was rejected. Please submit a new request.',
+                'eligibility' => $eligibility,
+                'pre_phd_viva_status' => 'rejected',
+                'pre_phd_viva_request' => $prePhdVivaRequest
+            ];
+        }
+
+        if ($prePhdVivaRequest->isApproved()) {
+            // Check if viva date is set
+            if (!$prePhdVivaRequest->viva_date) {
+                return [
+                    'can_submit' => false,
+                    'reason' => 'Pre-PhD Viva date has not been set yet. Please contact your supervisor.',
+                    'eligibility' => $eligibility,
+                    'pre_phd_viva_status' => 'approved_no_date',
+                    'pre_phd_viva_request' => $prePhdVivaRequest
+                ];
+            }
+
+            // Check if we're within the submission window (after viva date and before 6 months deadline)
+            if (!$prePhdVivaRequest->isWithinSubmissionWindow()) {
+                if (now()->lt($prePhdVivaRequest->viva_date)) {
+                    return [
+                        'can_submit' => false,
+                        'reason' => 'You can only submit thesis after your Pre-PhD Viva date (' . $prePhdVivaRequest->viva_date->format('d/m/Y') . ').',
+                        'eligibility' => $eligibility,
+                        'pre_phd_viva_status' => 'before_viva',
+                        'pre_phd_viva_request' => $prePhdVivaRequest,
+                        'viva_date' => $prePhdVivaRequest->viva_date
+                    ];
+                }
+
+                if ($prePhdVivaRequest->hasExpired()) {
+                    // Mark as expired
+                    $prePhdVivaRequest->update(['status' => 'expired']);
+
+                    return [
+                        'can_submit' => false,
+                        'reason' => 'Your Pre-PhD Viva thesis submission deadline has expired (Deadline: ' . $prePhdVivaRequest->thesis_submission_deadline->format('d/m/Y') . '). Please submit a new Pre-PhD Viva request.',
+                        'eligibility' => $eligibility,
+                        'pre_phd_viva_status' => 'expired',
+                        'pre_phd_viva_request' => $prePhdVivaRequest,
+                        'deadline' => $prePhdVivaRequest->thesis_submission_deadline
+                    ];
+                }
+            }
+
+            // Within submission window - check eligibility
+            return [
+                'can_submit' => $eligibility['can_submit'],
+                'reason' => $eligibility['can_submit'] ?
+                    'Eligible to submit thesis (Pre-PhD Viva completed on ' . $prePhdVivaRequest->viva_date->format('d/m/Y') . ')' :
+                    $eligibility['reason'],
+                'eligibility' => $eligibility,
+                'pre_phd_viva_status' => 'approved',
+                'pre_phd_viva_request' => $prePhdVivaRequest,
+                'viva_date' => $prePhdVivaRequest->viva_date,
+                'deadline' => $prePhdVivaRequest->thesis_submission_deadline
             ];
         }
 
         return [
             'can_submit' => $eligibility['can_submit'],
             'reason' => $eligibility['reason'],
-            'eligibility' => $eligibility
+            'eligibility' => $eligibility,
+            'pre_phd_viva_status' => null
         ];
     }
 
@@ -619,11 +724,82 @@ class Scholar extends Model
             ];
         }
 
-        // Step 5: Thesis Submission
-        if (!$this->thesisSubmissions()->where('status', 'approved')->exists()) {
-            if (!$this->thesisSubmissions()->exists()) {
+        // Step 5: Pre-PhD Viva Request
+        $prePhdVivaRequest = $this->activePrePhdVivaRequest;
+        if (!$prePhdVivaRequest) {
+            // No request submitted yet
+            return [
+                'step' => 5,
+                'title' => 'Pre-PhD Viva Request',
+                'description' => 'Submit a Pre-PhD Viva request before thesis submission',
+                'route' => 'scholar.pre_phd_viva.request',
+                'status' => 'pending',
+                'icon' => 'viva'
+            ];
+        } elseif ($prePhdVivaRequest->isPending()) {
+            // Request pending approval
+            return [
+                'step' => 5,
+                'title' => 'Pre-PhD Viva Request',
+                'description' => 'Your Pre-PhD Viva request is pending RAC approval. Waiting for viva date assignment.',
+                'route' => 'scholar.pre_phd_viva.status',
+                'status' => 'in_progress',
+                'icon' => 'viva'
+            ];
+        } elseif ($prePhdVivaRequest->isRejected()) {
+            // Request rejected, need to resubmit
+            return [
+                'step' => 5,
+                'title' => 'Pre-PhD Viva Request',
+                'description' => 'Your Pre-PhD Viva request was rejected. Please submit a new request.',
+                'route' => 'scholar.pre_phd_viva.request',
+                'status' => 'pending',
+                'icon' => 'viva'
+            ];
+        } elseif ($prePhdVivaRequest->isApproved() && !$prePhdVivaRequest->hasExpired() && !$prePhdVivaRequest->thesis_submitted) {
+            // Approved and within submission window
+            if (now()->lt($prePhdVivaRequest->viva_date)) {
                 return [
                     'step' => 5,
+                    'title' => 'Pre-PhD Viva',
+                    'description' => 'Pre-PhD Viva scheduled on ' . $prePhdVivaRequest->viva_date->format('d/m/Y') . '. Please attend the viva.',
+                    'route' => 'scholar.pre_phd_viva.status',
+                    'status' => 'in_progress',
+                    'icon' => 'viva'
+                ];
+            } else {
+                // Viva date passed, can submit thesis
+                // Continue to Step 6: Thesis Submission below
+            }
+        } elseif ($prePhdVivaRequest->hasExpired() && !$prePhdVivaRequest->thesis_submitted) {
+            // Expired, need to resubmit
+            return [
+                'step' => 5,
+                'title' => 'Pre-PhD Viva Request',
+                'description' => 'Your Pre-PhD Viva thesis submission deadline has expired. Please submit a new request.',
+                'route' => 'scholar.pre_phd_viva.request',
+                'status' => 'pending',
+                'icon' => 'viva'
+            ];
+        }
+
+        // Step 6: Thesis Submission (after Pre-PhD Viva is completed)
+        if (!$this->thesisSubmissions()->where('status', 'approved')->exists()) {
+            $eligibilityCheck = $this->canSubmitThesis();
+            if (!$eligibilityCheck['can_submit']) {
+                return [
+                    'step' => 6,
+                    'title' => 'Thesis Submission',
+                    'description' => $eligibilityCheck['reason'],
+                    'route' => 'scholar.thesis.eligibility',
+                    'status' => 'pending',
+                    'icon' => 'thesis'
+                ];
+            }
+
+            if (!$this->thesisSubmissions()->exists()) {
+                return [
+                    'step' => 6,
                     'title' => 'Thesis Submission',
                     'description' => 'Submit your final thesis for evaluation',
                     'route' => 'scholar.thesis.submit',
@@ -631,22 +807,25 @@ class Scholar extends Model
                     'icon' => 'thesis'
                 ];
             } else {
-                return [
-                    'step' => 6,
-                    'title' => 'Thesis Submission',
-                    'description' => 'Wait for thesis approval',
-                    'route' => 'scholar.thesis.submit',
-                    'status' => 'in_progress',
-                    'icon' => 'thesis'
-                ];
+                $thesisSubmission = $this->thesisSubmissions()->where('status', '!=', 'rejected')->latest()->first();
+                if ($thesisSubmission && $thesisSubmission->status !== 'approved') {
+                    return [
+                        'step' => 6,
+                        'title' => 'Thesis Submission',
+                        'description' => 'Wait for thesis approval (Status: ' . ucfirst(str_replace('_', ' ', $thesisSubmission->status)) . ')',
+                        'route' => 'scholar.thesis.status',
+                        'status' => 'in_progress',
+                        'icon' => 'thesis'
+                    ];
+                }
             }
         }
 
-        // Step 6: Viva Examination
+        // Step 7: Viva Examination
         if (!$this->vivaExaminations()->where('status', 'completed')->exists()) {
             if (!$this->vivaExaminations()->exists()) {
                 return [
-                    'step' => 6,
+                    'step' => 7,
                     'title' => 'Viva Examination',
                     'description' => 'Wait for viva scheduling',
                     'route' => 'scholar.thesis.status',
@@ -655,7 +834,7 @@ class Scholar extends Model
                 ];
             } else {
                 return [
-                    'step' => 6,
+                    'step' => 7,
                     'title' => 'Viva Examination',
                     'description' => 'Attend scheduled viva examination',
                     'route' => 'scholar.thesis.status',
@@ -665,10 +844,10 @@ class Scholar extends Model
             }
         }
 
-        // Step 7: Final Documents
+        // Step 8: Final Documents
         if (!$this->registration_letter_generated) {
             return [
-                    'step' => 7,
+                'step' => 8,
                 'title' => 'Final Documents',
                 'description' => 'Download registration letter and certificates',
                 'route' => 'scholar.thesis.submissions.status',

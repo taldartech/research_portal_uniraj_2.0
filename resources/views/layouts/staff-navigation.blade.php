@@ -36,6 +36,12 @@
             <x-nav-link :href="route('staff.progress_reports.pending')" :active="request()->routeIs('staff.progress_reports.pending')">
                 {{ __('Pending Progress Reports') }}
             </x-nav-link>
+            <x-nav-link :href="route('staff.pre_phd_viva.pending')" :active="request()->routeIs('staff.pre_phd_viva.pending') || request()->routeIs('staff.pre_phd_viva.approve')">
+                {{ __('Pre-PhD Viva Requests') }}
+            </x-nav-link>
+            <x-nav-link :href="route('staff.pre_phd_viva.upcoming')" :active="request()->routeIs('staff.pre_phd_viva.upcoming')">
+                {{ __('Upcoming Viva Dates') }}
+            </x-nav-link>
             <x-nav-link :href="route('staff.thesis.pending')" :active="request()->routeIs('staff.thesis.pending')">
                 {{ __('Pending Thesis Submissions') }}
             </x-nav-link>
@@ -83,6 +89,9 @@
             </x-nav-link>
             <x-nav-link :href="route('hod.rac_committee.pending')" :active="request()->routeIs('hod.rac_committee.*')">
                 {{ __('RAC Committee Submissions') }}
+            </x-nav-link>
+            <x-nav-link :href="route('hod.pre_phd_viva.upcoming')" :active="request()->routeIs('hod.pre_phd_viva.upcoming')">
+                {{ __('Upcoming Pre-PhD Viva Dates') }}
             </x-nav-link>
         @endif
 

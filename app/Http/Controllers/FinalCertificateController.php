@@ -19,7 +19,7 @@ class FinalCertificateController extends Controller
     {
         // Check if user is HVC or DA
         if (!in_array(Auth::user()->user_type, ['hvc', 'da'])) {
-            abort(403, 'Only HVC or DA can generate final certificates.');
+            abort(403, 'Only Honorable Vice Chancellor or Dealing Assistant can generate final certificates.');
         }
 
         $eligibleTheses = ThesisSubmission::where('status', 'final_approved')
@@ -38,7 +38,7 @@ class FinalCertificateController extends Controller
     {
         // Check if user is HVC or DA
         if (!in_array(Auth::user()->user_type, ['hvc', 'da'])) {
-            abort(403, 'Only HVC or DA can generate final certificates.');
+            abort(403, 'Only Honorable Vice Chancellor or Dealing Assistant can generate final certificates.');
         }
 
         if ($thesis->status !== 'final_approved') {
@@ -59,7 +59,7 @@ class FinalCertificateController extends Controller
     {
         // Check if user is HVC or DA
         if (!in_array(Auth::user()->user_type, ['hvc', 'da'])) {
-            abort(403, 'Only HVC or DA can generate final certificates.');
+            abort(403, 'Only Honorable Vice Chancellor or Dealing Assistant can generate final certificates.');
         }
 
         if ($thesis->status !== 'final_approved') {

@@ -53,15 +53,15 @@
                                             <td class="px-6 py-4 text-sm text-gray-900">
                                                 <div class="space-y-1">
                                                     <div>
-                                                        <span class="font-semibold">1. Supervisor:</span> {{ $submission->supervisor->user->name }}<br>
+                                                        <span class="font-semibold">1. Member 1:</span> {{ $submission->supervisor->user->name }} Convener<br>
                                                         <span class="text-xs text-gray-500">{{ $submission->supervisor->designation ?? 'N/A' }}, {{ $submission->supervisor->department->name ?? 'N/A' }}</span>
                                                     </div>
                                                     <div>
-                                                        <span class="font-semibold">2. Member 1:</span> {{ $submission->member1_name }}<br>
+                                                        <span class="font-semibold">2. Member 2:</span> {{ $submission->member1_name }}<br>
                                                         <span class="text-xs text-gray-500">{{ $submission->member1_designation ?? 'N/A' }}, {{ $submission->member1_department ?? 'N/A' }}</span>
                                                     </div>
                                                     <div>
-                                                        <span class="font-semibold">3. Member 2:</span> {{ $submission->member2_name }}<br>
+                                                        <span class="font-semibold">3. Member 3:</span> {{ $submission->member2_name }}<br>
                                                         <span class="text-xs text-gray-500">{{ $submission->member2_designation ?? 'N/A' }}, {{ $submission->member2_department ?? 'N/A' }}</span>
                                                     </div>
                                                 </div>

@@ -1,7 +1,7 @@
 <x-app-layout>
     <x-slot name="header">
         <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
-            {{ __('Pending Thesis Submissions for DA Approval') }}
+            {{ __('Pending Thesis Submissions for Dealing Assistant Approval') }}
         </h2>
     </x-slot>
 
@@ -51,7 +51,7 @@
                             </table>
                         </div>
                     @else
-                        <p class="text-gray-500 dark:text-gray-400">No pending thesis submissions for DA approval.</p>
+                        <p class="text-gray-500 dark:text-gray-400">No pending thesis submissions for Dealing Assistant approval.</p>
                     @endif
                 </div>
             </div>

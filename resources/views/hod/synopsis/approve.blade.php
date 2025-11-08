@@ -256,7 +256,7 @@
                                 <select id="action" name="action" class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500" required>
                                     <option value="">Select Recommendation</option>
                                     <option value="approve" {{ old('action') == 'approve' ? 'selected' : '' }}>Approved</option>
-                                    <option value="reject" {{ old('action') == 'reject' ? 'selected' : '' }}>Not - Approved</option>
+                                    <option value="reject" {{ old('action') == 'reject' ? 'selected' : '' }}>Not Approved</option>
                                 </select>
                                 @error('action')
                                     <p class="mt-1 text-sm text-red-600">{{ $message }}</p>

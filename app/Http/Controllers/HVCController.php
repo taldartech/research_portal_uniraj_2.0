@@ -121,7 +121,7 @@ class HVCController extends Controller
                 'hvc_remarks' => $request->remarks,
             ]);
 
-            $message = 'Thesis approved by HVC!';
+            $message = 'Thesis approved by ' . \App\Helpers\WorkflowHelper::getRoleFullForm('hvc') . '!';
         } else {
             $thesis->update([
                 'status' => 'rejected',
@@ -133,7 +133,7 @@ class HVCController extends Controller
                 'rejection_reason' => $request->remarks,
             ]);
 
-            $message = 'Thesis rejected by HVC.';
+            $message = 'Thesis rejected by ' . \App\Helpers\WorkflowHelper::getRoleFullForm('hvc') . '.';
         }
 
         return redirect()->route('hvc.thesis.pending_approval')->with('success', $message);
@@ -444,7 +444,7 @@ class HVCController extends Controller
 
             // Sync workflow
             $workflowSyncService->syncSynopsisWorkflow($synopsis, 'hvc_approve', Auth::user());
-            $message = 'Synopsis approved by HVC!';
+            $message = 'Synopsis approved by ' . \App\Helpers\WorkflowHelper::getRoleFullForm('hvc') . '!';
         } else {
             $synopsis->update([
                 'hvc_remarks' => $request->remarks,
@@ -456,17 +456,9 @@ class HVCController extends Controller
             $workflowSyncService->syncSynopsisWorkflow($synopsis, 'hvc_reject', Auth::user(), $reassignedRole);
 
             if ($reassignedRole) {
-                $roleLabels = [
-                    'supervisor' => 'Supervisor',
-                    'hod' => 'HOD',
-                    'da' => 'DA',
-                    'so' => 'Section Officer',
-                    'ar' => 'Assistant Registrar',
-                    'dr' => 'Deputy Registrar',
-                ];
-                $message = 'Synopsis rejected and reassigned to ' . ($roleLabels[$reassignedRole] ?? $reassignedRole) . ' for corrections.';
+                $message = 'Synopsis rejected and reassigned to ' . \App\Helpers\WorkflowHelper::getRoleFullForm($reassignedRole) . ' for corrections.';
             } else {
-                $message = 'Synopsis rejected by HVC.';
+                $message = 'Synopsis rejected by ' . \App\Helpers\WorkflowHelper::getRoleFullForm('hvc') . '.';
             }
         }
 
@@ -496,6 +488,74 @@ class HVCController extends Controller
             ->get();
 
         return view('hvc.progress_reports.all', compact('reports'));
+    }
+
+    /**
+     * Show progress report approval form
+     */
+    public function showProgressReportApprovalForm(\App\Models\ProgressReport $report)
+    {
+        if ($report->status !== 'pending_hvc_approval') {
+            abort(403, 'This progress report is not pending HVC approval.');
+        }
+
+        $report->load(['scholar.user', 'supervisor.user', 'supervisorApprover', 'hodApprover', 'daApprover', 'soApprover', 'arApprover', 'drApprover']);
+
+        return view('hvc.progress_reports.approve', compact('report'));
+    }
+
+    /**
+     * Process progress report approval/rejection
+     */
+    public function processProgressReportApproval(Request $request, \App\Models\ProgressReport $report)
+    {
+        if ($report->status !== 'pending_hvc_approval') {
+            abort(403, 'This progress report is not pending HVC approval.');
+        }
+
+        $request->validate([
+            'action' => 'required|in:approve,reject',
+            'remarks' => 'required|string|max:500',
+            'reassigned_to_role' => 'nullable|string|in:supervisor,hod,da,so,ar,dr',
+            'reassignment_reason' => 'nullable|string|max:1000',
+        ]);
+
+        if ($request->action === 'approve') {
+            $report->update([
+                'status' => 'approved',
+                'hvc_approver_id' => Auth::id(),
+                'hvc_approved_at' => now(),
+                'hvc_remarks' => $request->remarks,
+            ]);
+
+            $message = 'Progress report approved successfully.';
+        } else {
+            if ($request->reassigned_to_role) {
+                $report->update([
+                    'status' => 'pending_' . $request->reassigned_to_role . '_approval',
+                    'hvc_approver_id' => Auth::id(),
+                    'hvc_approved_at' => now(),
+                    'hvc_remarks' => $request->remarks,
+                    'reassigned_to_role' => $request->reassigned_to_role,
+                    'reassignment_reason' => $request->reassignment_reason,
+                ]);
+                $message = 'Progress report rejected and reassigned to ' . \App\Helpers\WorkflowHelper::getRoleFullForm($request->reassigned_to_role) . ' for corrections.';
+            } else {
+                $report->update([
+                    'status' => 'rejected',
+                    'hvc_approver_id' => Auth::id(),
+                    'hvc_approved_at' => now(),
+                    'hvc_remarks' => $request->remarks,
+                    'rejected_by' => Auth::id(),
+                    'rejected_at' => now(),
+                    'rejection_reason' => $request->remarks,
+                    'rejection_count' => $report->rejection_count + 1,
+                ]);
+                $message = 'Progress report rejected by ' . \App\Helpers\WorkflowHelper::getRoleFullForm('hvc') . '.';
+            }
+        }
+
+        return redirect()->route('hvc.progress_reports.pending')->with('success', $message);
     }
 
     /**

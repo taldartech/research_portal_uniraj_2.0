@@ -80,6 +80,11 @@ Route::prefix('scholar')->name('scholar.')->middleware(['auth'])->group(function
         Route::post('/thesis/{thesis}/resubmit', [App\Http\Controllers\ScholarController::class, 'storeResubmission'])->name('thesis.resubmit.store');
         Route::get('/thesis/{thesis}/certificate/download', [App\Http\Controllers\ScholarController::class, 'downloadSubmissionCertificate'])->name('thesis.submission_certificate.download');
 
+        // Pre-PhD Viva Request Routes
+        Route::get('/pre-phd-viva/request', [App\Http\Controllers\ScholarController::class, 'requestPrePhdViva'])->name('pre_phd_viva.request');
+        Route::post('/pre-phd-viva/request', [App\Http\Controllers\ScholarController::class, 'storePrePhdVivaRequest'])->name('pre_phd_viva.request.store');
+        Route::get('/pre-phd-viva/status', [App\Http\Controllers\ScholarController::class, 'prePhdVivaStatus'])->name('pre_phd_viva.status');
+
         // Ph.D. Registration Form Routes
         Route::get('/registration/phd-form', [App\Http\Controllers\ScholarController::class, 'showPhdRegistrationForm'])->name('registration.phd_form');
         Route::patch('/registration/phd-form', [App\Http\Controllers\ScholarController::class, 'storePhdRegistrationForm'])->name('registration.phd_form.store');
@@ -183,6 +188,12 @@ Route::prefix('staff')->name('staff.')->middleware(['auth'])->group(function () 
         Route::get('/thesis/pending', [App\Http\Controllers\SupervisorController::class, 'listPendingThesisSubmissions'])->name('thesis.pending');
         Route::get('/thesis/{thesis}/approve', [App\Http\Controllers\SupervisorController::class, 'approveThesisForm'])->name('thesis.approve');
         Route::post('/thesis/{thesis}/approve', [App\Http\Controllers\SupervisorController::class, 'approveThesis'])->name('thesis.approve.store');
+
+        // Pre-PhD Viva Request Routes
+        Route::get('/pre-phd-viva/pending', [App\Http\Controllers\SupervisorController::class, 'listPendingPrePhdVivaRequests'])->name('pre_phd_viva.pending');
+        Route::get('/pre-phd-viva/upcoming', [App\Http\Controllers\SupervisorController::class, 'listUpcomingVivaDates'])->name('pre_phd_viva.upcoming');
+        Route::get('/pre-phd-viva/{prePhdVivaRequest}/approve', [App\Http\Controllers\SupervisorController::class, 'showPrePhdVivaApprovalForm'])->name('pre_phd_viva.approve');
+        Route::post('/pre-phd-viva/{prePhdVivaRequest}/approve', [App\Http\Controllers\SupervisorController::class, 'processPrePhdVivaApproval'])->name('pre_phd_viva.approve.store');
         Route::get('/thesis/{thesis}/certificate/download', [App\Http\Controllers\SupervisorController::class, 'downloadSubmissionCertificate'])->name('supervisor.thesis.submission_certificate.download');
 
         // Viva Examination Routes
@@ -242,6 +253,9 @@ Route::prefix('hod')->name('hod.')->middleware(['auth', UserTypeMiddleware::clas
     Route::get('/thesis/pending', [HODController::class, 'listPendingThesisSubmissions'])->name('thesis.pending');
     Route::get('/thesis/{thesis}/approve', [HODController::class, 'approveThesisForm'])->name('thesis.approve');
     Route::post('/thesis/{thesis}/approve', [HODController::class, 'approveThesis'])->name('thesis.approve.store');
+
+    // Pre-PhD Viva Routes
+    Route::get('/pre-phd-viva/upcoming', [HODController::class, 'listUpcomingVivaDates'])->name('pre_phd_viva.upcoming');
 
     // Viva Examination Management Routes
     Route::get('/viva/examinations', [HODController::class, 'listVivaExaminations'])->name('viva.examinations');
@@ -379,6 +393,8 @@ Route::prefix('so')->name('so.')->middleware(['auth', UserTypeMiddleware::class]
     // Progress Reports
     Route::get('/progress-reports/pending', [SOController::class, 'listPendingProgressReports'])->name('progress_reports.pending');
     Route::get('/progress-reports/all', [SOController::class, 'listAllProgressReports'])->name('progress_reports.all');
+    Route::get('/progress-reports/{report}/approve', [SOController::class, 'showProgressReportApprovalForm'])->name('progress_reports.approve');
+    Route::post('/progress-reports/{report}/process', [SOController::class, 'processProgressReportApproval'])->name('progress_reports.process');
 
     // Thesis Submissions
     Route::get('/thesis/pending', [SOController::class, 'listPendingThesisSubmissions'])->name('thesis.pending');
@@ -408,6 +424,8 @@ Route::prefix('ar')->name('ar.')->middleware(['auth', UserTypeMiddleware::class]
     // Progress Reports
     Route::get('/progress-reports/pending', [ARController::class, 'listPendingProgressReports'])->name('progress_reports.pending');
     Route::get('/progress-reports/all', [ARController::class, 'listAllProgressReports'])->name('progress_reports.all');
+    Route::get('/progress-reports/{report}/approve', [ARController::class, 'showProgressReportApprovalForm'])->name('progress_reports.approve');
+    Route::post('/progress-reports/{report}/process', [ARController::class, 'processProgressReportApproval'])->name('progress_reports.process');
 
     // Thesis Submissions
     Route::get('/thesis/pending', [ARController::class, 'listPendingThesisSubmissions'])->name('thesis.pending');
@@ -441,6 +459,8 @@ Route::prefix('dr')->name('dr.')->middleware(['auth', UserTypeMiddleware::class]
     // Progress Reports
     Route::get('/progress-reports/pending', [DRController::class, 'listPendingProgressReports'])->name('progress_reports.pending');
     Route::get('/progress-reports/all', [DRController::class, 'listAllProgressReports'])->name('progress_reports.all');
+    Route::get('/progress-reports/{report}/approve', [DRController::class, 'showProgressReportApprovalForm'])->name('progress_reports.approve');
+    Route::post('/progress-reports/{report}/process', [DRController::class, 'processProgressReportApproval'])->name('progress_reports.process');
 
     // Thesis Submissions
     Route::get('/thesis/pending', [DRController::class, 'listPendingThesisSubmissions'])->name('thesis.pending');
@@ -474,6 +494,8 @@ Route::prefix('hvc')->name('hvc.')->middleware(['auth', UserTypeMiddleware::clas
     // Progress Reports
     Route::get('/progress-reports/pending', [HVCController::class, 'listPendingProgressReports'])->name('progress_reports.pending');
     Route::get('/progress-reports/all', [HVCController::class, 'listAllProgressReports'])->name('progress_reports.all');
+    Route::get('/progress-reports/{report}/approve', [HVCController::class, 'showProgressReportApprovalForm'])->name('progress_reports.approve');
+    Route::post('/progress-reports/{report}/process', [HVCController::class, 'processProgressReportApproval'])->name('progress_reports.process');
 
     // Thesis Submissions
     Route::get('/thesis/pending', [HVCController::class, 'listPendingThesisSubmissions'])->name('thesis.pending');
@@ -519,7 +541,7 @@ Route::prefix('expert')->name('expert.')->middleware(['auth', UserTypeMiddleware
     Route::post('/evaluations/{evaluation}/submit', [App\Http\Controllers\ExpertEvaluationController::class, 'submitEvaluation'])->name('evaluations.submit');
 });
 
-require __DIR__.'/auth.php';
+// require __DIR__.'/auth.php';
 
 // Custom login routes
 Route::middleware('guest')->group(function () {

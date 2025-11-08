@@ -70,7 +70,7 @@
 
                     @if($report->feedback_da)
                     <div class="mb-6 p-4 bg-blue-50 rounded-lg">
-                        <h3 class="text-lg font-medium text-blue-900 mb-2">DA Feedback</h3>
+                        <h3 class="text-lg font-medium text-blue-900 mb-2">Dealing Assistant Feedback</h3>
                         <div class="text-sm text-gray-700 whitespace-pre-wrap">{{ $report->feedback_da }}</div>
                     </div>
                     @endif
@@ -82,40 +82,106 @@
                     </div>
                     @endif
 
+                    @if($report->hod_remarks && $report->hod_approved_at)
+                    <div class="mb-6 p-4 {{ $report->hod_warning ? 'bg-yellow-50 border-2 border-yellow-300' : 'bg-green-50' }} rounded-lg">
+                        <h3 class="text-lg font-medium {{ $report->hod_warning ? 'text-yellow-900' : 'text-green-900' }} mb-2">
+                            {{ \App\Helpers\WorkflowHelper::getRoleFullForm('hod') }} Remarks
+                            @if($report->hod_warning)
+                                <span class="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-yellow-100 text-yellow-800">⚠️ Warning (Unsatisfied)</span>
+                            @else
+                                <span class="ml-2 px-2 py-1 text-xs font-semibold rounded-full bg-green-200 text-green-800">Approved</span>
+                            @endif
+                        </h3>
+                        <div class="text-sm text-gray-700 whitespace-pre-wrap mb-2">{{ $report->hod_remarks }}</div>
+                        @if($report->drc_date)
+                        <div class="text-xs text-gray-600 mt-2">
+                            <strong>DRC Date:</strong> {{ $report->drc_date->format('M d, Y') }}
+                        </div>
+                        @endif
+                        @if($report->hodApprover)
+                        <div class="text-xs text-gray-600 mt-1">
+                            <strong>Approved by:</strong> {{ $report->hodApprover->name }} on {{ $report->hod_approved_at->format('M d, Y H:i') }}
+                        </div>
+                        @endif
+                    </div>
+                    @endif
+
+                    @if($report->supervisor_remarks && $report->supervisor_approved_at)
+                    <div class="mb-6 p-4 {{ $report->supervisor_warning ? 'bg-yellow-50 border-2 border-yellow-300' : 'bg-blue-50' }} rounded-lg">
+                        <h3 class="text-lg font-medium {{ $report->supervisor_warning ? 'text-yellow-900' : 'text-blue-900' }} mb-2">
+                            {{ \App\Helpers\WorkflowHelper::getRoleFullForm('supervisor') }} Remarks
+                            @if($report->supervisor_warning)
+                                <span class="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-yellow-100 text-yellow-800">⚠️ Warning (Unsatisfied)</span>
+                            @endif
+                        </h3>
+                        <div class="text-sm text-gray-700 whitespace-pre-wrap mb-2">{{ $report->supervisor_remarks }}</div>
+                        @if($report->rac_meeting_date)
+                        <div class="text-xs text-gray-600 mt-2">
+                            <strong>RAC Meeting Date:</strong> {{ $report->rac_meeting_date->format('M d, Y') }}
+                        </div>
+                        @endif
+                        @if($report->rac_minutes_file)
+                        <div class="mt-3">
+                            <label class="block text-xs font-medium text-gray-700 mb-1">RAC Minutes File</label>
+                            <a href="{{ Storage::url($report->rac_minutes_file) }}" target="_blank" class="inline-flex items-center px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium rounded-md">
+                                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                </svg>
+                                View RAC Minutes
+                            </a>
+                        </div>
+                        @endif
+                        @if($report->supervisorApprover)
+                        <div class="text-xs text-gray-600 mt-1">
+                            <strong>Approved by:</strong> {{ $report->supervisorApprover->name }} on {{ $report->supervisor_approved_at->format('M d, Y H:i') }}
+                        </div>
+                        @endif
+                    </div>
+                    @endif
+
                     <!-- Approval Form -->
+                    <style>
+                        /* Force button visibility */
+                        button#submitButton {
+                            display: inline-flex !important;
+                            opacity: 1 !important;
+                            visibility: visible !important;
+                            pointer-events: auto !important;
+                        }
+                        button#forwardToSOButton {
+                            display: inline-flex !important;
+                            opacity: 1 !important;
+                            visibility: visible !important;
+                            pointer-events: auto !important;
+                        }
+                        button#rejectButton {
+                            display: none !important;
+                        }
+                        body.reject-mode button#submitButton,
+                        body.reject-mode button#forwardToSOButton {
+                            display: none !important;
+                        }
+                        body.reject-mode button#rejectButton {
+                            display: inline-flex !important;
+                        }
+                    </style>
                     <div class="mt-8 p-6 bg-white border border-gray-200 rounded-lg">
-                        <h3 class="text-lg font-medium text-gray-900 mb-4">DA Remark</h3>
-                        <form method="POST" action="{{ route('da.progress_reports.process', $report) }}">
+                        <h3 class="text-lg font-medium text-gray-900 mb-4">Dealing Assistant Remark</h3>
+                        <form method="POST" action="{{ route('da.progress_reports.process', $report) }}" id="approvalForm">
                             @csrf
                             @method('POST')
 
-                            <!-- Action Selection -->
-                            <div class="mb-4">
-                                <label for="action" class="block text-sm font-medium text-gray-700 mb-2">Remark</label>
-                                <select id="action" name="action" class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500" required>
-                                    <option value="">Select Remark</option>
-                                    <option value="approve" {{ old('action') == 'approve' ? 'selected' : '' }}>Satisfied</option>
-                                    <option value="reject" {{ old('action') == 'reject' ? 'selected' : '' }}>Unsatisfied</option>
-                                </select>
-                                @error('action')
-                                    <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                                @enderror
-                            </div>
+                            <!-- Hidden field for action -->
+                            <input type="hidden" name="action" id="formAction" value="approve">
 
-                            <!-- Remarks -->
-                            <div class="mb-4">
-                                <label for="remarks" class="block text-sm font-medium text-gray-700 mb-2">Remarks</label>
-                                <textarea id="remarks" name="remarks" rows="4" class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500" placeholder="Enter your remarks..." required>{{ old('remarks') }}</textarea>
-                                @error('remarks')
-                                    <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                                @enderror
-                            </div>
+                            <!-- Action Selection for Reject -->
+                            <input type="hidden" name="reject_action" value="Approved">
 
-                            <!-- DA Negative Remarks (Optional) -->
-                            <div class="mb-6">
-                                <label for="da_negative_remarks" class="block text-sm font-medium text-gray-700 mb-2">DA Negative Remarks (Optional)</label>
-                                <textarea id="da_negative_remarks" name="da_negative_remarks" rows="3" class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500" placeholder="Enter negative remarks if any...">{{ old('da_negative_remarks') }}</textarea>
-                                <p class="mt-1 text-sm text-gray-500">If negative remarks are provided, the report will go through the full approval chain.</p>
+                            <!-- Dealing Assistant Negative Remarks (Required when forwarding to SO) -->
+                            <div class="mb-6" id="negative_remarks_section">
+                                <label for="da_negative_remarks" class="block text-sm font-medium text-gray-700 mb-2">Dealing Assistant Remarks</label>
+                                <textarea id="da_negative_remarks" name="da_negative_remarks" rows="3" class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500" placeholder="Enter negative remarks...">{{ old('da_negative_remarks') }}</textarea>
+                                <p class="mt-1 text-sm text-gray-500">Required when forwarding to SO. Leave empty for direct submission.</p>
                                 @error('da_negative_remarks')
                                     <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                                 @enderror
@@ -127,16 +193,90 @@
                                    class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
                                     Cancel
                                 </a>
-                                <button type="submit"
-                                        class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+
+                                <!-- Reject Button (shown when reject is selected) -->
+                                {{-- <button type="button" id="rejectButton" style="display: none;" class="items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
+                                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                    </svg>
+                                    Reject
+                                </button> --}}
+
+                                <!-- Submit Button (direct approval) -->
+                                <button type="button" id="submitButton" style="display: inline-flex !important; visibility: visible !important; opacity: 1 !important;" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-green-500 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
                                     <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                                     </svg>
-                                    Submit Remark
+                                    Viewed
+                                </button>
+
+                                <!-- Forward to SO Button -->
+                                <button type="button" id="forwardToSOButton" style="display: inline-flex !important; visibility: visible !important; opacity: 1 !important;" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path>
+                                    </svg>
+                                    Forward to {{ \App\Helpers\WorkflowHelper::getRoleFullForm('so') }}
                                 </button>
                             </div>
                         </form>
                     </div>
+
+                    <script>
+                        document.addEventListener('DOMContentLoaded', function() {
+                            const rejectAction = document.getElementById('reject_action');
+                            const formAction = document.getElementById('formAction');
+                            const submitButton = document.getElementById('submitButton');
+                            const forwardToSOButton = document.getElementById('forwardToSOButton');
+                            const rejectButton = document.getElementById('rejectButton');
+                            const approvalForm = document.getElementById('approvalForm');
+                            const negativeRemarks = document.getElementById('da_negative_remarks');
+
+
+                            function updateButtons() {
+                                if (rejectAction && rejectAction.value === 'reject') {
+                                    document.body.classList.add('reject-mode');
+                                    if (formAction) formAction.value = 'reject';
+                                } else {
+                                    document.body.classList.remove('reject-mode');
+                                    if (formAction) formAction.value = 'approve';
+                                }
+                            }
+
+                            if (rejectAction) {
+                                rejectAction.addEventListener('change', updateButtons);
+                                updateButtons();
+                            }
+
+                            // Handle Submit button (direct approval)
+                            submitButton.addEventListener('click', function(e) {
+                                e.preventDefault();
+                                if (formAction) formAction.value = 'approve';
+                                if (negativeRemarks) negativeRemarks.value = ''; // Clear negative remarks for direct approval
+                                if (approvalForm) approvalForm.submit();
+                            });
+
+                            // Handle Forward to SO button
+                            forwardToSOButton.addEventListener('click', function(e) {
+                                e.preventDefault();
+                                // if (!negativeRemarks || !negativeRemarks.value.trim()) {
+                                //     alert('Please enter negative remarks before forwarding to {{ \App\Helpers\WorkflowHelper::getRoleFullForm("so") }}.');
+                                //     if (negativeRemarks) negativeRemarks.focus();
+                                //     return;
+                                // }
+                                if (formAction) formAction.value = 'approve'; // Still approve, but with negative remarks
+                                if (approvalForm) approvalForm.submit();
+                            });
+
+                            // Handle Reject button
+                            rejectButton.addEventListener('click', function(e) {
+                                e.preventDefault();
+                                if (confirm('Are you sure you want to reject this progress report?')) {
+                                    if (formAction) formAction.value = 'reject';
+                                    if (approvalForm) approvalForm.submit();
+                                }
+                            });
+                        });
+                    </script>
                 </div>
             </div>
         </div>

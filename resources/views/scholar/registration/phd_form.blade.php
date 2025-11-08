@@ -98,13 +98,13 @@
 
                         <!-- Progress Bar -->
                         <div class="mb-4">
-                            <div class="flex justify-between items-center mb-2">
+                            {{-- <div class="flex justify-between items-center mb-2">
                                 <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Form Completion Progress</span>
                                 <span class="text-sm font-medium text-gray-700 dark:text-gray-300">{{ number_format($scholar->getRegistrationFormProgress(), 0) }}%</span>
-                            </div>
-                            <div class="w-full bg-gray-200 rounded-full h-3 dark:bg-gray-600">
+                            </div> --}}
+                            {{-- <div class="w-full bg-gray-200 rounded-full h-3 dark:bg-gray-600">
                                 <div class="bg-blue-600 h-3 rounded-full transition-all duration-300" style="width: {{ $scholar->getRegistrationFormProgress() }}%"></div>
-                            </div>
+                            </div> --}}
                         </div>
 
                         <!-- Certificate Status -->
@@ -158,6 +158,66 @@
                     <form method="POST" action="{{ route('scholar.registration.phd_form.store') }}" enctype="multipart/form-data" class="space-y-8">
                         @csrf
                         @method('patch')
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 border-t border-gray-200 dark:border-gray-700 pt-4 mt-4">
+                                    <div>
+                                        <x-input-label for="enrollment_type" :value="__('Enrollment Type')" :required="true"/>
+                                        <div class="mt-2 space-y-2">
+                                            <label class="inline-flex items-center">
+                                                <input type="radio" name="enrollment_type" value="preenroll" class="form-radio"
+                                                    {{ old('enrollment_type', $scholar->enrollment_type ?? '') == 'preenroll' ? 'checked' : '' }}
+                                                    onchange="toggleNewEnrollFields()">
+                                                <span class="ml-2">Pre-enroll</span>
+                                            </label>
+                                            <label class="inline-flex items-center">
+                                                <input type="radio" name="enrollment_type" value="new_enroll" class="form-radio"
+                                                    {{ old('enrollment_type', $scholar->enrollment_type ?? '') == 'new_enroll' ? 'checked' : '' }}
+                                                    onchange="toggleNewEnrollFields()">
+                                                <span class="ml-2">New Enroll</span>
+                                            </label>
+                                        </div>
+                                        <x-input-error :messages="$errors->get('enrollment_type')" class="mt-2" />
+                                    </div>
+                                    <div>
+                                        <x-input-label for="enrollment_number" :value="__('Enrollment Number')" :required="true"/>
+                                        <x-text-input id="enrollment_number" name="enrollment_number" type="text" class="mt-1 block w-full"
+                                            :value="old('enrollment_number', $scholar->enrollment_number)" required />
+                                        <x-input-error :messages="$errors->get('enrollment_number')" class="mt-2" />
+                                    </div>
+                                </div>
+                                <div id="new_enroll_fields" class="md:col-span-2 {{ old('enrollment_type', $scholar->enrollment_type ?? '') == 'new_enroll' ? '' : 'hidden' }}">
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 border-t border-gray-200 dark:border-gray-700 pt-4 mt-4">
+                                        <div>
+                                            <x-input-label for="cash_receipt_number" :value="__('Cash Receipt Number')" />
+                                            <x-text-input id="cash_receipt_number" name="cash_receipt_number" type="text" class="mt-1 block w-full"
+                                                :value="old('cash_receipt_number', $scholar->cash_receipt_number)" />
+                                            <x-input-error :messages="$errors->get('cash_receipt_number')" class="mt-2" />
+                                        </div>
+
+                                        <div>
+                                            <x-input-label for="cash_receipt_date" :value="__('Cash Receipt Date')" />
+                                            <x-text-input id="cash_receipt_date" name="cash_receipt_date" type="date" class="mt-1 block w-full"
+                                                :value="old('cash_receipt_date', $scholar->cash_receipt_date ? $scholar->cash_receipt_date->format('Y-m-d') : '')" />
+                                            <x-input-error :messages="$errors->get('cash_receipt_date')" class="mt-2" />
+                                        </div>
+                                    </div>
+                                </div>
+                                <div id="new_enroll_fields" class="md:col-span-2 {{ old('enrollment_type', $scholar->enrollment_type ?? '') == 'new_enroll' ? '' : 'hidden' }}">
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 border-t border-gray-200 dark:border-gray-700 pt-4 mt-4">
+                                        <div>
+                                            <x-input-label for="cash_receipt_number" :value="__('Cash Receipt Number')" />
+                                            <x-text-input id="cash_receipt_number" name="cash_receipt_number" type="text" class="mt-1 block w-full"
+                                                :value="old('cash_receipt_number', $scholar->cash_receipt_number)" />
+                                            <x-input-error :messages="$errors->get('cash_receipt_number')" class="mt-2" />
+                                        </div>
+
+                                        <div>
+                                            <x-input-label for="cash_receipt_date" :value="__('Cash Receipt Date')" />
+                                            <x-text-input id="cash_receipt_date" name="cash_receipt_date" type="date" class="mt-1 block w-full"
+                                                :value="old('cash_receipt_date', $scholar->cash_receipt_date ? $scholar->cash_receipt_date->format('Y-m-d') : '')" />
+                                            <x-input-error :messages="$errors->get('cash_receipt_date')" class="mt-2" />
+                                        </div>
+                                    </div>
+                                </div>
 
                         <!-- Personal Information Section -->
                         <div class="border-b border-gray-200 dark:border-gray-700 pb-8">
@@ -486,55 +546,11 @@
                                         <option value="">Select Faculty</option>
                                         @foreach($faculties as $faculty)
                                             <option value="{{ $faculty->name }}" {{ old('faculty_name', $scholar->phd_faculty) == $faculty->name ? 'selected' : '' }}>
-                                                {{ $faculty->name }}
+                                                {{ $faculty->description }}
                                             </option>
                                         @endforeach
                                     </select>
                                     <x-input-error :messages="$errors->get('faculty_name')" class="mt-2" />
-                                </div>
-
-                                <div>
-                                    <x-input-label for="enrollment_number" :value="__('Enrollment Number')" :required="true"/>
-                                    <x-text-input id="enrollment_number" name="enrollment_number" type="text" class="mt-1 block w-full"
-                                        :value="old('enrollment_number', $scholar->enrollment_number)" required />
-                                    <x-input-error :messages="$errors->get('enrollment_number')" class="mt-2" />
-                                </div>
-
-                                <div>
-                                    <x-input-label for="enrollment_type" :value="__('Enrollment Type')" :required="true"/>
-                                    <div class="mt-2 space-y-2">
-                                        <label class="inline-flex items-center">
-                                            <input type="radio" name="enrollment_type" value="preenroll" class="form-radio"
-                                                {{ old('enrollment_type', $scholar->enrollment_type ?? '') == 'preenroll' ? 'checked' : '' }}
-                                                onchange="toggleNewEnrollFields()">
-                                            <span class="ml-2">Pre-enroll</span>
-                                        </label>
-                                        <label class="inline-flex items-center">
-                                            <input type="radio" name="enrollment_type" value="new_enroll" class="form-radio"
-                                                {{ old('enrollment_type', $scholar->enrollment_type ?? '') == 'new_enroll' ? 'checked' : '' }}
-                                                onchange="toggleNewEnrollFields()">
-                                            <span class="ml-2">New Enroll</span>
-                                        </label>
-                                    </div>
-                                    <x-input-error :messages="$errors->get('enrollment_type')" class="mt-2" />
-                                </div>
-
-                                <div id="new_enroll_fields" class="md:col-span-2 {{ old('enrollment_type', $scholar->enrollment_type ?? '') == 'new_enroll' ? '' : 'hidden' }}">
-                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 border-t border-gray-200 dark:border-gray-700 pt-4 mt-4">
-                                        <div>
-                                            <x-input-label for="cash_receipt_number" :value="__('Cash Receipt Number')" />
-                                            <x-text-input id="cash_receipt_number" name="cash_receipt_number" type="text" class="mt-1 block w-full"
-                                                :value="old('cash_receipt_number', $scholar->cash_receipt_number)" />
-                                            <x-input-error :messages="$errors->get('cash_receipt_number')" class="mt-2" />
-                                        </div>
-
-                                        <div>
-                                            <x-input-label for="cash_receipt_date" :value="__('Cash Receipt Date')" />
-                                            <x-text-input id="cash_receipt_date" name="cash_receipt_date" type="date" class="mt-1 block w-full"
-                                                :value="old('cash_receipt_date', $scholar->cash_receipt_date ? $scholar->cash_receipt_date->format('Y-m-d') : '')" />
-                                            <x-input-error :messages="$errors->get('cash_receipt_date')" class="mt-2" />
-                                        </div>
-                                    </div>
                                 </div>
 
                                 <div>
@@ -562,7 +578,7 @@
                                 </div>
 
                                 <div>
-                                    <x-input-label for="letter_number" :value="__('Letter Number')" :required="true"/>
+                                    <x-input-label for="letter_number" :value="__('Letter Number Recognition of Supervisor')" :required="true"/>
                                     <x-text-input id="letter_number" name="letter_number" type="text" class="mt-1 block w-full"
                                         :value="old('letter_number', $scholar->letter_number)" required />
                                     <x-input-error :messages="$errors->get('letter_number')" class="mt-2" />

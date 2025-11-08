@@ -57,7 +57,7 @@ class SOController extends Controller
                 'so_remarks' => $request->remarks,
             ]);
 
-            $message = 'Request approved and forwarded to Assistant Registrar.';
+            $message = 'Request approved and forwarded to ' . \App\Helpers\WorkflowHelper::getRoleFullForm('ar') . '.';
         } else {
             $capacityRequest->update([
                 'status' => 'rejected',
@@ -136,7 +136,7 @@ class SOController extends Controller
 
             // Sync workflow
             $workflowSyncService->syncSynopsisWorkflow($synopsis, 'so_approve', Auth::user());
-            $message = 'Synopsis approved and forwarded to Assistant Registrar.';
+            $message = 'Synopsis approved and forwarded to ' . \App\Helpers\WorkflowHelper::getRoleFullForm('ar') . '.';
         } else {
             $synopsis->update([
                 'so_remarks' => $request->remarks,
@@ -148,12 +148,7 @@ class SOController extends Controller
             $workflowSyncService->syncSynopsisWorkflow($synopsis, 'so_reject', Auth::user(), $reassignedRole);
 
             if ($reassignedRole) {
-                $roleLabels = [
-                    'supervisor' => 'Supervisor',
-                    'hod' => 'HOD',
-                    'da' => 'DA',
-                ];
-                $message = 'Synopsis rejected and reassigned to ' . ($roleLabels[$reassignedRole] ?? $reassignedRole) . ' for corrections.';
+                $message = 'Synopsis rejected and reassigned to ' . \App\Helpers\WorkflowHelper::getRoleFullForm($reassignedRole) . ' for corrections.';
             } else {
                 $message = 'Synopsis rejected.';
             }
@@ -185,6 +180,74 @@ class SOController extends Controller
             ->get();
 
         return view('so.progress_reports.all', compact('reports'));
+    }
+
+    /**
+     * Show progress report approval form
+     */
+    public function showProgressReportApprovalForm(\App\Models\ProgressReport $report)
+    {
+        if ($report->status !== 'pending_so_approval') {
+            abort(403, 'This progress report is not pending SO approval.');
+        }
+
+        $report->load(['scholar.user', 'supervisor.user', 'supervisorApprover', 'hodApprover', 'daApprover']);
+
+        return view('so.progress_reports.approve', compact('report'));
+    }
+
+    /**
+     * Process progress report approval/rejection
+     */
+    public function processProgressReportApproval(Request $request, \App\Models\ProgressReport $report)
+    {
+        if ($report->status !== 'pending_so_approval') {
+            abort(403, 'This progress report is not pending SO approval.');
+        }
+
+        $request->validate([
+            'action' => 'required|in:approve,reject',
+            'remarks' => 'required|string|max:500',
+            'reassigned_to_role' => 'nullable|string|in:supervisor,hod,da,so',
+            'reassignment_reason' => 'nullable|string|max:1000',
+        ]);
+
+        if ($request->action === 'approve') {
+            $report->update([
+                'status' => 'pending_ar_approval',
+                'so_approver_id' => Auth::id(),
+                'so_approved_at' => now(),
+                'so_remarks' => $request->remarks,
+            ]);
+
+            $message = 'Progress report approved and forwarded to ' . \App\Helpers\WorkflowHelper::getRoleFullForm('ar') . '.';
+        } else {
+            if ($request->reassigned_to_role) {
+                $report->update([
+                    'status' => 'pending_' . $request->reassigned_to_role . '_approval',
+                    'so_approver_id' => Auth::id(),
+                    'so_approved_at' => now(),
+                    'so_remarks' => $request->remarks,
+                    'reassigned_to_role' => $request->reassigned_to_role,
+                    'reassignment_reason' => $request->reassignment_reason,
+                ]);
+                $message = 'Progress report rejected and reassigned to ' . \App\Helpers\WorkflowHelper::getRoleFullForm($request->reassigned_to_role) . ' for corrections.';
+            } else {
+                $report->update([
+                    'status' => 'rejected',
+                    'so_approver_id' => Auth::id(),
+                    'so_approved_at' => now(),
+                    'so_remarks' => $request->remarks,
+                    'rejected_by' => Auth::id(),
+                    'rejected_at' => now(),
+                    'rejection_reason' => $request->remarks,
+                    'rejection_count' => $report->rejection_count + 1,
+                ]);
+                $message = 'Progress report rejected by ' . \App\Helpers\WorkflowHelper::getRoleFullForm('so') . '.';
+            }
+        }
+
+        return redirect()->route('so.progress_reports.pending')->with('success', $message);
     }
 
     /**

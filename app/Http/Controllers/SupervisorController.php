@@ -10,6 +10,7 @@ use App\Models\Supervisor;
 use App\Models\SupervisorAssignment;
 use App\Models\Synopsis;
 use App\Models\ThesisEvaluation;
+use App\Models\PrePhdVivaRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Notifications\SynopsisRejected;
@@ -508,35 +509,44 @@ class SupervisorController extends Controller
         $request->validate([
             'action' => 'required|in:approve,reject',
             'remarks' => 'required|string|max:500',
-            'rac_minutes_file' => 'required|file|mimes:pdf,doc,docx|max:5120',
-            'rac_meeting_date' => 'required|date',
+            'rac_minutes_file' => 'required_if:action,approve|nullable|file|mimes:pdf,doc,docx|max:5120',
+            'rac_meeting_date' => 'required_if:action,approve|nullable|date',
         ]);
 
         \Illuminate\Support\Facades\Log::info('Action: ' . $request->action);
         \Illuminate\Support\Facades\Log::info('Remarks: ' . $request->remarks);
 
-        // Upload RAC minutes file
-        $racMinutesPath = $request->file('rac_minutes_file')->store('rac_minutes', 'public');
+        // Upload RAC minutes file if provided
+        $racMinutesPath = null;
+        if ($request->hasFile('rac_minutes_file')) {
+            $racMinutesPath = $request->file('rac_minutes_file')->store('rac_minutes', 'public');
+        }
 
         $updateData = [
             'supervisor_approver_id' => Auth::id(),
             'supervisor_approved_at' => now(),
             'supervisor_remarks' => $request->remarks,
-            'rac_minutes_file' => $racMinutesPath,
-            'rac_meeting_date' => $request->rac_meeting_date,
         ];
+
+        // Add RAC minutes data if provided or if approving
+        if ($racMinutesPath) {
+            $updateData['rac_minutes_file'] = $racMinutesPath;
+        }
+        if ($request->rac_meeting_date) {
+            $updateData['rac_meeting_date'] = $request->rac_meeting_date;
+        }
 
         if ($request->action === 'approve') {
             $updateData['status'] = 'pending_hod_approval';
-            $message = 'Progress report approved and forwarded to HOD.';
+            $updateData['supervisor_warning'] = false;
+            $message = 'Progress report approved and forwarded to ' . \App\Helpers\WorkflowHelper::getRoleFullForm('hod') . '.';
             \Illuminate\Support\Facades\Log::info('Progress report approved successfully');
         } else {
-            $updateData['status'] = 'rejected';
-            $updateData['rejected_by'] = Auth::id();
-            $updateData['rejected_at'] = now();
-            $updateData['rejection_reason'] = $request->remarks;
-            $message = 'Progress report rejected.';
-            \Illuminate\Support\Facades\Log::info('Progress report rejected');
+            // Mark as unsatisfied but forward to HOD with warning
+            $updateData['status'] = 'pending_hod_approval';
+            $updateData['supervisor_warning'] = true;
+            $message = 'Progress report marked as unsatisfied and forwarded to ' . \App\Helpers\WorkflowHelper::getRoleFullForm('hod') . ' with warning.';
+            \Illuminate\Support\Facades\Log::info('Progress report marked as unsatisfied (forwarded with warning)');
         }
 
         $progressReport->update($updateData);
@@ -598,7 +608,7 @@ class SupervisorController extends Controller
 
         if ($request->action === 'approve') {
             $updateData['status'] = 'pending_hod_approval';
-            $message = 'Thesis approved and forwarded to HOD.';
+            $message = 'Thesis approved and forwarded to ' . \App\Helpers\WorkflowHelper::getRoleFullForm('hod') . '.';
         } else {
             $updateData['status'] = 'rejected_by_supervisor';
             $updateData['rejected_by'] = Auth::id();
@@ -970,7 +980,6 @@ class SupervisorController extends Controller
         if (in_array($currentMonth, $allowedMonths)) {
             $existingReport = \App\Models\ProgressReport::where('scholar_id', $scholar->id)
                 ->where('report_period', $currentMonthName)
-                ->where('status', '!=', 'rejected')
                 ->first();
 
             if (!$existingReport) {
@@ -983,7 +992,6 @@ class SupervisorController extends Controller
         if (!$canSubmit && in_array($nextMonth, $allowedMonths)) {
             $existingReport = \App\Models\ProgressReport::where('scholar_id', $scholar->id)
                 ->where('report_period', $nextMonthName)
-                ->where('status', '!=', 'rejected')
                 ->first();
 
             if (!$existingReport) {
@@ -1097,5 +1105,131 @@ class SupervisorController extends Controller
 
         return redirect()->route('staff.scholars.show', $scholar)
             ->with('success', $message);
+    }
+
+    /**
+     * List pending Pre-PhD Viva requests
+     */
+    public function listPendingPrePhdVivaRequests()
+    {
+        $supervisor = $this->getSupervisor();
+
+        $requests = PrePhdVivaRequest::where('supervisor_id', $supervisor->id)
+            ->where('status', 'pending_rac_approval')
+            ->with(['scholar.user', 'supervisor.user'])
+            ->latest()
+            ->get();
+
+        return view('supervisor.pre_phd_viva.pending', compact('requests'));
+    }
+
+    /**
+     * Show Pre-PhD Viva approval form
+     */
+    public function showPrePhdVivaApprovalForm(PrePhdVivaRequest $prePhdVivaRequest)
+    {
+        $supervisor = $this->getSupervisor();
+
+        // Check if the request's supervisor_id matches the logged-in supervisor's ID
+        if ($prePhdVivaRequest->supervisor_id !== $supervisor->id) {
+            abort(403, 'Unauthorized action. This Pre-PhD Viva request does not belong to you.');
+        }
+
+        if ($prePhdVivaRequest->status !== 'pending_rac_approval') {
+            abort(403, 'This Pre-PhD Viva request is not pending approval.');
+        }
+
+        $prePhdVivaRequest->load(['scholar.user', 'supervisor.user']);
+
+        return view('supervisor.pre_phd_viva.approve', compact('prePhdVivaRequest'));
+    }
+
+    /**
+     * Process Pre-PhD Viva approval
+     */
+    public function processPrePhdVivaApproval(Request $request, PrePhdVivaRequest $prePhdVivaRequest)
+    {
+        $supervisor = $this->getSupervisor();
+
+        // Check if the request's supervisor_id matches the logged-in supervisor's ID
+        if ($prePhdVivaRequest->supervisor_id !== $supervisor->id) {
+            abort(403, 'Unauthorized action. This Pre-PhD Viva request does not belong to you.');
+        }
+
+        if ($prePhdVivaRequest->status !== 'pending_rac_approval') {
+            abort(403, 'This Pre-PhD Viva request is not pending approval.');
+        }
+
+        $request->validate([
+            'action' => 'required|in:approve,reject',
+            'rac_remarks' => 'required|string|max:1000',
+            'viva_date' => 'required_if:action,approve|nullable|date|after:' . now()->addMonth()->format('Y-m-d'),
+            'rac_minutes_file' => 'required_if:action,approve|nullable|file|mimes:pdf,doc,docx|max:5120',
+        ], [
+            'viva_date.after' => 'Viva date must be at least 1 month from today.',
+            'viva_date.required_if' => 'Viva date is required when approving.',
+            'rac_minutes_file.required_if' => 'RAC minutes file is required when approving.',
+            'rac_minutes_file.mimes' => 'RAC minutes file must be a PDF, DOC, or DOCX file.',
+            'rac_minutes_file.max' => 'RAC minutes file must not exceed 5MB.',
+        ]);
+
+        if ($request->action === 'approve') {
+            $vivaDate = \Carbon\Carbon::parse($request->viva_date);
+            $thesisDeadline = $vivaDate->copy()->addMonths(6);
+
+            // Upload RAC minutes file
+            $racMinutesPath = null;
+            if ($request->hasFile('rac_minutes_file')) {
+                $racMinutesPath = $request->file('rac_minutes_file')->store('pre_phd_viva_rac_minutes', 'public');
+            }
+
+            $updateData = [
+                'status' => 'approved',
+                'viva_date' => $vivaDate,
+                'thesis_submission_deadline' => $thesisDeadline,
+                'rac_approver_id' => Auth::id(),
+                'rac_approved_at' => now(),
+                'rac_remarks' => $request->rac_remarks,
+            ];
+
+            if ($racMinutesPath) {
+                $updateData['rac_minutes_file'] = $racMinutesPath;
+            }
+
+            $prePhdVivaRequest->update($updateData);
+
+            $message = 'Pre-PhD Viva request approved. Viva date set to ' . $vivaDate->format('d/m/Y') . '. Thesis submission deadline: ' . $thesisDeadline->format('d/m/Y') . '.';
+        } else {
+            $prePhdVivaRequest->update([
+                'status' => 'rejected',
+                'rac_approver_id' => Auth::id(),
+                'rac_approved_at' => now(),
+                'rac_remarks' => $request->rac_remarks,
+            ]);
+
+            $message = 'Pre-PhD Viva request rejected.';
+        }
+
+        return redirect()->route('staff.pre_phd_viva.pending')->with('success', $message);
+    }
+
+    /**
+     * List upcoming Pre-PhD Viva dates (today and future)
+     */
+    public function listUpcomingVivaDates()
+    {
+        $supervisor = $this->getSupervisor();
+
+        $today = now()->startOfDay();
+
+        $upcomingVivas = PrePhdVivaRequest::where('supervisor_id', $supervisor->id)
+            ->where('status', 'approved')
+            ->whereNotNull('viva_date')
+            ->where('viva_date', '>=', $today)
+            ->with(['scholar.user', 'supervisor.user'])
+            ->orderBy('viva_date', 'asc')
+            ->get();
+
+        return view('supervisor.pre_phd_viva.upcoming', compact('upcomingVivas'));
     }
 }

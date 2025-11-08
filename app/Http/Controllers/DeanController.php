@@ -48,7 +48,7 @@ class DeanController extends Controller
                 'dean_remarks' => $request->remarks,
             ]);
 
-            $message = 'Coursework exemption approved and forwarded to Dean\'s Assistant.';
+            $message = 'Coursework exemption approved and forwarded to ' . \App\Helpers\WorkflowHelper::getRoleFullForm('da') . '.';
         } else {
             $courseworkExemption->update([
                 'status' => 'rejected_by_dean',
@@ -145,7 +145,7 @@ class DeanController extends Controller
                 'dean_remarks' => $request->remarks,
             ]);
 
-            $message = 'Late submission request approved and forwarded to Dean\'s Assistant.';
+            $message = 'Late submission request approved and forwarded to ' . \App\Helpers\WorkflowHelper::getRoleFullForm('da') . '.';
         } else {
             $lateSubmissionRequest->update([
                 'status' => 'rejected_by_dean',

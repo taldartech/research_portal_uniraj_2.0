@@ -14,6 +14,7 @@ use App\Models\Scholar;
 use App\Models\Synopsis;
 use App\Models\RACCommitteeSubmission;
 use App\Models\CourseworkResult;
+use App\Models\PrePhdVivaRequest;
 use Illuminate\Support\Facades\Auth;
 use Maatwebsite\Excel\Facades\Excel;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
@@ -620,7 +621,7 @@ class HODController extends Controller
 
             // Sync workflow
             $workflowSyncService->syncSynopsisWorkflow($synopsis, 'hod_approve', Auth::user());
-            $message = 'Synopsis approved and forwarded to DA.';
+            $message = 'Synopsis approved and forwarded to ' . \App\Helpers\WorkflowHelper::getRoleFullForm('da') . '.';
         } else {
             $synopsis->update([
                 'hod_remarks' => $request->remarks,
@@ -633,12 +634,9 @@ class HODController extends Controller
             $workflowSyncService->syncSynopsisWorkflow($synopsis, 'hod_reject', Auth::user(), $reassignedRole);
 
             if ($reassignedRole) {
-                $roleLabels = [
-                    'supervisor' => 'Supervisor',
-                ];
-                $message = 'Synopsis rejected and reassigned to ' . ($roleLabels[$reassignedRole] ?? $reassignedRole) . ' for corrections.';
+                $message = 'Synopsis rejected and reassigned to ' . \App\Helpers\WorkflowHelper::getRoleFullForm($reassignedRole) . ' for corrections.';
             } else {
-                $message = 'Synopsis rejected by HOD.';
+                $message = 'Synopsis rejected by ' . \App\Helpers\WorkflowHelper::getRoleFullForm('hod') . '.';
             }
         }
 
@@ -703,30 +701,32 @@ class HODController extends Controller
         $request->validate([
             'action' => 'required|in:approve,reject',
             'remarks' => 'required|string|max:500',
+            'drc_date' => 'required|date',
         ]);
 
         if ($request->action === 'approve') {
             $progressReport->update([
                 'status' => 'pending_da_approval',
-                'da_approver_id' => Auth::id(),
-                'da_approved_at' => now(),
-                'da_remarks' => $request->remarks,
+                'hod_approver_id' => Auth::id(),
+                'hod_approved_at' => now(),
+                'hod_remarks' => $request->remarks,
+                'hod_warning' => false,
+                'drc_date' => $request->drc_date,
             ]);
 
-            $message = 'Progress report approved and forwarded to DA.';
+            $message = 'Progress report approved and forwarded to ' . \App\Helpers\WorkflowHelper::getRoleFullForm('da') . '.';
         } else {
+            // When HOD marks as unsatisfied, forward to DA with warning (not rejection)
             $progressReport->update([
-                'status' => 'rejected',
-                'da_approver_id' => Auth::id(),
-                'da_approved_at' => now(),
-                'da_remarks' => $request->remarks,
-                'rejected_by' => Auth::id(),
-                'rejected_at' => now(),
-                'rejection_reason' => $request->remarks,
-                'rejection_count' => $progressReport->rejection_count + 1,
+                'status' => 'pending_da_approval',
+                'hod_approver_id' => Auth::id(),
+                'hod_approved_at' => now(),
+                'hod_remarks' => $request->remarks,
+                'hod_warning' => true,
+                'drc_date' => $request->drc_date,
             ]);
 
-            $message = 'Progress report rejected by HOD.';
+            $message = 'Progress report marked as unsatisfied by ' . \App\Helpers\WorkflowHelper::getRoleFullForm('hod') . ' and forwarded to ' . \App\Helpers\WorkflowHelper::getRoleFullForm('da') . ' with warning.';
         }
 
         return redirect()->route('hod.progress_reports.pending')->with('success', $message);
@@ -800,7 +800,7 @@ class HODController extends Controller
                 'hod_remarks' => $request->remarks,
             ]);
 
-            $message = 'Thesis approved and forwarded to DA.';
+            $message = 'Thesis approved and forwarded to ' . \App\Helpers\WorkflowHelper::getRoleFullForm('da') . '.';
         } else {
             $thesis->update([
                 'status' => 'rejected_by_hod',
@@ -813,7 +813,7 @@ class HODController extends Controller
                 'rejection_count' => $thesis->rejection_count + 1,
             ]);
 
-            $message = 'Thesis rejected by HOD.';
+            $message = 'Thesis rejected by ' . \App\Helpers\WorkflowHelper::getRoleFullForm('hod') . '.';
         }
 
         return redirect()->route('hod.thesis.pending')->with('success', $message);
@@ -907,7 +907,7 @@ class HODController extends Controller
 
         // Check if thesis is approved and ready for viva
         if ($thesis->status !== 'approved_by_da') {
-            return redirect()->back()->with('error', 'Thesis must be approved by DA before scheduling viva.');
+            return redirect()->back()->with('error', 'Thesis must be approved by ' . \App\Helpers\WorkflowHelper::getRoleFullForm('da') . ' before scheduling viva.');
         }
 
         // Get potential examiners from the same department
@@ -930,7 +930,7 @@ class HODController extends Controller
 
         // Check if thesis is approved and ready for viva
         if ($thesis->status !== 'approved_by_da') {
-            return redirect()->back()->with('error', 'Thesis must be approved by DA before scheduling viva.');
+            return redirect()->back()->with('error', 'Thesis must be approved by ' . \App\Helpers\WorkflowHelper::getRoleFullForm('da') . ' before scheduling viva.');
         }
 
         $request->validate([
@@ -1491,5 +1491,31 @@ class HODController extends Controller
             ->get();
 
         return view('hod.coursework.view', compact('scholar', 'courseworkResults'));
+    }
+
+    /**
+     * List upcoming Pre-PhD Viva dates (today and future) for scholars in HOD's department
+     */
+    public function listUpcomingVivaDates()
+    {
+        $hodDepartment = auth()->user()->departmentManaging;
+
+        if (!$hodDepartment) {
+            abort(403, 'You are not assigned as HOD to any department.');
+        }
+
+        $today = now()->startOfDay();
+        
+        $upcomingVivas = PrePhdVivaRequest::whereHas('scholar.admission', function ($query) use ($hodDepartment) {
+                $query->where('department_id', $hodDepartment->id);
+            })
+            ->where('status', 'approved')
+            ->whereNotNull('viva_date')
+            ->where('viva_date', '>=', $today)
+            ->with(['scholar.user', 'scholar.admission.department', 'supervisor.user'])
+            ->orderBy('viva_date', 'asc')
+            ->get();
+
+        return view('hod.pre_phd_viva.upcoming', compact('upcomingVivas'));
     }
 }

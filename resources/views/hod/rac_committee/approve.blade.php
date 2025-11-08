@@ -52,17 +52,17 @@
                         <h3 class="text-lg font-semibold text-gray-900 mb-4">RAC Committee Members</h3>
                         <div class="space-y-3">
                             <div class="border-l-4 border-indigo-500 pl-4 py-2 bg-gray-50 rounded-r">
-                                <p class="text-sm font-semibold text-gray-900">1. Supervisor</p>
-                                <p class="text-sm text-gray-700">{{ $racCommitteeSubmission->supervisor->user->name }}</p>
+                                <p class="text-sm font-semibold text-gray-900">1. Member 1</p>
+                                <p class="text-sm text-gray-700">{{ $racCommitteeSubmission->supervisor->user->name }} <b>(Convener)</b></p>
                                 <p class="text-xs text-gray-500">{{ $racCommitteeSubmission->supervisor->designation ?? 'N/A' }}, {{ $racCommitteeSubmission->supervisor->department->name ?? 'N/A' }}</p>
                             </div>
                             <div class="border-l-4 border-indigo-500 pl-4 py-2 bg-gray-50 rounded-r">
-                                <p class="text-sm font-semibold text-gray-900">2. Member 1</p>
+                                <p class="text-sm font-semibold text-gray-900">2. Member 2</p>
                                 <p class="text-sm text-gray-700">{{ $racCommitteeSubmission->member1_name }}</p>
                                 <p class="text-xs text-gray-500">{{ $racCommitteeSubmission->member1_designation ?? 'N/A' }}, {{ $racCommitteeSubmission->member1_department ?? 'N/A' }}</p>
                             </div>
                             <div class="border-l-4 border-indigo-500 pl-4 py-2 bg-gray-50 rounded-r">
-                                <p class="text-sm font-semibold text-gray-900">3. Member 2</p>
+                                <p class="text-sm font-semibold text-gray-900">3. Member 3</p>
                                 <p class="text-sm text-gray-700">{{ $racCommitteeSubmission->member2_name }}</p>
                                 <p class="text-xs text-gray-500">{{ $racCommitteeSubmission->member2_designation ?? 'N/A' }}, {{ $racCommitteeSubmission->member2_department ?? 'N/A' }}</p>
                             </div>
@@ -84,7 +84,7 @@
                                 <select id="action" name="action" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500" required>
                                     <option value="">Select Decision</option>
                                     <option value="approve">Approved</option>
-                                    <option value="reject">Not - Approved</option>
+                                    <option value="reject">Not Approved</option>
                                 </select>
                                 <x-input-error :messages="$errors->get('action')" class="mt-2" />
                             </div>

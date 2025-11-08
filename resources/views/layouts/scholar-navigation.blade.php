@@ -37,7 +37,7 @@
                         </x-nav-link>
                     @endif
 
-                    @if(Auth::user()->scholar && Auth::user()->scholar->hasAssignedSupervisor())
+                    @if(Auth::user()->scholar && Auth::user()->scholar->canSubmitThesis())
                         {{-- <x-nav-link :href="route('scholar.supervisor.preference')" :active="request()->routeIs('scholar.supervisor.preference')">
                             {{ __('Supervisor Preference') }}
                         </x-nav-link> --}}
@@ -45,6 +45,7 @@
                             {{ __('Submit Progress Report') }}
                         </x-nav-link>
                         <!-- Thesis Dropdown -->
+                        @if(Auth::user()->scholar && Auth::user()->scholar->progressReports()->count() >= 5)
                         <div class="relative" x-data="{ open: false }">
                             <button @click="open = !open" class="inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-sm font-medium leading-5 text-gray-500 hover:text-gray-700 hover:border-gray-300 focus:outline-none focus:text-gray-700 focus:border-gray-300 transition duration-150 ease-in-out">
                                 {{ __('Thesis') }}
@@ -53,13 +54,17 @@
                                 </svg>
                             </button>
                             <div x-show="open" @click.away="open = false" class="absolute left-0 mt-2 w-56 bg-white rounded-md shadow-lg py-1 nav-dropdown">
-                                <a href="{{ route('scholar.thesis.eligibility') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Thesis Eligibility</a>
-                                <a href="{{ route('scholar.thesis.submit') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Submit Thesis</a>
-                                <a href="{{ route('scholar.thesis.submission_form') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Thesis Submission Form</a>
-                                <a href="{{ route('scholar.thesis.submissions.status') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Thesis Certificates</a>
-                                <a href="{{ route('scholar.thesis.status') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Thesis Status</a>
+                                <a href="{{ route('scholar.pre_phd_viva.request') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Pre-PhD Viva Request</a>
+                                <a href="{{ route('scholar.pre_phd_viva.status') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Pre-PhD Viva Status</a>
+                                @if(Auth::user()->scholar && !Auth::user()->scholar->activePrePhdVivaRequest())
+                                    <a href="{{ route('scholar.thesis.eligibility') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Thesis Eligibility</a>
+                                    <a href="{{ route('scholar.thesis.submit') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Submit Thesis</a>
+                                    <a href="{{ route('scholar.thesis.submissions.status') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Thesis Certificates</a>
+                                    <a href="{{ route('scholar.thesis.status') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Thesis Status</a>
+                                @endif
                             </div>
                         </div>
+                        @endif
                         <x-nav-link :href="route('scholar.registration_form.status')" :active="request()->routeIs('scholar.registration_form.status')">
                             {{ __('Registration Form') }}
                         </x-nav-link>
@@ -142,6 +147,12 @@
             @if(Auth::user()->scholar && Auth::user()->scholar->hasAssignedSupervisor())
                 <x-responsive-nav-link :href="route('scholar.progress_report.submit')" :active="request()->routeIs('scholar.progress_report.submit')">
                     {{ __('Submit Progress Report') }}
+                </x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('scholar.pre_phd_viva.request')" :active="request()->routeIs('scholar.pre_phd_viva.*')">
+                    {{ __('Pre-PhD Viva Request') }}
+                </x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('scholar.pre_phd_viva.status')" :active="request()->routeIs('scholar.pre_phd_viva.status')">
+                    {{ __('Pre-PhD Viva Status') }}
                 </x-responsive-nav-link>
                 <x-responsive-nav-link :href="route('scholar.thesis.eligibility')" :active="request()->routeIs('scholar.thesis.eligibility')">
                     {{ __('Thesis Eligibility') }}

@@ -81,6 +81,60 @@
                         </div>
                     </div>
 
+                    <!-- Pre-PhD Viva Status -->
+                    @if(isset($eligibilityCheck['pre_phd_viva_status']))
+                    <div class="mt-6 mb-6">
+                        <h4 class="text-md font-semibold text-gray-900 dark:text-gray-100 mb-3">Pre-PhD Viva Status</h4>
+                        @if($eligibilityCheck['pre_phd_viva_status'] === 'no_request')
+                        <div class="bg-red-50 dark:bg-red-900 border border-red-200 dark:border-red-700 rounded-lg p-4">
+                            <p class="text-red-700 dark:text-red-300 mb-3">{{ $eligibilityCheck['reason'] }}</p>
+                            <a href="{{ route('scholar.pre_phd_viva.request') }}" class="inline-flex items-center px-4 py-2 bg-red-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-red-700">
+                                Submit Pre-PhD Viva Request
+                            </a>
+                        </div>
+                        @elseif($eligibilityCheck['pre_phd_viva_status'] === 'pending')
+                        <div class="bg-yellow-50 dark:bg-yellow-900 border border-yellow-200 dark:border-yellow-700 rounded-lg p-4">
+                            <p class="text-yellow-700 dark:text-yellow-300">{{ $eligibilityCheck['reason'] }}</p>
+                            <a href="{{ route('scholar.pre_phd_viva.status') }}" class="inline-flex items-center px-4 py-2 bg-yellow-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-yellow-700 mt-3">
+                                View Request Status
+                            </a>
+                        </div>
+                        @elseif($eligibilityCheck['pre_phd_viva_status'] === 'rejected' || $eligibilityCheck['pre_phd_viva_status'] === 'expired')
+                        <div class="bg-red-50 dark:bg-red-900 border border-red-200 dark:border-red-700 rounded-lg p-4">
+                            <p class="text-red-700 dark:text-red-300 mb-3">{{ $eligibilityCheck['reason'] }}</p>
+                            <a href="{{ route('scholar.pre_phd_viva.request') }}" class="inline-flex items-center px-4 py-2 bg-red-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-red-700">
+                                Submit New Request
+                            </a>
+                        </div>
+                        @elseif($eligibilityCheck['pre_phd_viva_status'] === 'before_viva')
+                        <div class="bg-blue-50 dark:bg-blue-900 border border-blue-200 dark:border-blue-700 rounded-lg p-4">
+                            <p class="text-blue-700 dark:text-blue-300 mb-2">{{ $eligibilityCheck['reason'] }}</p>
+                            @if(isset($eligibilityCheck['viva_date']))
+                            <p class="text-sm text-blue-600 dark:text-blue-400">Viva Date: <strong>{{ $eligibilityCheck['viva_date']->format('d/m/Y') }}</strong></p>
+                            @endif
+                        </div>
+                        @elseif($eligibilityCheck['pre_phd_viva_status'] === 'approved')
+                        <div class="bg-green-50 dark:bg-green-900 border border-green-200 dark:border-green-700 rounded-lg p-4">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">
+                                @if(isset($eligibilityCheck['viva_date']))
+                                <div>
+                                    <p class="text-sm font-medium text-green-800 dark:text-green-200">Pre-PhD Viva Date:</p>
+                                    <p class="text-lg font-semibold text-green-900 dark:text-green-100">{{ $eligibilityCheck['viva_date']->format('d/m/Y') }}</p>
+                                </div>
+                                @endif
+                                @if(isset($eligibilityCheck['deadline']))
+                                <div>
+                                    <p class="text-sm font-medium text-green-800 dark:text-green-200">Thesis Submission Deadline:</p>
+                                    <p class="text-lg font-semibold text-green-900 dark:text-green-100">{{ $eligibilityCheck['deadline']->format('d/m/Y') }}</p>
+                                </div>
+                                @endif
+                            </div>
+                            <p class="text-sm text-green-700 dark:text-green-300">{{ $eligibilityCheck['reason'] }}</p>
+                        </div>
+                        @endif
+                    </div>
+                    @endif
+
                     <!-- Actions -->
                     <div class="mt-6 flex items-center justify-between">
                         <div>

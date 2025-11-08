@@ -51,19 +51,24 @@
                                     }
                                 @endphp
 
-                                @foreach(range(1, $supervisors->count()) as $preferenceOrder)
+                                @foreach(range(1, $supervisors->count()) as $key => $preferenceOrder)
                                     <div class="mb-6 p-4 border rounded-lg">
                                         <h4 class="text-lg font-medium text-gray-900 mb-4">{{ ordinal($preferenceOrder) }} Preference</h4>
                                         <div class="mb-4">
                                             <x-input-label for="supervisor_{{ $preferenceOrder }}_id" :value="__('Supervisor')" />
-                                            <x-select-input id="supervisor_{{ $preferenceOrder }}_id" name="supervisor_{{ $preferenceOrder }}_id" class="block mt-1 w-full supervisor-select" required data-preference="{{ $preferenceOrder }}">
+                                            <select
+                                                id="supervisor_{{ $preferenceOrder }}_id"
+                                                name="supervisor_{{ $preferenceOrder }}_id"
+                                                class="block mt-1 w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 dark:focus:border-indigo-600 focus:ring-indigo-500 dark:focus:ring-indigo-600 rounded-md shadow-sm supervisor-select"
+                                                @if($key == 0) required @endif
+                                                data-preference="{{ $preferenceOrder }}">
                                                 <option value="">Select a Supervisor</option>
                                                 @foreach($supervisors as $supervisor)
                                                     <option value="{{ $supervisor->id }}" {{ old("supervisor_{$preferenceOrder}_id") == $supervisor->id ? 'selected' : '' }}>
                                                         {{ $supervisor->user->name }} - {{ $supervisor->research_specialization }}
                                                     </option>
                                                 @endforeach
-                                            </x-select-input>
+                                            </select>
                                             <x-input-error :messages="$errors->get("supervisor_{$preferenceOrder}_id")" class="mt-2" />
                                         </div>
                                     </div>

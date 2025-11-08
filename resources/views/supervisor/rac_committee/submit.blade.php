@@ -43,9 +43,9 @@
                                 </p>
                                 <p class="text-sm text-gray-700 mt-1">
                                     <strong>Current Members:</strong><br>
-                                    1. Supervisor: {{ $existingSubmission->supervisor->user->name }} ({{ $existingSubmission->supervisor->designation ?? 'N/A' }}, {{ $existingSubmission->supervisor->department->name ?? 'N/A' }})<br>
-                                    2. Member 1: {{ $existingSubmission->member1_name }} ({{ $existingSubmission->member1_designation ?? 'N/A' }}, {{ $existingSubmission->member1_department ?? 'N/A' }})<br>
-                                    3. Member 2: {{ $existingSubmission->member2_name }} ({{ $existingSubmission->member2_designation ?? 'N/A' }}, {{ $existingSubmission->member2_department ?? 'N/A' }})
+                                    1. Member 1: {{ $existingSubmission->supervisor->user->name }}, {{ $existingSubmission->supervisor->designation ?? 'N/A' }}, {{ $existingSubmission->supervisor->department->name ?? 'N/A' }} <b>(Convener)</b><br>
+                                    2. Member 2: {{ $existingSubmission->member1_name }}, {{ $existingSubmission->member1_designation ?? 'N/A' }}, {{ $existingSubmission->member1_department ?? 'N/A' }}<br>
+                                    3. Member 3: {{ $existingSubmission->member2_name }}, {{ $existingSubmission->member2_designation ?? 'N/A' }}, {{ $existingSubmission->member2_department ?? 'N/A' }}
                                 </p>
                                 <p class="text-sm text-gray-700 mt-1">
                                     <strong>DRC Date:</strong> {{ $existingSubmission->drc_date ? $existingSubmission->drc_date->format('M d, Y') : 'N/A' }}
@@ -56,9 +56,9 @@
                                 </p>
                                 <p class="text-sm text-gray-700 mt-1">
                                     <strong>Current Members:</strong><br>
-                                    1. Supervisor: {{ $existingSubmission->supervisor->user->name }} ({{ $existingSubmission->supervisor->designation ?? 'N/A' }}, {{ $existingSubmission->supervisor->department->name ?? 'N/A' }})<br>
-                                    2. Member 1: {{ $existingSubmission->member1_name }} ({{ $existingSubmission->member1_designation ?? 'N/A' }}, {{ $existingSubmission->member1_department ?? 'N/A' }})<br>
-                                    3. Member 2: {{ $existingSubmission->member2_name }} ({{ $existingSubmission->member2_designation ?? 'N/A' }}, {{ $existingSubmission->member2_department ?? 'N/A' }})
+                                    1. Member 1: {{ $existingSubmission->supervisor->user->name }}, {{ $existingSubmission->supervisor->designation ?? 'N/A' }}, {{ $existingSubmission->supervisor->department->name ?? 'N/A' }} <b>(Convener)</b><br>
+                                    2. Member 2: {{ $existingSubmission->member1_name }}, {{ $existingSubmission->member1_designation ?? 'N/A' }}, {{ $existingSubmission->member1_department ?? 'N/A' }}<br>
+                                    3. Member 3: {{ $existingSubmission->member2_name }}, {{ $existingSubmission->member2_designation ?? 'N/A' }}, {{ $existingSubmission->member2_department ?? 'N/A' }}
                                 </p>
                             @elseif($existingSubmission->status === 'rejected')
                                 <p class="text-sm text-red-800 mt-2">
@@ -78,8 +78,8 @@
                         @csrf
 
                         <div class="space-y-4">
-                            <h4 class="text-md font-semibold text-gray-900 mt-6 mb-4">RAC Committee Member 1</h4>
-                            
+                            <h4 class="text-md font-semibold text-gray-900 mt-6 mb-4">RAC Committee Member 2</h4>
+
                             <div>
                                 <label for="member1_name" class="block text-sm font-medium text-gray-700">
                                     Name <span class="text-red-500">*</span>
@@ -115,8 +115,8 @@
                         </div>
 
                         <div class="space-y-4 mt-6">
-                            <h4 class="text-md font-semibold text-gray-900 mt-6 mb-4">RAC Committee Member 2</h4>
-                            
+                            <h4 class="text-md font-semibold text-gray-900 mt-6 mb-4">RAC Committee Member 3</h4>
+
                             <div>
                                 <label for="member2_name" class="block text-sm font-medium text-gray-700">
                                     Name <span class="text-red-500">*</span>

@@ -145,19 +145,6 @@
                                 </div>
                             </div>
                         </div>
-
-                        @if($nextStep['status'] !== 'completed')
-                            <!-- Progress Indicator -->
-                            <div class="mt-6">
-                                <div class="flex items-center justify-between text-sm text-gray-600 dark:text-gray-400 mb-2">
-                                    <span>Overall Progress</span>
-                                    <span>{{ $nextStep['step'] - 1 }}/8 Steps Completed</span>
-                                </div>
-                                <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-                                    <div class="bg-blue-600 h-2 rounded-full" style="width: {{ (($nextStep['step'] - 1) / 8) * 100 }}%"></div>
-                                </div>
-                            </div>
-                        @endif
                     @else
                         <div class="text-center py-8">
                             <p class="text-gray-500 dark:text-gray-400">No scholar profile found. Please contact your administrator.</p>

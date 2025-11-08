@@ -111,6 +111,15 @@
                                 @enderror
                             </div>
 
+                            <!-- DRC Date -->
+                            <div class="mb-6">
+                                <label for="drc_date" class="block text-sm font-medium text-gray-700 mb-2">DRC Date <span class="text-red-500">*</span></label>
+                                <input type="date" id="drc_date" name="drc_date" value="{{ old('drc_date') }}" class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500" required>
+                                @error('drc_date')
+                                    <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                                @enderror
+                            </div>
+
                             <!-- Action Buttons -->
                             <div class="flex items-center justify-end space-x-4">
                                 <a href="{{ route('hod.progress_reports.pending') }}"

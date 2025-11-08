@@ -57,7 +57,7 @@ class DRController extends Controller
                 'dr_remarks' => $request->remarks,
             ]);
 
-            $message = 'Request approved and forwarded to Hon\'ble Vice Chancellor';
+            $message = 'Request approved and forwarded to ' . \App\Helpers\WorkflowHelper::getRoleFullForm('hvc');
         } else {
             $capacityRequest->update([
                 'status' => 'rejected',
@@ -138,7 +138,7 @@ class DRController extends Controller
 
             // Sync workflow
             $workflowSyncService->syncSynopsisWorkflow($synopsis, 'dr_approve', Auth::user());
-            $message = 'Synopsis approved and forwarded to Hon\'ble Vice Chancellor';
+            $message = 'Synopsis approved and forwarded to ' . \App\Helpers\WorkflowHelper::getRoleFullForm('hvc');
         } else {
             $synopsis->update([
                 'dr_remarks' => $request->remarks,
@@ -148,16 +148,9 @@ class DRController extends Controller
             // Sync workflow with reassignment
             $reassignedRole = $request->reassigned_to_role;
             $workflowSyncService->syncSynopsisWorkflow($synopsis, 'dr_reject', Auth::user(), $reassignedRole);
-            
+
             if ($reassignedRole) {
-                $roleLabels = [
-                    'supervisor' => 'Supervisor',
-                    'hod' => 'HOD',
-                    'da' => 'Dean\'s Assistant',
-                    'so' => 'Section Officer',
-                    'ar' => 'Assistant Registrar',
-                ];
-                $message = 'Synopsis rejected and reassigned to ' . ($roleLabels[$reassignedRole] ?? $reassignedRole) . ' for corrections.';
+                $message = 'Synopsis rejected and reassigned to ' . \App\Helpers\WorkflowHelper::getRoleFullForm($reassignedRole) . ' for corrections.';
             } else {
                 $message = 'Synopsis rejected.';
             }
@@ -189,6 +182,74 @@ class DRController extends Controller
             ->get();
 
         return view('dr.progress_reports.all', compact('reports'));
+    }
+
+    /**
+     * Show progress report approval form
+     */
+    public function showProgressReportApprovalForm(\App\Models\ProgressReport $report)
+    {
+        if ($report->status !== 'pending_dr_approval') {
+            abort(403, 'This progress report is not pending DR approval.');
+        }
+
+        $report->load(['scholar.user', 'supervisor.user', 'supervisorApprover', 'hodApprover', 'daApprover', 'soApprover', 'arApprover']);
+
+        return view('dr.progress_reports.approve', compact('report'));
+    }
+
+    /**
+     * Process progress report approval/rejection
+     */
+    public function processProgressReportApproval(Request $request, \App\Models\ProgressReport $report)
+    {
+        if ($report->status !== 'pending_dr_approval') {
+            abort(403, 'This progress report is not pending DR approval.');
+        }
+
+        $request->validate([
+            'action' => 'required|in:approve,reject',
+            'remarks' => 'required|string|max:500',
+            'reassigned_to_role' => 'nullable|string|in:supervisor,hod,da,so,ar,dr',
+            'reassignment_reason' => 'nullable|string|max:1000',
+        ]);
+
+        if ($request->action === 'approve') {
+            $report->update([
+                'status' => 'pending_hvc_approval',
+                'dr_approver_id' => Auth::id(),
+                'dr_approved_at' => now(),
+                'dr_remarks' => $request->remarks,
+            ]);
+
+            $message = 'Progress report approved and forwarded to ' . \App\Helpers\WorkflowHelper::getRoleFullForm('hvc') . '.';
+        } else {
+            if ($request->reassigned_to_role) {
+                $report->update([
+                    'status' => 'pending_' . $request->reassigned_to_role . '_approval',
+                    'dr_approver_id' => Auth::id(),
+                    'dr_approved_at' => now(),
+                    'dr_remarks' => $request->remarks,
+                    'reassigned_to_role' => $request->reassigned_to_role,
+                    'reassignment_reason' => $request->reassignment_reason,
+                ]);
+                $message = 'Progress report rejected and reassigned to ' . \App\Helpers\WorkflowHelper::getRoleFullForm($request->reassigned_to_role) . ' for corrections.';
+            } else {
+                $report->update([
+                    'status' => 'rejected',
+                    'dr_approver_id' => Auth::id(),
+                    'dr_approved_at' => now(),
+                    'dr_remarks' => $request->remarks,
+                    'rejected_by' => Auth::id(),
+                    'rejected_at' => now(),
+                    'rejection_reason' => $request->remarks,
+                    'rejection_count' => $report->rejection_count + 1,
+                ]);
+                $message = 'Progress report rejected by ' . \App\Helpers\WorkflowHelper::getRoleFullForm('dr') . '.';
+            }
+        }
+
+        return redirect()->route('dr.progress_reports.pending')->with('success', $message);
     }
 
     /**

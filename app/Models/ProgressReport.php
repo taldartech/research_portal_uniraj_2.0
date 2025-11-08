@@ -17,6 +17,7 @@ class ProgressReport extends Model
         'report_file',
         'rac_minutes_file',
         'drc_minutes_file',
+        'drc_date',
         'submission_date',
         'report_period',
         'feedback_da',
@@ -27,10 +28,12 @@ class ProgressReport extends Model
         'supervisor_approver_id',
         'supervisor_approved_at',
         'supervisor_remarks',
+        'supervisor_warning',
         'rac_meeting_date',
         'hod_approver_id',
         'hod_approved_at',
         'hod_remarks',
+        'hod_warning',
         'da_approver_id',
         'da_approved_at',
         'da_remarks',
@@ -64,6 +67,7 @@ class ProgressReport extends Model
     protected $casts = [
         'submission_date' => 'date',
         'rac_meeting_date' => 'date',
+        'drc_date' => 'date',
         'transaction_date' => 'date',
         'transaction_amount' => 'decimal:2',
         'supervisor_approved_at' => 'datetime',
@@ -77,6 +81,8 @@ class ProgressReport extends Model
         'special_remark' => 'boolean',
         'cancellation_request' => 'boolean',
         'supervisor_change_request' => 'boolean',
+        'supervisor_warning' => 'boolean',
+        'hod_warning' => 'boolean',
     ];
 
     public function scholar()

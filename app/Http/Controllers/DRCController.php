@@ -106,7 +106,7 @@ class DRCController extends Controller
                 'hod_remarks' => $request->remarks,
             ]);
 
-            $message = 'Synopsis approved and forwarded to Dean\'s Assistant.';
+            $message = 'Synopsis approved and forwarded to ' . \App\Helpers\WorkflowHelper::getRoleFullForm('da') . '.';
         } else {
             $synopsis->update([
                 'status' => 'rejected',
@@ -176,7 +176,7 @@ class DRCController extends Controller
                 'da_remarks' => $request->remarks,
             ]);
 
-            $message = 'Progress report approved and forwarded to Dean\'s Assistant.';
+            $message = 'Progress report approved and forwarded to ' . \App\Helpers\WorkflowHelper::getRoleFullForm('da') . '.';
         } else {
             $progressReport->update([
                 'status' => 'rejected',
@@ -232,7 +232,7 @@ class DRCController extends Controller
                 'hod_remarks' => $request->remarks,
             ]);
 
-            $message = 'Thesis approved and forwarded to Dean\'s Assistant.';
+            $message = 'Thesis approved and forwarded to ' . \App\Helpers\WorkflowHelper::getRoleFullForm('da') . '.';
         } else {
             $thesis->update([
                 'status' => 'rejected_by_hod',

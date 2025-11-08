@@ -100,7 +100,7 @@ class ExpertEvaluationController extends Controller
     {
         // Check if user is DA
         if (Auth::user()->user_type !== 'da') {
-            abort(403, 'Only Dean\'s Assistant can assign final experts.');
+            abort(403, 'Only ' . \App\Helpers\WorkflowHelper::getRoleFullForm('da') . ' can assign final experts.');
         }
 
         $thesisEvaluations = ThesisEvaluation::where('status', 'assigned')
@@ -119,7 +119,7 @@ class ExpertEvaluationController extends Controller
     {
         // Check if user is DA
         if (Auth::user()->user_type !== 'da') {
-            abort(403, 'Only Dean\'s Assistant can assign final experts.');
+            abort(403, 'Only ' . \App\Helpers\WorkflowHelper::getRoleFullForm('da') . ' can assign final experts.');
         }
 
         if ($thesis->status !== 'pending_expert_assignment') {

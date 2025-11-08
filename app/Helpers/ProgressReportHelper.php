@@ -96,4 +96,63 @@ class ProgressReportHelper
 
         return 'Progress report submission is not currently available';
     }
+
+    /**
+     * Check if a progress report can be submitted for a scholar
+     * 
+     * @param \App\Models\Scholar $scholar
+     * @return array
+     */
+    public static function canSubmitProgressReport(\App\Models\Scholar $scholar): array
+    {
+        $currentMonth = (int) date('n');
+        $currentMonthName = date('F');
+        $allowedMonths = self::getAllowedMonths();
+
+        $nextMonth = $currentMonth + 1;
+        if ($nextMonth > 12) {
+            $nextMonth = 1;
+        }
+
+        $monthNames = [
+            1 => 'January', 2 => 'February', 3 => 'March', 4 => 'April',
+            5 => 'May', 6 => 'June', 7 => 'July', 8 => 'August',
+            9 => 'September', 10 => 'October', 11 => 'November', 12 => 'December'
+        ];
+        $nextMonthName = $monthNames[$nextMonth];
+
+        $canSubmit = false;
+        $reportPeriod = null;
+
+        // Check current month
+        if (in_array($currentMonth, $allowedMonths)) {
+            $existingReport = \App\Models\ProgressReport::where('scholar_id', $scholar->id)
+                ->where('report_period', $currentMonthName)
+                ->where('status', '!=', 'rejected')
+                ->first();
+
+            if (!$existingReport) {
+                $canSubmit = true;
+                $reportPeriod = $currentMonthName;
+            }
+        }
+
+        // Check next month if current month not allowed or already submitted
+        if (!$canSubmit && in_array($nextMonth, $allowedMonths)) {
+            $existingReport = \App\Models\ProgressReport::where('scholar_id', $scholar->id)
+                ->where('report_period', $nextMonthName)
+                ->where('status', '!=', 'rejected')
+                ->first();
+
+            if (!$existingReport) {
+                $canSubmit = true;
+                $reportPeriod = $nextMonthName;
+            }
+        }
+
+        return [
+            'can_submit' => $canSubmit,
+            'report_period' => $reportPeriod,
+        ];
+    }
 }

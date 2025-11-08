@@ -10,7 +10,7 @@
 
             if($synopsis->supervisor_remarks && $synopsis->supervisor_approved_at) {
                 $history[] = [
-                    'role' => 'Supervisor',
+                    'role' => \App\Helpers\WorkflowHelper::getRoleFullForm('supervisor'),
                     'remarks' => $synopsis->supervisor_remarks,
                     'date' => $synopsis->supervisor_approved_at,
                     'color' => 'blue',
@@ -21,12 +21,12 @@
             if($synopsis->hod_remarks && $synopsis->hod_approved_at) {
                 $isRejected = str_contains($synopsis->status, 'rejected_by_hod');
                 $history[] = [
-                    'role' => 'HOD',
+                    'role' => \App\Helpers\WorkflowHelper::getRoleFullForm('hod'),
                     'remarks' => $synopsis->hod_remarks,
                     'date' => $synopsis->hod_approved_at,
                     'color' => 'green',
                     'status' => $isRejected ? 'rejected' : 'approved',
-                    'reassigned_to' => ($isRejected && $synopsis->reassigned_to_role) ? ($synopsis->reassigned_to_role === 'hod' ? 'HOD' : ($synopsis->reassigned_to_role === 'supervisor' ? 'Supervisor' : ucfirst($synopsis->reassigned_to_role))) : null,
+                    'reassigned_to' => ($isRejected && $synopsis->reassigned_to_role) ? \App\Helpers\WorkflowHelper::getRoleFullForm($synopsis->reassigned_to_role) : null,
                     'reassignment_reason' => ($isRejected && $synopsis->reassigned_to_role) ? $synopsis->reassignment_reason : null
                 ];
             }
@@ -34,12 +34,12 @@
             if($synopsis->da_remarks && $synopsis->da_approved_at) {
                 $isRejected = str_contains($synopsis->status, 'rejected_by_da');
                 $history[] = [
-                    'role' => 'DA',
+                    'role' => \App\Helpers\WorkflowHelper::getRoleFullForm('da'),
                     'remarks' => $synopsis->da_remarks,
                     'date' => $synopsis->da_approved_at,
                     'color' => 'yellow',
                     'status' => $isRejected ? 'rejected' : 'approved',
-                    'reassigned_to' => ($isRejected && $synopsis->reassigned_to_role) ? ($synopsis->reassigned_to_role === 'hod' ? 'HOD' : ($synopsis->reassigned_to_role === 'da' ? 'DA' : ($synopsis->reassigned_to_role === 'supervisor' ? 'Supervisor' : ucfirst($synopsis->reassigned_to_role)))) : null,
+                    'reassigned_to' => ($isRejected && $synopsis->reassigned_to_role) ? \App\Helpers\WorkflowHelper::getRoleFullForm($synopsis->reassigned_to_role) : null,
                     'reassignment_reason' => ($isRejected && $synopsis->reassigned_to_role) ? $synopsis->reassignment_reason : null
                 ];
             }
@@ -47,12 +47,12 @@
             if($synopsis->so_remarks && $synopsis->so_approved_at) {
                 $isRejected = str_contains($synopsis->status, 'rejected_by_so');
                 $history[] = [
-                    'role' => 'SO',
+                    'role' => \App\Helpers\WorkflowHelper::getRoleFullForm('so'),
                     'remarks' => $synopsis->so_remarks,
                     'date' => $synopsis->so_approved_at,
                     'color' => 'purple',
                     'status' => $isRejected ? 'rejected' : 'approved',
-                    'reassigned_to' => ($isRejected && $synopsis->reassigned_to_role) ? ($synopsis->reassigned_to_role === 'hod' ? 'HOD' : ($synopsis->reassigned_to_role === 'da' ? 'DA' : ($synopsis->reassigned_to_role === 'so' ? 'SO' : ($synopsis->reassigned_to_role === 'supervisor' ? 'Supervisor' : ucfirst($synopsis->reassigned_to_role))))) : null,
+                    'reassigned_to' => ($isRejected && $synopsis->reassigned_to_role) ? \App\Helpers\WorkflowHelper::getRoleFullForm($synopsis->reassigned_to_role) : null,
                     'reassignment_reason' => ($isRejected && $synopsis->reassigned_to_role) ? $synopsis->reassignment_reason : null
                 ];
             }
@@ -60,12 +60,12 @@
             if($synopsis->ar_remarks && $synopsis->ar_approved_at) {
                 $isRejected = str_contains($synopsis->status, 'rejected_by_ar');
                 $history[] = [
-                    'role' => 'AR',
+                    'role' => \App\Helpers\WorkflowHelper::getRoleFullForm('ar'),
                     'remarks' => $synopsis->ar_remarks,
                     'date' => $synopsis->ar_approved_at,
                     'color' => 'pink',
                     'status' => $isRejected ? 'rejected' : 'approved',
-                    'reassigned_to' => ($isRejected && $synopsis->reassigned_to_role) ? ($synopsis->reassigned_to_role === 'hod' ? 'HOD' : ($synopsis->reassigned_to_role === 'da' ? 'DA' : ($synopsis->reassigned_to_role === 'so' ? 'SO' : ($synopsis->reassigned_to_role === 'ar' ? 'AR' : ($synopsis->reassigned_to_role === 'supervisor' ? 'Supervisor' : ucfirst($synopsis->reassigned_to_role)))))) : null,
+                    'reassigned_to' => ($isRejected && $synopsis->reassigned_to_role) ? \App\Helpers\WorkflowHelper::getRoleFullForm($synopsis->reassigned_to_role) : null,
                     'reassignment_reason' => ($isRejected && $synopsis->reassigned_to_role) ? $synopsis->reassignment_reason : null
                 ];
             }
@@ -73,23 +73,30 @@
             if($synopsis->dr_remarks && $synopsis->dr_approved_at) {
                 $isRejected = str_contains($synopsis->status, 'rejected_by_dr');
                 $history[] = [
-                    'role' => 'DR',
+                    'role' => \App\Helpers\WorkflowHelper::getRoleFullForm('dr'),
                     'remarks' => $synopsis->dr_remarks,
                     'date' => $synopsis->dr_approved_at,
                     'color' => 'red',
                     'status' => $isRejected ? 'rejected' : 'approved',
-                    'reassigned_to' => ($isRejected && $synopsis->reassigned_to_role) ? ($synopsis->reassigned_to_role === 'hod' ? 'HOD' : ($synopsis->reassigned_to_role === 'da' ? 'DA' : ($synopsis->reassigned_to_role === 'so' ? 'SO' : ($synopsis->reassigned_to_role === 'ar' ? 'AR' : ($synopsis->reassigned_to_role === 'dr' ? 'DR' : ($synopsis->reassigned_to_role === 'supervisor' ? 'Supervisor' : ucfirst($synopsis->reassigned_to_role))))))) : null,
+                    'reassigned_to' => ($isRejected && $synopsis->reassigned_to_role) ? \App\Helpers\WorkflowHelper::getRoleFullForm($synopsis->reassigned_to_role) : null,
                     'reassignment_reason' => ($isRejected && $synopsis->reassigned_to_role) ? $synopsis->reassignment_reason : null
                 ];
             }
 
             if($synopsis->hvc_remarks && $synopsis->hvc_approved_at) {
+                // HVC rejection detection:
+                // Since HVC is the last approver, if hvc_approved_at exists but status is NOT 'approved',
+                // it means HVC rejected it (either explicitly with status 'rejected_by_hvc' or with reassignment)
+                $isRejected = str_contains($synopsis->status, 'rejected_by_hvc') || 
+                              ($synopsis->status !== 'approved' && str_starts_with($synopsis->status, 'pending_'));
                 $history[] = [
-                    'role' => 'HVC',
+                    'role' => \App\Helpers\WorkflowHelper::getRoleFullForm('hvc'),
                     'remarks' => $synopsis->hvc_remarks,
                     'date' => $synopsis->hvc_approved_at,
                     'color' => 'orange',
-                    'status' => str_contains($synopsis->status, 'rejected_by_hvc') ? 'rejected' : 'approved'
+                    'status' => $isRejected ? 'rejected' : 'approved',
+                    'reassigned_to' => ($isRejected && $synopsis->reassigned_to_role) ? \App\Helpers\WorkflowHelper::getRoleFullForm($synopsis->reassigned_to_role) : null,
+                    'reassignment_reason' => ($isRejected && $synopsis->reassigned_to_role) ? $synopsis->reassignment_reason : null
                 ];
             }
 

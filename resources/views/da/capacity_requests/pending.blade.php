@@ -22,7 +22,7 @@
                     @endif
 
                     <div class="mb-6">
-                        <h3 class="text-lg font-medium text-gray-900">Capacity Increase Requests Pending DA Approval</h3>
+                        <h3 class="text-lg font-medium text-gray-900">Capacity Increase Requests Pending Dealing Assistant Approval</h3>
                         <p class="text-sm text-gray-600">Review and approve supervisor capacity increase requests</p>
                     </div>
 
@@ -79,11 +79,11 @@
                         </div>
                     @else
                         <div class="text-center py-12">
-                            <svg class="mx-auto h-5 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg class="mx-auto h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
                             </svg>
                             <h3 class="mt-2 text-sm font-medium text-gray-900">No pending requests</h3>
-                            <p class="mt-1 text-sm text-gray-500">There are no capacity increase requests pending DA approval at this time.</p>
+                            <p class="mt-1 text-sm text-gray-500">There are no capacity increase requests pending Dealing Assistant approval at this time.</p>
                         </div>
                     @endif
                 </div>

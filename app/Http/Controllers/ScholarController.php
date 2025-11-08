@@ -13,6 +13,7 @@ use App\Models\RAC;
 use App\Models\Synopsis;
 use App\Models\ThesisSubmission;
 use App\Models\ThesisSubmissionCertificate;
+use App\Models\PrePhdVivaRequest;
 use App\Models\User;
 use App\Traits\HasAlertResponses;
 
@@ -506,7 +507,11 @@ class ScholarController extends Controller
 
         // Add validation for all preference fields - all are required
         for ($i = 1; $i <= $supervisorCount; $i++) {
-            $rules["supervisor_{$i}_id"] = 'required|exists:supervisors,id';
+            if ($i == 1) {
+                $rules["supervisor_{$i}_id"] = 'required|exists:supervisors,id';
+            } else {
+                $rules["supervisor_{$i}_id"] = 'nullable|exists:supervisors,id';
+            }
         }
 
         $request->validate($rules);
@@ -528,11 +533,11 @@ class ScholarController extends Controller
         }
 
         // Ensure all supervisors are selected (should be handled by required validation, but double-check)
-        if (count($selectedSupervisors) !== $supervisorCount) {
-            return redirect()->back()->withErrors([
-                'supervisor_selection' => 'You must select preferences for all ' . $supervisorCount . ' supervisors in your department.'
-            ])->withInput();
-        }
+        // if (count($selectedSupervisors) !== $supervisorCount) {
+        //     return redirect()->back()->withErrors([
+        //         'supervisor_selection' => 'You must select preferences for all ' . $supervisorCount . ' supervisors in your department.'
+        //     ])->withInput();
+        // }
 
         // Create supervisor preferences
         $preferences = [];
@@ -663,7 +668,7 @@ class ScholarController extends Controller
             $progressReportData['rejection_count'] = ($rejectedReport->rejection_count ?? 0) + 1;
 
             // Update the original report to mark it as superseded
-            $rejectedReport->update(['status' => 'superseded']);
+            $rejectedReport->update(['status' => 'warning']);
         }
 
         \App\Models\ProgressReport::create($progressReportData);
@@ -689,7 +694,28 @@ class ScholarController extends Controller
             return redirect()->route('scholar.dashboard')->with('error', $eligibilityCheck['reason']);
         }
 
-        return view('scholar.thesis.submit', compact('eligibilityCheck'));
+        // Get synopsis for title and abstract
+        $synopsis = $scholar->synopses()->where('status', 'approved')->latest()->first();
+
+        // Get Pre-PhD Viva request for pre_phd_presentation_date
+        $prePhdVivaRequest = $scholar->activePrePhdVivaRequest;
+
+        // Get latest progress reports for RAC/DRC dates
+        $latestProgressReport = $scholar->progressReports()->latest('submission_date')->first();
+
+        // Get coursework results
+        $courseworkResults = $scholar->courseworkResults()->latest('exam_date')->first();
+
+        // Get RAC Committee Submission for RAC/DRC dates
+        $racCommitteeSubmission = $scholar->racCommitteeSubmissions()->where('status', 'approved')->latest()->first();
+
+        // Get RAC for RAC constitution date
+        $rac = $scholar->racs()->latest()->first();
+
+        // Get registration form for registration fee date
+        $registrationForm = $scholar->registrationForm;
+
+        return view('scholar.thesis.submit', compact('scholar', 'eligibilityCheck', 'synopsis', 'prePhdVivaRequest', 'latestProgressReport', 'courseworkResults', 'racCommitteeSubmission', 'rac', 'registrationForm'));
     }
 
     public function storeThesis(Request $request)
@@ -706,42 +732,11 @@ class ScholarController extends Controller
         }
 
         $request->validate([
-            // Personal Details
-            'father_husband_name' => 'required|string|max:255',
-            'mother_name' => 'required|string|max:255',
-            'subject' => 'required|string|max:255',
-            'faculty' => 'required|string|max:255',
-
-            // Academic Progress
-            'mpat_passing_date' => 'nullable|date',
-            'coursework_session' => 'nullable|string|max:255',
-            'coursework_fee_receipt_no' => 'nullable|string|max:255',
-            'coursework_fee_receipt_date' => 'nullable|date',
-            'coursework_passing_date' => 'nullable|date',
-            'registration_fee_date' => 'nullable|date',
-            'extension_date' => 'nullable|date',
-            're_registration_date' => 'nullable|date',
-            'pre_phd_presentation_date' => 'required|date',
-            'pre_phd_presentation_certificate' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:2048',
-
-            // Research Output
-            'published_research_paper_details' => 'required|string|max:2000',
-            'published_research_paper_certificate' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:2048',
-            'conference_presentation_1' => 'required|string|max:1000',
-            'conference_certificate_1' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:2048',
-            'conference_presentation_2' => 'required|string|max:1000',
-            'conference_certificate_2' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:2048',
-
-            // RAC/DRC Details
-            'rac_constitution_date' => 'nullable|date',
-            'drc_approval_date' => 'nullable|date',
-            'rac_drc_undertaking' => 'nullable|string|max:1000',
-
             // Thesis Details
             'title' => 'required|string|max:255',
             'abstract' => 'required|string|max:2000',
             'thesis_file' => 'required|file|mimes:pdf|max:10240',
-            'supporting_documents.*' => 'nullable|file|mimes:pdf,doc,docx|max:2048',
+            'supporting_documents.*' => 'nullable|file|mimes:pdf,doc,docx,jpg,jpeg,png|max:5120',
 
             // Declaration
             'declaration' => 'required|accepted',
@@ -752,69 +747,22 @@ class ScholarController extends Controller
         $supportingDocs = [];
         if ($request->hasFile('supporting_documents')) {
             foreach ($request->file('supporting_documents') as $file) {
-                $supportingDocs[] = $file->store('thesis_supporting_docs', 'public');
+                if ($file->isValid()) {
+                    $supportingDocs[] = $file->store('thesis_supporting_docs', 'public');
+                }
             }
-        }
-
-        // Handle certificate uploads
-        $prePhdCertificate = null;
-        if ($request->hasFile('pre_phd_presentation_certificate')) {
-            $prePhdCertificate = $request->file('pre_phd_presentation_certificate')->store('thesis_certificates', 'public');
-        }
-
-        $researchPaperCertificate = null;
-        if ($request->hasFile('published_research_paper_certificate')) {
-            $researchPaperCertificate = $request->file('published_research_paper_certificate')->store('thesis_certificates', 'public');
-        }
-
-        $conferenceCertificate1 = null;
-        if ($request->hasFile('conference_certificate_1')) {
-            $conferenceCertificate1 = $request->file('conference_certificate_1')->store('thesis_certificates', 'public');
-        }
-
-        $conferenceCertificate2 = null;
-        if ($request->hasFile('conference_certificate_2')) {
-            $conferenceCertificate2 = $request->file('conference_certificate_2')->store('thesis_certificates', 'public');
         }
 
         $supervisor = $scholar->currentSupervisor;
         $hod = $scholar->admission->department->hod;
 
-        \App\Models\ThesisSubmission::create([
+        // Get active Pre-PhD Viva request
+        $prePhdVivaRequest = $scholar->activePrePhdVivaRequest;
+
+        $thesisSubmissionData = [
             'scholar_id' => $scholar->id,
             'supervisor_id' => $supervisor->id,
             'hod_id' => $hod->id,
-
-            // Personal Details
-            'father_husband_name' => $request->father_husband_name,
-            'mother_name' => $request->mother_name,
-            'subject' => $request->subject,
-            'faculty' => $request->faculty,
-
-            // Academic Progress
-            'mpat_passing_date' => $request->mpat_passing_date,
-            'coursework_session' => $request->coursework_session,
-            'coursework_fee_receipt_no' => $request->coursework_fee_receipt_no,
-            'coursework_fee_receipt_date' => $request->coursework_fee_receipt_date,
-            'coursework_passing_date' => $request->coursework_passing_date,
-            'registration_fee_date' => $request->registration_fee_date,
-            'extension_date' => $request->extension_date,
-            're_registration_date' => $request->re_registration_date,
-            'pre_phd_presentation_date' => $request->pre_phd_presentation_date,
-            'pre_phd_presentation_certificate' => $prePhdCertificate,
-
-            // Research Output
-            'published_research_paper_details' => $request->published_research_paper_details,
-            'published_research_paper_certificate' => $researchPaperCertificate,
-            'conference_presentation_1' => $request->conference_presentation_1,
-            'conference_certificate_1' => $conferenceCertificate1,
-            'conference_presentation_2' => $request->conference_presentation_2,
-            'conference_certificate_2' => $conferenceCertificate2,
-
-            // RAC/DRC Details
-            'rac_constitution_date' => $request->rac_constitution_date,
-            'drc_approval_date' => $request->drc_approval_date,
-            'rac_drc_undertaking' => $request->rac_drc_undertaking,
 
             // Thesis Details
             'title' => $request->title,
@@ -825,7 +773,17 @@ class ScholarController extends Controller
             'status' => 'pending_supervisor_approval',
             'form_completed' => true,
             'form_submitted_at' => now(),
-        ]);
+        ];
+
+        $thesisSubmission = \App\Models\ThesisSubmission::create($thesisSubmissionData);
+
+        // Link thesis submission to Pre-PhD Viva request and mark as submitted
+        if ($prePhdVivaRequest && $prePhdVivaRequest->isApproved()) {
+            $prePhdVivaRequest->update([
+                'thesis_submitted' => true,
+                'thesis_submission_id' => $thesisSubmission->id,
+            ]);
+        }
 
         return redirect()->route('scholar.thesis.submit')->with('success', 'Thesis submitted for supervisor approval.');
     }
@@ -1158,5 +1116,112 @@ class ScholarController extends Controller
         $synopsis->topicChangeProposedBy->notify(new \App\Notifications\TopicChangeResponseNotification($synopsis, $request->response));
 
         return redirect()->route('scholar.dashboard')->with('success', $message);
+    }
+
+    /**
+     * Show Pre-PhD Viva request form
+     */
+    public function requestPrePhdViva()
+    {
+        $scholar = Auth::user()->scholar;
+
+        if (!$scholar->hasAssignedSupervisor()) {
+            return redirect()->route('scholar.dashboard')->with('error', 'You must have an assigned supervisor to request Pre-PhD Viva.');
+        }
+
+        // Check if there's already an active request
+        $activeRequest = $scholar->activePrePhdVivaRequest;
+        if ($activeRequest && $activeRequest->isPending()) {
+            return redirect()->route('scholar.pre_phd_viva.status')
+                ->with('info', 'You already have a pending Pre-PhD Viva request.');
+        }
+
+        if ($activeRequest && $activeRequest->isApproved() && !$activeRequest->hasExpired()) {
+            return redirect()->route('scholar.pre_phd_viva.status')
+                ->with('info', 'You already have an approved Pre-PhD Viva request.');
+        }
+
+        return view('scholar.pre_phd_viva.request', compact('scholar'));
+    }
+
+    /**
+     * Store Pre-PhD Viva request
+     */
+    public function storePrePhdVivaRequest(Request $request)
+    {
+        $scholar = Auth::user()->scholar;
+
+        if (!$scholar->hasAssignedSupervisor()) {
+            return redirect()->route('scholar.dashboard')->with('error', 'You must have an assigned supervisor to request Pre-PhD Viva.');
+        }
+
+        // Check if there's already an active request
+        $activeRequest = $scholar->activePrePhdVivaRequest;
+        if ($activeRequest && ($activeRequest->isPending() || ($activeRequest->isApproved() && !$activeRequest->hasExpired()))) {
+            return redirect()->route('scholar.pre_phd_viva.status')
+                ->with('error', 'You already have an active Pre-PhD Viva request.');
+        }
+
+        $request->validate([
+            'thesis_summary_file' => 'required|file|mimes:pdf,doc,docx|max:10240', // 10MB
+            'supportive_documents' => 'required|array|min:1',
+            'supportive_documents.*' => 'required|file|mimes:pdf,doc,docx,jpg,jpeg,png|max:10240', // 10MB per file
+            'request_remarks' => 'nullable|string|max:1000',
+        ], [
+            'thesis_summary_file.required' => 'Thesis summary file is required.',
+            'thesis_summary_file.mimes' => 'Thesis summary file must be a PDF, DOC, or DOCX file.',
+            'thesis_summary_file.max' => 'Thesis summary file must not exceed 10MB.',
+            'supportive_documents.required' => 'At least one supportive document is required.',
+            'supportive_documents.min' => 'You must upload at least one supportive document.',
+            'supportive_documents.*.required' => 'Each supportive document is required.',
+            'supportive_documents.*.mimes' => 'Supportive documents must be PDF, DOC, DOCX, JPG, JPEG, or PNG files.',
+            'supportive_documents.*.max' => 'Each supportive document must not exceed 10MB.',
+        ]);
+
+        $supervisorAssignment = $scholar->currentSupervisor;
+        if (!$supervisorAssignment) {
+            return redirect()->route('scholar.dashboard')->with('error', 'You must have an assigned supervisor to request Pre-PhD Viva.');
+        }
+
+        // Get the actual Supervisor model ID from the assignment
+        $supervisorId = $supervisorAssignment->supervisor_id;
+
+        // Upload thesis summary file
+        $thesisSummaryPath = null;
+        if ($request->hasFile('thesis_summary_file')) {
+            $thesisSummaryPath = $request->file('thesis_summary_file')->store('pre_phd_viva/thesis_summaries', 'public');
+        }
+
+        // Upload supportive documents
+        $supportiveDocuments = [];
+        if ($request->hasFile('supportive_documents')) {
+            foreach ($request->file('supportive_documents') as $file) {
+                $supportiveDocuments[] = $file->store('pre_phd_viva/supportive_documents', 'public');
+            }
+        }
+
+        PrePhdVivaRequest::create([
+            'scholar_id' => $scholar->id,
+            'supervisor_id' => $supervisorId,
+            'status' => 'pending_rac_approval',
+            'request_remarks' => $request->request_remarks,
+            'thesis_summary_file' => $thesisSummaryPath,
+            'supportive_documents' => json_encode($supportiveDocuments),
+            'requested_date' => now(),
+        ]);
+
+        return redirect()->route('scholar.pre_phd_viva.status')
+            ->with('success', 'Pre-PhD Viva request submitted successfully. Waiting for RAC approval.');
+    }
+
+    /**
+     * Show Pre-PhD Viva request status
+     */
+    public function prePhdVivaStatus()
+    {
+        $scholar = Auth::user()->scholar;
+        $requests = $scholar->prePhdVivaRequests()->with(['supervisor.user', 'racApprover'])->latest()->get();
+
+        return view('scholar.pre_phd_viva.status', compact('scholar', 'requests'));
     }
 }
