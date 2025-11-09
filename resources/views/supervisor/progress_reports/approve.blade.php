@@ -128,17 +128,17 @@
                             </div>
 
                             <div id="rac_fields">
-                                <div>
+                            <div>
                                     <label for="rac_minutes_file" class="block text-sm font-medium text-gray-700">RAC Minutes File <span class="text-red-500" id="rac_file_required">*</span></label>
                                     <input type="file" id="rac_minutes_file" name="rac_minutes_file" accept=".pdf,.doc,.docx" class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100">
-                                    <p class="mt-1 text-xs text-gray-500">Accepted formats: PDF, DOC, DOCX (Max size: 5MB)</p>
-                                    <x-input-error :messages="$errors->get('rac_minutes_file')" class="mt-2" />
-                                </div>
+                                <p class="mt-1 text-xs text-gray-500">Accepted formats: PDF, DOC, DOCX (Max size: 5MB)</p>
+                                <x-input-error :messages="$errors->get('rac_minutes_file')" class="mt-2" />
+                            </div>
 
                                 <div class="mt-4">
                                     <label for="rac_meeting_date" class="block text-sm font-medium text-gray-700">RAC Meeting Date <span class="text-red-500" id="rac_date_required">*</span></label>
                                     <input type="date" id="rac_meeting_date" name="rac_meeting_date" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
-                                    <x-input-error :messages="$errors->get('rac_meeting_date')" class="mt-2" />
+                                <x-input-error :messages="$errors->get('rac_meeting_date')" class="mt-2" />
                                 </div>
                             </div>
 

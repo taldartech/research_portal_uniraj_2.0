@@ -519,7 +519,7 @@ class SupervisorController extends Controller
         // Upload RAC minutes file if provided
         $racMinutesPath = null;
         if ($request->hasFile('rac_minutes_file')) {
-            $racMinutesPath = $request->file('rac_minutes_file')->store('rac_minutes', 'public');
+        $racMinutesPath = $request->file('rac_minutes_file')->store('rac_minutes', 'public');
         }
 
         $updateData = [
@@ -980,6 +980,7 @@ class SupervisorController extends Controller
         if (in_array($currentMonth, $allowedMonths)) {
             $existingReport = \App\Models\ProgressReport::where('scholar_id', $scholar->id)
                 ->where('report_period', $currentMonthName)
+                ->whereYear('created_at', date('Y'))
                 ->first();
 
             if (!$existingReport) {
@@ -990,8 +991,11 @@ class SupervisorController extends Controller
 
         // Check next month if current month not allowed or already submitted
         if (!$canSubmit && in_array($nextMonth, $allowedMonths)) {
+            // Determine the year for next month (if next month is January, use next year)
+            $nextMonthYear = ($nextMonth == 1) ? date('Y') + 1 : date('Y');
             $existingReport = \App\Models\ProgressReport::where('scholar_id', $scholar->id)
                 ->where('report_period', $nextMonthName)
+                ->whereYear('created_at', $nextMonthYear)
                 ->first();
 
             if (!$existingReport) {

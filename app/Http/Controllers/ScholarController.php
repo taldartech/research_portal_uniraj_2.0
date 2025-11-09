@@ -582,9 +582,10 @@ class ScholarController extends Controller
         $allowedMonths = \App\Helpers\ProgressReportHelper::getAllowedMonthNames();
         $currentMonth = date('F'); // Get current month name (e.g., 'April', 'October')
 
-        // Check if a report already exists for the current month
+        // Check if a report already exists for the current month and year
         $existingReport = \App\Models\ProgressReport::where('scholar_id', $scholar->id)
             ->where('report_period', $currentMonth)
+            ->whereYear('created_at', date('Y'))
             ->where('status', '!=', 'rejected')
             ->first();
 

@@ -110,7 +110,7 @@
                                                 <p class="text-xs text-red-600 mt-1">⚠️ Deadline expired</p>
                                                 @elseif(now()->lte($request->thesis_submission_deadline))
                                                 <p class="text-xs text-green-600 mt-1">
-                                                    {{ now()->diffInDays($request->thesis_submission_deadline, false) }} days remaining
+                                                    {{ (int) now()->diffInDays($request->thesis_submission_deadline, false) }} days remaining
                                                 </p>
                                                 @endif
                                             </div>

@@ -99,7 +99,7 @@ class ProgressReportHelper
 
     /**
      * Check if a progress report can be submitted for a scholar
-     * 
+     *
      * @param \App\Models\Scholar $scholar
      * @return array
      */
@@ -128,6 +128,7 @@ class ProgressReportHelper
         if (in_array($currentMonth, $allowedMonths)) {
             $existingReport = \App\Models\ProgressReport::where('scholar_id', $scholar->id)
                 ->where('report_period', $currentMonthName)
+                ->whereYear('created_at', date('Y'))
                 ->where('status', '!=', 'rejected')
                 ->first();
 
@@ -139,8 +140,11 @@ class ProgressReportHelper
 
         // Check next month if current month not allowed or already submitted
         if (!$canSubmit && in_array($nextMonth, $allowedMonths)) {
+            // Determine the year for next month (if next month is January, use next year)
+            $nextMonthYear = ($nextMonth == 1) ? date('Y') + 1 : date('Y');
             $existingReport = \App\Models\ProgressReport::where('scholar_id', $scholar->id)
                 ->where('report_period', $nextMonthName)
+                ->whereYear('created_at', $nextMonthYear)
                 ->where('status', '!=', 'rejected')
                 ->first();
 

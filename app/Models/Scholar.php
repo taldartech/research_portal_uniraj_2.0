@@ -684,9 +684,10 @@ class Scholar extends Model
             $statusMessage = \App\Helpers\ProgressReportHelper::getSubmissionStatusMessage();
             $currentMonth = date('F');
 
-            // Check if a report already exists for the current month
+            // Check if a report already exists for the current month and year
             $existingReport = $this->progressReports()
                 ->where('report_period', $currentMonth)
+                ->whereYear('created_at', date('Y'))
                 ->first();
 
             if ($existingReport) {
