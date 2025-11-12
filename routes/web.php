@@ -355,6 +355,7 @@ Route::prefix('da')->name('da.')->middleware(['auth', UserTypeMiddleware::class]
     Route::get('/thesis/pending', [DAController::class, 'listPendingThesisSubmissions'])->name('thesis.pending');
     Route::get('/thesis/{thesis}/approve', [DAController::class, 'showThesisApprovalForm'])->name('thesis.approve');
     Route::post('/thesis/{thesis}/approve', [DAController::class, 'processThesisApproval'])->name('thesis.process');
+    Route::get('/thesis/{thesis}/expert-details', [DAController::class, 'viewExpertDetails'])->name('thesis.expert_details');
 
     // Late Submission Request Routes
     Route::get('/late-submission/pending', [DAController::class, 'listPendingLateSubmissions'])->name('late_submission.pending');
@@ -399,6 +400,9 @@ Route::prefix('so')->name('so.')->middleware(['auth', UserTypeMiddleware::class]
     // Thesis Submissions
     Route::get('/thesis/pending', [SOController::class, 'listPendingThesisSubmissions'])->name('thesis.pending');
     Route::get('/thesis/all', [SOController::class, 'listAllThesisSubmissions'])->name('thesis.all');
+    Route::get('/thesis/{thesis}/approve', [SOController::class, 'approveThesisForm'])->name('thesis.approve');
+    Route::post('/thesis/{thesis}/approve', [SOController::class, 'approveThesis'])->name('thesis.approve.store');
+    Route::get('/thesis/{thesis}/expert-details', [SOController::class, 'viewExpertDetails'])->name('thesis.expert_details');
 
     // Coursework Exemptions
     Route::get('/coursework-exemptions/pending', [SOController::class, 'listPendingCourseworkExemptions'])->name('coursework_exemptions.pending');
@@ -430,6 +434,9 @@ Route::prefix('ar')->name('ar.')->middleware(['auth', UserTypeMiddleware::class]
     // Thesis Submissions
     Route::get('/thesis/pending', [ARController::class, 'listPendingThesisSubmissions'])->name('thesis.pending');
     Route::get('/thesis/all', [ARController::class, 'listAllThesisSubmissions'])->name('thesis.all');
+    Route::get('/thesis/{thesis}/approve', [ARController::class, 'approveThesisForm'])->name('thesis.approve');
+    Route::post('/thesis/{thesis}/approve', [ARController::class, 'approveThesis'])->name('thesis.approve.store');
+    Route::get('/thesis/{thesis}/expert-details', [ARController::class, 'viewExpertDetails'])->name('thesis.expert_details');
 
     // Coursework Exemptions
     Route::get('/coursework-exemptions/pending', [ARController::class, 'listPendingCourseworkExemptions'])->name('coursework_exemptions.pending');
@@ -465,6 +472,9 @@ Route::prefix('dr')->name('dr.')->middleware(['auth', UserTypeMiddleware::class]
     // Thesis Submissions
     Route::get('/thesis/pending', [DRController::class, 'listPendingThesisSubmissions'])->name('thesis.pending');
     Route::get('/thesis/all', [DRController::class, 'listAllThesisSubmissions'])->name('thesis.all');
+    Route::get('/thesis/{thesis}/approve', [DRController::class, 'approveThesisForm'])->name('thesis.approve');
+    Route::post('/thesis/{thesis}/approve', [DRController::class, 'approveThesis'])->name('thesis.approve.store');
+    Route::get('/thesis/{thesis}/expert-details', [DRController::class, 'viewExpertDetails'])->name('thesis.expert_details');
 
     // Coursework Exemptions
     Route::get('/coursework-exemptions/pending', [DRController::class, 'listPendingCourseworkExemptions'])->name('coursework_exemptions.pending');

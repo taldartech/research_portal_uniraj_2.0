@@ -735,7 +735,7 @@ class ScholarController extends Controller
         $request->validate([
             // Thesis Details
             'title' => 'required|string|max:255',
-            'abstract' => 'required|string|max:2000',
+            // 'abstract' => 'required|string|max:2000',
             'thesis_file' => 'required|file|mimes:pdf|max:10240',
             'supporting_documents.*' => 'nullable|file|mimes:pdf,doc,docx,jpg,jpeg,png|max:5120',
 
@@ -762,12 +762,12 @@ class ScholarController extends Controller
 
         $thesisSubmissionData = [
             'scholar_id' => $scholar->id,
-            'supervisor_id' => $supervisor->id,
-            'hod_id' => $hod->id,
+            'supervisor_id' => $supervisor ? $supervisor->supervisor_id : null,
+            'hod_id' => $hod ? $hod->id : null,
 
             // Thesis Details
             'title' => $request->title,
-            'abstract' => $request->abstract,
+            // 'abstract' => $request->abstract,
             'file_path' => $thesisPath,
             'supporting_documents' => json_encode($supportingDocs),
             'submission_date' => now(),
@@ -786,7 +786,7 @@ class ScholarController extends Controller
             ]);
         }
 
-        return redirect()->route('scholar.thesis.submit')->with('success', 'Thesis submitted for supervisor approval.');
+        return redirect()->route('scholar.dashboard')->with('success', 'Thesis submitted for supervisor approval.');
     }
 
     public function viewThesisStatus()
@@ -829,7 +829,7 @@ class ScholarController extends Controller
 
         $request->validate([
             'title' => 'required|string|max:255',
-            'abstract' => 'required|string|max:2000',
+            // 'abstract' => 'required|string|max:2000',
             'thesis_file' => 'required|file|mimes:pdf|max:10240',
             'supporting_documents.*' => 'nullable|file|mimes:pdf,doc,docx|max:2048',
         ]);
@@ -848,10 +848,10 @@ class ScholarController extends Controller
 
         \App\Models\ThesisSubmission::create([
             'scholar_id' => $scholar->id,
-            'supervisor_id' => $supervisor->id,
-            'hod_id' => $hod->id,
+            'supervisor_id' => $supervisor ? $supervisor->supervisor_id : null,
+            'hod_id' => $hod ? $hod->id : null,
             'title' => $request->title,
-            'abstract' => $request->abstract,
+            // 'abstract' => $request->abstract,
             'file_path' => $thesisPath,
             'supporting_documents' => json_encode($supportingDocs),
             'submission_date' => now(),

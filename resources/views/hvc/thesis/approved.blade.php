@@ -40,7 +40,15 @@
                                                 {{ Str::limit($thesis->thesis_title ?? 'N/A', 50) }}
                                             </td>
                                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                                {{ $thesis->supervisor->user->name ?? 'N/A' }}
+                                                @php
+                                                    $supervisorName = 'N/A';
+                                                    if ($thesis->supervisor && $thesis->supervisor->user) {
+                                                        $supervisorName = $thesis->supervisor->user->name;
+                                                    } elseif ($thesis->scholar->currentSupervisor && $thesis->scholar->currentSupervisor->supervisor && $thesis->scholar->currentSupervisor->supervisor->user) {
+                                                        $supervisorName = $thesis->scholar->currentSupervisor->supervisor->user->name;
+                                                    }
+                                                @endphp
+                                                {{ $supervisorName }}
                                             </td>
                                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                                 {{ $thesis->hvc_approved_at ? $thesis->hvc_approved_at->format('M d, Y') : 'N/A' }}

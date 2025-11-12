@@ -20,6 +20,7 @@ class ThesisEvaluation extends Model
         'status',
         'hvc_selected_expert_id',
         'da_assigned_expert_id',
+        'priority_order',
         'decision',
     ];
 

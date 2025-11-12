@@ -14,7 +14,17 @@
                         <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
                             <p><strong>Scholar:</strong> {{ $thesis->scholar->user->name }}</p>
                             <p><strong>Title:</strong> {{ $thesis->title }}</p>
-                            <p><strong>Supervisor:</strong> {{ $thesis->supervisor->user->name }}</p>
+                            <p><strong>Supervisor:</strong>
+                                @php
+                                    $supervisorName = 'N/A';
+                                    if ($thesis->supervisor && $thesis->supervisor->user) {
+                                        $supervisorName = $thesis->supervisor->user->name;
+                                    } elseif ($thesis->scholar->currentSupervisor && $thesis->scholar->currentSupervisor->supervisor && $thesis->scholar->currentSupervisor->supervisor->user) {
+                                        $supervisorName = $thesis->scholar->currentSupervisor->supervisor->user->name;
+                                    }
+                                @endphp
+                                {{ $supervisorName }}
+                            </p>
                             <p><strong>Submission Date:</strong> {{ $thesis->submission_date->format('M d, Y') }}</p>
                             <p class="mt-2">
                                 <strong>Thesis File:</strong>

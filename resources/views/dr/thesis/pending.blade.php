@@ -40,7 +40,15 @@
                                                 {{ Str::limit($thesis->thesis_title ?? 'N/A', 50) }}
                                             </td>
                                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                                {{ $thesis->supervisor->user->name ?? 'N/A' }}
+                                                @php
+                                                    $supervisorName = 'N/A';
+                                                    if ($thesis->supervisor && $thesis->supervisor->user) {
+                                                        $supervisorName = $thesis->supervisor->user->name;
+                                                    } elseif ($thesis->scholar->currentSupervisor && $thesis->scholar->currentSupervisor->supervisor && $thesis->scholar->currentSupervisor->supervisor->user) {
+                                                        $supervisorName = $thesis->scholar->currentSupervisor->supervisor->user->name;
+                                                    }
+                                                @endphp
+                                                {{ $supervisorName }}
                                             </td>
                                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                                 {{ $thesis->submission_date->format('M d, Y') }}
@@ -51,7 +59,11 @@
                                                 </span>
                                             </td>
                                             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                                <a href="{{ Storage::url($thesis->thesis_file) }}" target="_blank" class="text-blue-600 hover:text-blue-900">Download</a>
+                                                <a href="{{ route('dr.thesis.approve', $thesis) }}" class="text-indigo-600 hover:text-indigo-900 mr-3">Review & Approve</a>
+                                                @if($thesis->thesisEvaluation && $thesis->thesisEvaluation->count() > 0)
+                                                    <a href="{{ route('dr.thesis.expert_details', $thesis) }}" class="text-green-600 hover:text-green-900 mr-3">View Expert Details</a>
+                                                @endif
+                                                <a href="{{ Storage::url($thesis->file_path ?? $thesis->thesis_file) }}" target="_blank" class="text-blue-600 hover:text-blue-900">Download</a>
                                             </td>
                                         </tr>
                                     @endforeach

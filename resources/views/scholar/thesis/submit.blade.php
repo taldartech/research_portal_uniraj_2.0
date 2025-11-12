@@ -29,11 +29,6 @@
                                     <x-input-error :messages="$errors->get('title')" class="mt-2" />
                                 </div>
                                 <div>
-                                    <x-input-label for="abstract" :value="__('Abstract *')" />
-                                    <textarea id="abstract" name="abstract" rows="6" class="block mt-1 w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 dark:focus:border-indigo-600 focus:ring-indigo-500 dark:focus:ring-indigo-600 rounded-md shadow-sm" required>{{ old('abstract', $scholar->research_scheme_outline ?? '') }}</textarea>
-                                    <x-input-error :messages="$errors->get('abstract')" class="mt-2" />
-                                </div>
-                                <div>
                                     <x-input-label for="thesis_file" :value="__('Thesis File (PDF) *')" />
                                     <input id="thesis_file" type="file" name="thesis_file" accept=".pdf" class="block mt-1 w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100" required />
                                     <p class="mt-1 text-sm text-gray-500">Maximum file size: 10MB</p>

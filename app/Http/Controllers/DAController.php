@@ -343,7 +343,7 @@ class DAController extends Controller
     public function listPendingThesisSubmissions()
     {
         $theses = \App\Models\ThesisSubmission::where('status', 'pending_da_approval')
-            ->with(['scholar.user', 'supervisor.user', 'supervisorApprover', 'hodApprover'])
+            ->with(['scholar.user', 'scholar.currentSupervisor.supervisor.user', 'supervisor.user', 'supervisorApprover', 'hodApprover', 'thesisEvaluation'])
             ->latest()
             ->get();
 
@@ -359,7 +359,7 @@ class DAController extends Controller
             abort(403, 'This thesis is not pending DA approval.');
         }
 
-        $thesis->load(['scholar.user', 'supervisor.user', 'supervisorApprover', 'hodApprover']);
+        $thesis->load(['scholar.user', 'scholar.currentSupervisor.supervisor.user', 'supervisor.user', 'supervisorApprover', 'hodApprover']);
 
         return view('da.thesis.approve', compact('thesis'));
     }
@@ -376,15 +376,19 @@ class DAController extends Controller
         $request->validate([
             'action' => 'required|in:approve,reject',
             'remarks' => 'required|string|max:500',
+            'drc_minutes_file' => 'required|url|max:500',
         ]);
 
+        $updateData = [
+            'status' => $request->action === 'approve' ? 'pending_so_approval' : 'rejected_by_da',
+            'da_approver_id' => Auth::id(),
+            'da_approved_at' => now(),
+            'da_remarks' => $request->remarks,
+            'drc_minutes_file' => $request->drc_minutes_file,
+        ];
+
         if ($request->action === 'approve') {
-            $thesis->update([
-                'status' => 'pending_so_approval',
-                'da_approver_id' => Auth::id(),
-                'da_approved_at' => now(),
-                'da_remarks' => $request->remarks,
-            ]);
+            $thesis->update($updateData);
 
             // Auto-generate submission certificate when DA approves
             $certificateService = new \App\Services\CertificateGenerationService();
@@ -392,21 +396,44 @@ class DAController extends Controller
 
             $message = 'Thesis approved and forwarded to ' . \App\Helpers\WorkflowHelper::getRoleFullForm('so') . '. Submission certificate generated.';
         } else {
-            $thesis->update([
-                'status' => 'rejected_by_da',
-                'da_approver_id' => Auth::id(),
-                'da_approved_at' => now(),
-                'da_remarks' => $request->remarks,
-                'rejected_by' => Auth::id(),
-                'rejected_at' => now(),
-                'rejection_reason' => $request->remarks,
-                'rejection_count' => $thesis->rejection_count + 1,
-            ]);
+            $updateData['rejected_by'] = Auth::id();
+            $updateData['rejected_at'] = now();
+            $updateData['rejection_reason'] = $request->remarks;
+            $updateData['rejection_count'] = $thesis->rejection_count + 1;
+
+            $thesis->update($updateData);
 
             $message = 'Thesis rejected by ' . \App\Helpers\WorkflowHelper::getRoleFullForm('da') . '.';
         }
 
         return redirect()->route('da.thesis.pending')->with('success', $message);
+    }
+
+    /**
+     * View expert details for a thesis
+     */
+    public function viewExpertDetails(\App\Models\ThesisSubmission $thesis)
+    {
+        $thesis->load([
+            'scholar.user',
+            'scholar.currentSupervisor.supervisor.user',
+            'supervisor.user',
+            'scholar.admission.department',
+            'thesisEvaluation.expert',
+        ]);
+
+        // Get supervisor-suggested experts
+        $suggestedExperts = \App\Models\ExpertSuggestion::where('thesis_submission_id', $thesis->id)
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        // Get HVC-selected experts with priority
+        $selectedExperts = $thesis->thesisEvaluation()
+            ->with('expert')
+            ->orderBy('priority_order', 'asc')
+            ->get();
+
+        return view('da.thesis.expert_details', compact('thesis', 'suggestedExperts', 'selectedExperts'));
     }
 
     /**

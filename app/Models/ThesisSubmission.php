@@ -13,7 +13,6 @@ class ThesisSubmission extends Model
     protected $fillable = [
         'scholar_id',
         'title',
-        'abstract',
         'file_path',
         'status',
         'submission_date',
@@ -32,6 +31,7 @@ class ThesisSubmission extends Model
         'hod_approved_at',
         'hod_remarks',
         'drc_minutes_file',
+        'drc_date',
         'da_approver_id',
         'da_approved_at',
         'da_remarks',

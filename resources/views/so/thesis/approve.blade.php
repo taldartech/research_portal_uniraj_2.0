@@ -1,7 +1,7 @@
 <x-app-layout>
     <x-slot name="header">
         <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
-            {{ __('Review Thesis Submission - Dealing Assistant Approval') }}
+            {{ __('Review Thesis Submission - Section Officer Approval') }}
         </h2>
     </x-slot>
 
@@ -25,11 +25,11 @@
                                 @endphp
                                 {{ $supervisorName }}
                             </p>
-                            <p><strong>HOD:</strong> {{ $thesis->hodApprover->name ?? 'N/A' }}</p>
+                            <p><strong>Department:</strong> {{ $thesis->scholar->admission->department->name ?? 'N/A' }}</p>
                             <p><strong>Submission Date:</strong> {{ $thesis->submission_date ? $thesis->submission_date->format('M d, Y') : 'N/A' }}</p>
                             <p class="mt-2">
                                 <strong>Thesis File:</strong>
-                                <a href="{{ Storage::url($thesis->file_path) }}" target="_blank" class="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300">
+                                <a href="{{ Storage::url($thesis->file_path ?? $thesis->thesis_file) }}" target="_blank" class="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300">
                                     Download Thesis
                                 </a>
                             </p>
@@ -50,6 +50,26 @@
                             <h4 class="text-md font-medium text-gray-900 dark:text-gray-100 mb-2">HOD Remarks</h4>
                             <div class="bg-green-50 dark:bg-green-900 p-3 rounded-lg">
                                 <p class="text-sm text-gray-700 dark:text-gray-300">{{ $thesis->hod_remarks }}</p>
+                                @if($thesis->drc_date)
+                                    <p class="text-sm text-gray-700 dark:text-gray-300 mt-2"><strong>DRC Date:</strong> {{ $thesis->drc_date->format('M d, Y') }}</p>
+                                @endif
+                            </div>
+                        </div>
+                    @endif
+
+                    @if($thesis->da_remarks)
+                        <div class="mb-6">
+                            <h4 class="text-md font-medium text-gray-900 dark:text-gray-100 mb-2">DA Remarks</h4>
+                            <div class="bg-purple-50 dark:bg-purple-900 p-3 rounded-lg">
+                                <p class="text-sm text-gray-700 dark:text-gray-300">{{ $thesis->da_remarks }}</p>
+                                @if($thesis->drc_minutes_file)
+                                    <p class="text-sm text-gray-700 dark:text-gray-300 mt-2">
+                                        <strong>DRC Minutes File:</strong>
+                                        <a href="{{ $thesis->drc_minutes_file }}" target="_blank" class="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300">
+                                            View DRC Minutes
+                                        </a>
+                                    </p>
+                                @endif
                             </div>
                         </div>
                     @endif
@@ -69,25 +89,15 @@
                         </div>
                     @endif
 
-                    <!-- DRC Date (if set by HOD) -->
-                    @if($thesis->drc_date)
-                        <div class="mb-6">
-                            <h4 class="text-md font-medium text-gray-900 dark:text-gray-100 mb-2">DRC Date</h4>
-                            <div class="bg-purple-50 dark:bg-purple-900 p-3 rounded-lg">
-                                <p class="text-sm text-gray-700 dark:text-gray-300">{{ $thesis->drc_date->format('M d, Y') }}</p>
-                            </div>
-                        </div>
-                    @endif
-
-                    <form method="POST" action="{{ route('da.thesis.process', $thesis) }}" enctype="multipart/form-data">
+                    <form method="POST" action="{{ route('so.thesis.approve.store', $thesis) }}">
                         @csrf
 
                         <div class="mt-4">
-                            <x-input-label for="action" :value="__('Remark')" />
+                            <x-input-label for="action" :value="__('Action')" />
                             <select id="action" name="action" class="block mt-1 w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 dark:focus:border-indigo-600 focus:ring-indigo-500 dark:focus:ring-indigo-600 rounded-md shadow-sm" required>
-                                <option value="">Select Remark</option>
-                                <option value="approve">Satisfied</option>
-                                <option value="reject">Unsatisfied</option>
+                                <option value="">Select Action</option>
+                                <option value="approve">Approve</option>
+                                <option value="reject">Reject</option>
                             </select>
                             <x-input-error :messages="$errors->get('action')" class="mt-2" />
                         </div>
@@ -98,15 +108,8 @@
                             <x-input-error :messages="$errors->get('remarks')" class="mt-2" />
                         </div>
 
-                        <!-- DRC Minutes File Upload -->
-                        <div class="mt-4">
-                            <x-input-label for="drc_minutes_file" :value="__('DRC Minutes File (URL)')" :required="true" />
-                            <input type="url" id="drc_minutes_file" name="drc_minutes_file" class="block mt-1 w-full text-sm text-gray-500 dark:text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 dark:file:bg-indigo-900 dark:file:text-indigo-300" required>
-                            <x-input-error :messages="$errors->get('drc_minutes_file')" class="mt-2" />
-                        </div>
-
                         <div class="flex items-center justify-end mt-4">
-                            <a href="{{ route('da.thesis.pending') }}" class="text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100 mr-4">
+                            <a href="{{ route('so.thesis.pending') }}" class="text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100 mr-4">
                                 Cancel
                             </a>
                             <x-primary-button class="ms-3">
@@ -119,3 +122,4 @@
         </div>
     </div>
 </x-app-layout>
+

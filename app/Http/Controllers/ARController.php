@@ -256,7 +256,7 @@ class ARController extends Controller
      */
     public function listPendingThesisSubmissions()
     {
-        $theses = \App\Models\ThesisSubmission::with(['scholar.user', 'supervisor.user', 'scholar.admission.department'])
+        $theses = \App\Models\ThesisSubmission::with(['scholar.user', 'supervisor.user', 'scholar.currentSupervisor.supervisor.user', 'scholar.admission.department'])
             ->where('status', 'pending_ar_approval')
             ->latest()
             ->paginate(10);
@@ -269,11 +269,89 @@ class ARController extends Controller
      */
     public function listAllThesisSubmissions()
     {
-        $theses = \App\Models\ThesisSubmission::with(['scholar.user', 'supervisor.user', 'scholar.admission.department'])
+        $theses = \App\Models\ThesisSubmission::with(['scholar.user', 'supervisor.user', 'scholar.currentSupervisor.supervisor.user', 'scholar.admission.department'])
             ->latest()
             ->get();
 
         return view('ar.thesis.all', compact('theses'));
+    }
+
+    /**
+     * Show thesis approval form
+     */
+    public function approveThesisForm(\App\Models\ThesisSubmission $thesis)
+    {
+        if ($thesis->status !== 'pending_ar_approval') {
+            abort(403, 'This thesis is not pending AR approval.');
+        }
+
+        $thesis->load(['scholar.user', 'scholar.currentSupervisor.supervisor.user', 'supervisor.user', 'scholar.admission.department', 'supervisorApprover', 'hodApprover', 'daApprover', 'soApprover']);
+
+        return view('ar.thesis.approve', compact('thesis'));
+    }
+
+    /**
+     * Process thesis approval/rejection
+     */
+    public function approveThesis(Request $request, \App\Models\ThesisSubmission $thesis)
+    {
+        if ($thesis->status !== 'pending_ar_approval') {
+            abort(403, 'This thesis is not pending AR approval.');
+        }
+
+        $request->validate([
+            'action' => 'required|in:approve,reject',
+            'remarks' => 'required|string|max:500',
+        ]);
+
+        if ($request->action === 'approve') {
+            $thesis->update([
+                'status' => 'pending_dr_approval',
+                'ar_approver_id' => Auth::id(),
+                'ar_approved_at' => now(),
+                'ar_remarks' => $request->remarks,
+            ]);
+
+            $message = 'Thesis approved and forwarded to ' . \App\Helpers\WorkflowHelper::getRoleFullForm('dr') . '.';
+        } else {
+            $thesis->update([
+                'status' => 'rejected_by_ar',
+                'ar_approver_id' => Auth::id(),
+                'ar_approved_at' => now(),
+                'ar_remarks' => $request->remarks,
+            ]);
+
+            $message = 'Thesis rejected.';
+        }
+
+        return redirect()->route('ar.thesis.pending')->with('success', $message);
+    }
+
+    /**
+     * View expert details for a thesis
+     */
+    public function viewExpertDetails(\App\Models\ThesisSubmission $thesis)
+    {
+        $thesis->load([
+            'scholar.user',
+            'scholar.currentSupervisor.supervisor.user',
+            'supervisor.user',
+            'scholar.admission.department',
+            'thesisEvaluation.expert',
+        ]);
+
+        // Get supervisor-suggested experts
+        $suggestedExperts = \App\Models\ExpertSuggestion::where('thesis_submission_id', $thesis->id)
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        // Get HVC-selected experts with priority
+        $selectedExperts = $thesis->thesisEvaluation()
+            ->with('expert')
+            ->orderBy('priority_order', 'asc')
+            ->get();
+
+        return view('ar.thesis.expert_details', compact('thesis', 'suggestedExperts', 'selectedExperts'));
     }
 
     /**

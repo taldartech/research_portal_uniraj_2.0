@@ -54,10 +54,12 @@
                                 </svg>
                             </button>
                             <div x-show="open" @click.away="open = false" class="absolute left-0 mt-2 w-56 bg-white rounded-md shadow-lg py-1 nav-dropdown">
-                                <a href="{{ route('scholar.pre_phd_viva.request') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Pre-PhD Viva Request</a>
-                                <a href="{{ route('scholar.pre_phd_viva.status') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Pre-PhD Viva Status</a>
-                                @if(Auth::user()->scholar && !Auth::user()->scholar->activePrePhdVivaRequest())
-                                    <a href="{{ route('scholar.thesis.eligibility') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Thesis Eligibility</a>
+                                <a href="{{ route('scholar.thesis.eligibility') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Thesis Eligibility</a>
+                                @if(Auth::user()->scholar && !Auth::user()->scholar->canSubmitThesis()['can_submit'])
+                                    <a href="{{ route('scholar.pre_phd_viva.request') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Pre-PhD Viva Request</a>
+                                    <a href="{{ route('scholar.pre_phd_viva.status') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Pre-PhD Viva Status</a>
+                                @endif
+                                @if(Auth::user()->scholar && Auth::user()->scholar->canSubmitThesis())
                                     <a href="{{ route('scholar.thesis.submit') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Submit Thesis</a>
                                     <a href="{{ route('scholar.thesis.submissions.status') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Thesis Certificates</a>
                                     <a href="{{ route('scholar.thesis.status') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Thesis Status</a>

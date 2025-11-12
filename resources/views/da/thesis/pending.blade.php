@@ -26,24 +26,37 @@
                                     @foreach($theses as $thesis)
                                         <tr>
                                             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">
-                                                {{ $thesis->scholar->user->name }}
+                                                {{ $thesis->scholar->user->name ?? 'N/A' }}
                                             </td>
                                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
                                                 {{ $thesis->title }}
                                             </td>
                                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
-                                                {{ $thesis->supervisor->user->name }}
+                                                @php
+                                                    $supervisorName = 'N/A';
+                                                    if ($thesis->supervisor && $thesis->supervisor->user) {
+                                                        $supervisorName = $thesis->supervisor->user->name;
+                                                    } elseif ($thesis->scholar->currentSupervisor && $thesis->scholar->currentSupervisor->supervisor && $thesis->scholar->currentSupervisor->supervisor->user) {
+                                                        $supervisorName = $thesis->scholar->currentSupervisor->supervisor->user->name;
+                                                    }
+                                                @endphp
+                                                {{ $supervisorName }}
                                             </td>
                                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
                                                 {{ $thesis->hodApprover->name ?? 'N/A' }}
                                             </td>
                                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
-                                                {{ $thesis->submission_date->format('M d, Y') }}
+                                                {{ $thesis->submission_date ? $thesis->submission_date->format('M d, Y') : 'N/A' }}
                                             </td>
                                             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                                <a href="{{ route('da.thesis.approve', $thesis) }}" class="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300">
+                                                <a href="{{ route('da.thesis.approve', $thesis) }}" class="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300 mr-3">
                                                     Review & Approve
                                                 </a>
+                                                @if($thesis->thesisEvaluation && $thesis->thesisEvaluation->count() > 0)
+                                                    <a href="{{ route('da.thesis.expert_details', $thesis) }}" class="text-green-600 hover:text-green-900 dark:text-green-400 dark:hover:text-green-300">
+                                                        View Expert Details
+                                                    </a>
+                                                @endif
                                             </td>
                                         </tr>
                                     @endforeach

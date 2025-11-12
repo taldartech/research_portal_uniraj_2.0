@@ -207,21 +207,80 @@ class SupervisorController extends Controller
 
     public function suggestExpertsForm()
     {
-        return view('supervisor.thesis_evaluation.suggest_experts');
+        $supervisor = $this->getSupervisor();
+
+        // Get approved thesis submissions for scholars supervised by this supervisor
+        // These are theses that are approved and ready for expert suggestions
+        $thesisSubmissions = \App\Models\ThesisSubmission::where('status', 'approved')
+            ->where(function ($query) use ($supervisor) {
+                // Look for theses with direct supervisor_id match
+                $query->where('supervisor_id', $supervisor->id)
+                      // OR look for theses through current supervisor assignment
+                      ->orWhereHas('scholar.currentSupervisor', function ($assignmentQuery) use ($supervisor) {
+                          $assignmentQuery->where('supervisor_id', $supervisor->id)
+                                        ->where('status', 'assigned');
+                      });
+            })
+            ->with(['scholar.user', 'scholar.currentSupervisor.supervisor.user', 'supervisor.user'])
+            ->latest()
+            ->get();
+
+        return view('supervisor.thesis_evaluation.suggest_experts', compact('thesisSubmissions'));
     }
 
     public function storeExpertsSuggestion(Request $request)
     {
+        $supervisor = $this->getSupervisor();
+
         $request->validate([
             'thesis_submission_id' => 'required|exists:thesis_submissions,id',
             'expert_suggestions' => 'required|array|min:8',
             'expert_suggestions.*.name' => 'required|string|max:255',
-            'expert_suggestions.*.affiliation' => 'required|string|max:255',
-            'expert_suggestions.*.email' => 'required|email',
+            'expert_suggestions.*.email' => 'required|email|max:255',
+            'expert_suggestions.*.mobile_no' => 'required|string|max:20',
+            'expert_suggestions.*.address' => 'required|string',
+            'expert_suggestions.*.state' => 'required|string|max:255',
         ]);
 
-        // Logic to store expert suggestions. This would typically involve creating records in a related table.
-        // For now, simulate success.
+        // Verify thesis submission belongs to this supervisor
+        $thesis = \App\Models\ThesisSubmission::findOrFail($request->thesis_submission_id);
+        $isAuthorized = ($thesis->supervisor_id === $supervisor->id) ||
+                        ($thesis->scholar->currentSupervisor &&
+                         $thesis->scholar->currentSupervisor->supervisor_id === $supervisor->id &&
+                         $thesis->scholar->currentSupervisor->status === 'assigned');
+
+        if (!$isAuthorized) {
+            abort(403, 'Unauthorized action. This thesis does not belong to you.');
+        }
+
+        // Validate that maximum 2 experts are from the same state
+        $stateCounts = [];
+        foreach ($request->expert_suggestions as $suggestion) {
+            $state = $suggestion['state'];
+            if (!isset($stateCounts[$state])) {
+                $stateCounts[$state] = 0;
+            }
+            $stateCounts[$state]++;
+
+            if ($stateCounts[$state] > 2) {
+                return redirect()->back()
+                    ->withErrors(['expert_suggestions' => "Maximum 2 experts can be selected from a single state. You have selected more than 2 experts from '{$state}'."])
+                    ->withInput();
+            }
+        }
+
+        // Store expert suggestions
+        foreach ($request->expert_suggestions as $suggestion) {
+            \App\Models\ExpertSuggestion::create([
+                'thesis_submission_id' => $request->thesis_submission_id,
+                'supervisor_id' => $supervisor->id,
+                'name' => $suggestion['name'],
+                'email' => $suggestion['email'],
+                'mobile_no' => $suggestion['mobile_no'],
+                'address' => $suggestion['address'],
+                'state' => $suggestion['state'],
+            ]);
+        }
 
         return redirect()->back()->with('success', 'Expert suggestions submitted successfully.');
     }
@@ -556,10 +615,18 @@ class SupervisorController extends Controller
 
     public function listPendingThesisSubmissions()
     {
-        $supervisor = Auth::user()->supervisor;
-        $pendingTheses = \App\Models\ThesisSubmission::where('supervisor_id', $supervisor->id)
-                                                    ->where('status', 'pending_supervisor_approval')
-                                                    ->with(['scholar.user'])
+        $supervisor = $this->getSupervisor();
+        $pendingTheses = \App\Models\ThesisSubmission::where('status', 'pending_supervisor_approval')
+                                                    ->where(function ($query) use ($supervisor) {
+                                                        // Look for theses with direct supervisor_id match
+                                                        $query->where('supervisor_id', $supervisor->id)
+                                                              // OR look for theses through current supervisor assignment (for cases where supervisor_id might be null)
+                                                              ->orWhereHas('scholar.currentSupervisor', function ($assignmentQuery) use ($supervisor) {
+                                                                  $assignmentQuery->where('supervisor_id', $supervisor->id)
+                                                                                ->where('status', 'assigned');
+                                                              });
+                                                    })
+                                                    ->with(['scholar.user', 'scholar.currentSupervisor.supervisor.user'])
                                                     ->get();
 
         return view('supervisor.thesis.pending', compact('pendingTheses'));
@@ -567,7 +634,18 @@ class SupervisorController extends Controller
 
     public function approveThesisForm(\App\Models\ThesisSubmission $thesis)
     {
-        if ($thesis->supervisor_id !== Auth::user()->supervisor->id) {
+        $supervisor = $this->getSupervisor();
+
+        // Load scholar relationship
+        $thesis->load(['scholar.currentSupervisor']);
+
+        // Check if thesis belongs to this supervisor (either directly or through assignment)
+        $isAuthorized = ($thesis->supervisor_id === $supervisor->id) ||
+                        ($thesis->scholar->currentSupervisor &&
+                         $thesis->scholar->currentSupervisor->supervisor_id === $supervisor->id &&
+                         $thesis->scholar->currentSupervisor->status === 'assigned');
+
+        if (!$isAuthorized) {
             abort(403, 'Unauthorized action.');
         }
 
@@ -580,7 +658,18 @@ class SupervisorController extends Controller
 
     public function approveThesis(Request $request, \App\Models\ThesisSubmission $thesis)
     {
-        if ($thesis->supervisor_id !== Auth::user()->supervisor->id) {
+        $supervisor = $this->getSupervisor();
+
+        // Load scholar relationship
+        $thesis->load(['scholar.currentSupervisor']);
+
+        // Check if thesis belongs to this supervisor (either directly or through assignment)
+        $isAuthorized = ($thesis->supervisor_id === $supervisor->id) ||
+                        ($thesis->scholar->currentSupervisor &&
+                         $thesis->scholar->currentSupervisor->supervisor_id === $supervisor->id &&
+                         $thesis->scholar->currentSupervisor->status === 'assigned');
+
+        if (!$isAuthorized) {
             abort(403, 'Unauthorized action.');
         }
 

@@ -43,7 +43,17 @@
                                             <div class="bg-gray-50 p-3 rounded">
                                                 <p class="text-sm"><strong>Email:</strong> {{ $thesis->scholar->user->email }}</p>
                                                 <p class="text-sm"><strong>Research Area:</strong> {{ $thesis->scholar->research_area ?? 'Not specified' }}</p>
-                                                <p class="text-sm"><strong>Supervisor:</strong> {{ $thesis->supervisor->user->name }}</p>
+                                                <p class="text-sm"><strong>Supervisor:</strong>
+                                                    @php
+                                                        $supervisorName = 'N/A';
+                                                        if ($thesis->supervisor && $thesis->supervisor->user) {
+                                                            $supervisorName = $thesis->supervisor->user->name;
+                                                        } elseif ($thesis->scholar->currentSupervisor && $thesis->scholar->currentSupervisor->supervisor && $thesis->scholar->currentSupervisor->supervisor->user) {
+                                                            $supervisorName = $thesis->scholar->currentSupervisor->supervisor->user->name;
+                                                        }
+                                                    @endphp
+                                                    {{ $supervisorName }}
+                                                </p>
                                             </div>
                                         </div>
                                         <div>

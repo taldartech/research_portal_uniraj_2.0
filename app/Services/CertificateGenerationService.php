@@ -52,6 +52,17 @@ class CertificateGenerationService
         $user = $scholar->user;
         $department = $scholar->admission->department;
 
+        // Load relationships to ensure supervisor data is available
+        $thesisSubmission->load(['supervisor.user', 'scholar.currentSupervisor.supervisor.user']);
+
+        // Get supervisor name - try direct relationship first, then through assignment
+        $supervisorName = 'N/A';
+        if ($thesisSubmission->supervisor && $thesisSubmission->supervisor->user) {
+            $supervisorName = $thesisSubmission->supervisor->user->name;
+        } elseif ($scholar->currentSupervisor && $scholar->currentSupervisor->supervisor && $scholar->currentSupervisor->supervisor->user) {
+            $supervisorName = $scholar->currentSupervisor->supervisor->user->name;
+        }
+
         return '
         <!DOCTYPE html>
         <html>
@@ -193,7 +204,7 @@ class CertificateGenerationService
                         in the subject of <span class="dotted-line"></span><strong>' . htmlspecialchars($thesisSubmission->subject) . '</strong><span class="dotted-line"></span>
                     </p>
                     <p>
-                        under the supervision of <span class="dotted-line"></span><strong>' . htmlspecialchars($thesisSubmission->supervisor->name) . '</strong><span class="dotted-line"></span>
+                        under the supervision of <span class="dotted-line"></span><strong>' . htmlspecialchars($supervisorName) . '</strong><span class="dotted-line"></span>
                     </p>
                     <p>
                         in the Department of <span class="dotted-line"></span><strong>' . htmlspecialchars($department->name) . '</strong><span class="dotted-line"></span>

@@ -48,10 +48,15 @@ class ExpertEvaluationController extends Controller
             abort(403, 'Experts have already been selected for this thesis.');
         }
 
-        // Get all expert users
-        $experts = User::where('user_type', 'expert')->get();
+        // Load relationships
+        $thesis->load(['scholar.user', 'scholar.currentSupervisor.supervisor.user', 'supervisor.user', 'scholar.admission.department']);
 
-        return view('hvc.thesis.select_experts', compact('thesis', 'experts'));
+        // Get supervisor-suggested experts
+        $suggestedExperts = \App\Models\ExpertSuggestion::where('thesis_submission_id', $thesis->id)
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        return view('hvc.thesis.select_experts', compact('thesis', 'suggestedExperts'));
     }
 
     /**
@@ -70,27 +75,102 @@ class ExpertEvaluationController extends Controller
 
         $request->validate([
             'experts' => 'required|array|size:4',
-            'experts.*.expert_id' => 'required|exists:users,id',
+            'experts.*.expert_suggestion_id' => 'required|exists:expert_suggestions,id',
             'experts.*.priority' => 'required|integer|min:1|max:4',
         ]);
+
+        // Verify all expert suggestions belong to this thesis
+        $expertSuggestionIds = array_column($request->experts, 'expert_suggestion_id');
+        $suggestedExperts = \App\Models\ExpertSuggestion::whereIn('id', $expertSuggestionIds)
+            ->where('thesis_submission_id', $thesis->id)
+            ->get();
+
+        if ($suggestedExperts->count() !== 4) {
+            return redirect()->back()
+                ->withErrors(['experts' => 'Invalid expert selection. All experts must be from the supervisor suggestions for this thesis.'])
+                ->withInput();
+        }
 
         // Update thesis status
         $thesis->update(['status' => 'pending_expert_assignment']);
 
+        // Get the Supervisor role for experts (experts use Supervisor role based on seeder)
+        $expertRole = \App\Models\Role::where('name', 'Supervisor')->first();
+        if (!$expertRole) {
+            return redirect()->back()
+                ->withErrors(['experts' => 'Expert role not found. Please ensure roles are seeded.'])
+                ->withInput();
+        }
+
+        // Get supervisor_id - check both direct supervisor_id and currentSupervisor relationship
+        $supervisorId = $thesis->supervisor_id;
+        if (!$supervisorId && $thesis->scholar->currentSupervisor) {
+            $supervisorId = $thesis->scholar->currentSupervisor->supervisor_id;
+        }
+
+        // Ensure supervisor_id exists (required for thesis_evaluations table)
+        if (!$supervisorId) {
+            return redirect()->back()
+                ->withErrors(['experts' => 'Supervisor information is missing for this thesis. Please ensure the thesis has an assigned supervisor.'])
+                ->withInput();
+        }
+
         // Create evaluation records for selected experts
         foreach ($request->experts as $expertData) {
+            $expertSuggestion = \App\Models\ExpertSuggestion::findOrFail($expertData['expert_suggestion_id']);
+
+            // Find or create user account for the expert
+            $expertUser = User::firstOrCreate(
+                ['email' => $expertSuggestion->email],
+                [
+                    'name' => $expertSuggestion->name,
+                    'user_type' => 'expert',
+                    'role_id' => $expertRole->id,
+                    'password' => bcrypt(str()->random(16)), // Random password, expert can reset if needed
+                ]
+            );
+
+            // Update user details if they exist but info is different
+            if ($expertUser->name !== $expertSuggestion->name) {
+                $expertUser->update(['name' => $expertSuggestion->name]);
+            }
+
+            // Ensure role_id is set even if user already existed
+            if (!$expertUser->role_id) {
+                $expertUser->update(['role_id' => $expertRole->id]);
+            }
+
+            // Ensure priority is an integer
+            $priority = (int) $expertData['priority'];
+
             ThesisEvaluation::create([
                 'thesis_submission_id' => $thesis->id,
-                'expert_id' => $expertData['expert_id'],
-                'supervisor_id' => $thesis->supervisor_id,
+                'expert_id' => $expertUser->id,
+                'supervisor_id' => $supervisorId,
                 'assigned_date' => now(),
                 'status' => 'assigned',
                 'hvc_selected_expert_id' => Auth::id(),
-                'priority_order' => $expertData['priority'],
+                'priority_order' => $priority,
             ]);
         }
 
-        return redirect()->route('hvc.thesis.approved')->with('success', '4 experts selected and prioritized successfully.');
+        // Reload thesis with evaluations
+        $thesis->refresh();
+        $thesis->load('thesisEvaluation.expert');
+
+        // Send notification to all DR users
+        $drUsers = \App\Models\User::where('user_type', 'dr')->get();
+        foreach ($drUsers as $drUser) {
+            $drUser->notify(new \App\Notifications\ExpertSelectionNotification($thesis, 'dr'));
+        }
+
+        // Send notification to all DA users
+        $daUsers = \App\Models\User::where('user_type', 'da')->get();
+        foreach ($daUsers as $daUser) {
+            $daUser->notify(new \App\Notifications\ExpertSelectionNotification($thesis, 'da'));
+        }
+
+        return redirect()->route('hvc.thesis.approved')->with('success', '4 experts selected and prioritized successfully. Notification sent to ' . \App\Helpers\WorkflowHelper::getRoleFullForm('dr') . ' and ' . \App\Helpers\WorkflowHelper::getRoleFullForm('da') . '.');
     }
 
     /**
@@ -288,11 +368,17 @@ class ExpertEvaluationController extends Controller
             'venue' => 'required|string|max:255',
         ]);
 
+        // Get supervisor_id - check both direct supervisor_id and currentSupervisor relationship
+        $supervisorId = $thesis->supervisor_id;
+        if (!$supervisorId && $thesis->scholar->currentSupervisor) {
+            $supervisorId = $thesis->scholar->currentSupervisor->supervisor_id;
+        }
+
         VivaProcess::create([
             'thesis_submission_id' => $thesis->id,
             'hvc_assigned_expert_id' => $request->expert_id,
             'hod_id' => $thesis->hod_id,
-            'supervisor_id' => $thesis->supervisor_id,
+            'supervisor_id' => $supervisorId,
             'viva_date' => $request->viva_date,
             'viva_time' => $request->viva_time,
             'venue' => $request->venue,

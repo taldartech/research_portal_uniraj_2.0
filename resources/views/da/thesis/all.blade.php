@@ -69,6 +69,11 @@
                                                 <div class="text-sm text-gray-900">{{ $thesis->submission_date->format('M d, Y') }}</div>
                                             </td>
                                             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                                @if($thesis->thesisEvaluation && $thesis->thesisEvaluation->count() > 0)
+                                                    <a href="{{ route('da.thesis.expert_details', $thesis) }}" class="text-green-600 hover:text-green-900 mr-3">
+                                                        View Expert Details
+                                                    </a>
+                                                @endif
                                                 <a href="{{ Storage::url($thesis->thesis_file) }}"
                                                    target="_blank"
                                                    class="text-indigo-600 hover:text-indigo-900">

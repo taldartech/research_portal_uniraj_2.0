@@ -204,6 +204,9 @@
             <x-nav-link :href="route('dr.thesis.pending')" :active="request()->routeIs('dr.thesis.pending')">
                 {{ __('Pending Thesis Submissions') }}
             </x-nav-link>
+            <x-nav-link :href="route('dr.thesis.all')" :active="request()->routeIs('dr.thesis.all') || request()->routeIs('dr.thesis.expert_details')">
+                {{ __('All Thesis Submissions') }}
+            </x-nav-link>
             <x-nav-link :href="route('dr.coursework_exemptions.pending')" :active="request()->routeIs('dr.coursework_exemptions.pending')">
                 {{ __('Pending Coursework Exemptions') }}
             </x-nav-link>

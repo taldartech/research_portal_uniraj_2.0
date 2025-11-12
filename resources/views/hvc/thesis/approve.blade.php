@@ -25,7 +25,17 @@
                             </div>
                             <div>
                                 <label class="block text-sm font-medium text-gray-700">Supervisor</label>
-                                <p class="mt-1 text-sm text-gray-900">{{ $thesis->supervisor->user->name }}</p>
+                                <p class="mt-1 text-sm text-gray-900">
+                                    @php
+                                        $supervisorName = 'N/A';
+                                        if ($thesis->supervisor && $thesis->supervisor->user) {
+                                            $supervisorName = $thesis->supervisor->user->name;
+                                        } elseif ($thesis->scholar->currentSupervisor && $thesis->scholar->currentSupervisor->supervisor && $thesis->scholar->currentSupervisor->supervisor->user) {
+                                            $supervisorName = $thesis->scholar->currentSupervisor->supervisor->user->name;
+                                        }
+                                    @endphp
+                                    {{ $supervisorName }}
+                                </p>
                             </div>
                             <div>
                                 <label class="block text-sm font-medium text-gray-700">Department</label>

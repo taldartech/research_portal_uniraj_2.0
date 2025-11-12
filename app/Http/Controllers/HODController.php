@@ -790,6 +790,7 @@ class HODController extends Controller
         $request->validate([
             'action' => 'required|in:approve,reject',
             'remarks' => 'required|string|max:500',
+            'drc_date' => 'required|date',
         ]);
 
         if ($request->action === 'approve') {
@@ -798,6 +799,7 @@ class HODController extends Controller
                 'hod_approver_id' => Auth::id(),
                 'hod_approved_at' => now(),
                 'hod_remarks' => $request->remarks,
+                'drc_date' => $request->drc_date,
             ]);
 
             $message = 'Thesis approved and forwarded to ' . \App\Helpers\WorkflowHelper::getRoleFullForm('da') . '.';
@@ -807,6 +809,7 @@ class HODController extends Controller
                 'hod_approver_id' => Auth::id(),
                 'hod_approved_at' => now(),
                 'hod_remarks' => $request->remarks,
+                'drc_date' => $request->drc_date,
                 'rejected_by' => Auth::id(),
                 'rejected_at' => now(),
                 'rejection_reason' => $request->remarks,

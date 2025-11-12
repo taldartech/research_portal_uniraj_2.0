@@ -7,13 +7,6 @@
 
     <div class="py-12">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-            <!-- Action Buttons -->
-            <div class="mb-6">
-                <a href="{{ route('scholar.thesis.submission_form') }}" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
-                    Submit New Thesis
-                </a>
-            </div>
-
             <!-- Thesis Submissions -->
             <div class="space-y-6">
                 @forelse($thesisSubmissions as $thesis)
@@ -50,7 +43,6 @@
 
                             <div class="mb-4">
                                 <p class="text-gray-700 dark:text-gray-300">
-                                    <strong>Abstract:</strong> {{ Str::limit($thesis->abstract, 200) }}
                                 </p>
                             </div>
 

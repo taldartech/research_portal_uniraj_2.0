@@ -78,7 +78,7 @@ class HVCController extends Controller
     public function listPendingThesisApprovals()
     {
         $theses = \App\Models\ThesisSubmission::where('status', 'pending_hvc_approval')
-            ->with(['scholar.user', 'supervisor.user', 'hodApprover', 'daApprover', 'soApprover', 'arApprover', 'drApprover'])
+            ->with(['scholar.user', 'scholar.currentSupervisor.supervisor.user', 'supervisor.user', 'hodApprover', 'daApprover', 'soApprover', 'arApprover', 'drApprover'])
             ->latest()
             ->get();
 
@@ -94,7 +94,7 @@ class HVCController extends Controller
             abort(403, 'This thesis is not pending HVC approval.');
         }
 
-        $thesis->load(['scholar.user', 'supervisor.user', 'hodApprover', 'daApprover', 'soApprover', 'arApprover', 'drApprover']);
+        $thesis->load(['scholar.user', 'scholar.currentSupervisor.supervisor.user', 'supervisor.user', 'hodApprover', 'daApprover', 'soApprover', 'arApprover', 'drApprover']);
 
         return view('hvc.thesis.approve', compact('thesis'));
     }
@@ -146,7 +146,7 @@ class HVCController extends Controller
     {
         $theses = \App\Models\ThesisSubmission::where('status', 'approved')
             ->whereDoesntHave('thesisEvaluation')
-            ->with(['scholar.user', 'supervisor.user'])
+            ->with(['scholar.user', 'scholar.currentSupervisor.supervisor.user', 'supervisor.user'])
             ->latest()
             ->get();
 
@@ -158,6 +158,8 @@ class HVCController extends Controller
      */
     public function assignExpertForm(\App\Models\ThesisSubmission $thesis)
     {
+        $thesis->load(['scholar.user', 'scholar.currentSupervisor.supervisor.user', 'supervisor.user']);
+        
         if ($thesis->status !== 'approved') {
             abort(403, 'This thesis is not approved for evaluation.');
         }
@@ -563,7 +565,7 @@ class HVCController extends Controller
      */
     public function listPendingThesisSubmissions()
     {
-        $theses = \App\Models\ThesisSubmission::with(['scholar.user', 'supervisor.user', 'scholar.admission.department'])
+        $theses = \App\Models\ThesisSubmission::with(['scholar.user', 'supervisor.user', 'scholar.currentSupervisor.supervisor.user', 'scholar.admission.department'])
             ->where('status', 'pending_hvc_approval')
             ->latest()
             ->paginate(10);
@@ -576,7 +578,7 @@ class HVCController extends Controller
      */
     public function listAllThesisSubmissions()
     {
-        $theses = \App\Models\ThesisSubmission::with(['scholar.user', 'supervisor.user', 'scholar.admission.department'])
+        $theses = \App\Models\ThesisSubmission::with(['scholar.user', 'supervisor.user', 'scholar.currentSupervisor.supervisor.user', 'scholar.admission.department'])
             ->latest()
             ->get();
 
